@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { 
   Play, Pause, X, Maximize2, 
@@ -19,6 +19,52 @@ export default function FocusTimer() {
   const [isMuted, setIsMuted] = useState(false)
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const playSound = useCallback((type: 'start' | 'complete' | 'tick') => {
+    if (isMuted) return
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    
+    if (type === 'start') {
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(440, ctx.currentTime)
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1)
+    } else if (type === 'complete') {
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(880, ctx.currentTime)
+      osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.2)
+    }
+    
+    gain.gain.setValueAtTime(0.1, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2)
+    
+    osc.start()
+    osc.stop(ctx.currentTime + 0.2)
+  }, [isMuted])
+
+  const handleComplete = useCallback(async () => {
+    setIsActive(false)
+    playSound('complete')
+    
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { error } = await supabase.from('focus_sessions').insert({
+        user_id: user.id,
+        task_id: linkedTaskId,
+        duration_minutes: Math.ceil((25 * 60 - timeLeft) / 60) || 25,
+        completed: true
+      })
+      if (!error) toast.success('Focus session recorded')
+    }
+
+    if (linkedTaskId) {
+      // Potentially mark task as done or status updated
+    }
+  }, [linkedTaskId, timeLeft, playSound])
 
   useEffect(() => {
     const handleToggle = (e: any) => {
@@ -45,53 +91,7 @@ export default function FocusTimer() {
       if (timerRef.current) clearInterval(timerRef.current)
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [isActive, timeLeft])
-
-  async function handleComplete() {
-    setIsActive(false)
-    playSound('complete')
-    
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { error } = await supabase.from('focus_sessions').insert({
-        user_id: user.id,
-        task_id: linkedTaskId,
-        duration_minutes: Math.ceil((25 * 60 - timeLeft) / 60) || 25,
-        completed: true
-      })
-      if (!error) toast.success('Focus session recorded')
-    }
-
-    if (linkedTaskId) {
-      // Potentially mark task as done or status updated
-    }
-  }
-
-  function playSound(type: 'start' | 'complete' | 'tick') {
-    if (isMuted) return
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    
-    if (type === 'start') {
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(440, ctx.currentTime)
-      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1)
-    } else if (type === 'complete') {
-      osc.type = 'triangle'
-      osc.frequency.setValueAtTime(880, ctx.currentTime)
-      osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.2)
-    }
-    
-    gain.gain.setValueAtTime(0.1, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2)
-    
-    osc.start()
-    osc.stop(ctx.currentTime + 0.2)
-  }
+  }, [isActive, timeLeft, handleComplete])
 
   const minutes = Math.floor(timeLeft / 60)
   const seconds = timeLeft % 60

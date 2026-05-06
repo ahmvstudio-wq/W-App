@@ -148,7 +148,7 @@ export default function CommandPalette({ isOpen, onClose }: { isOpen: boolean, o
 
         <div style={{ padding: '8px', maxHeight: '400px', overflowY: 'auto' }}>
           {filteredOptions.length === 0 ? (
-            <div style={{ padding: '32px', textAlign: 'center', color: '#6b6e75', fontSize: '14px' }}>No commands found for "{search}"</div>
+            <div style={{ padding: '32px', textAlign: 'center', color: '#6b6e75', fontSize: '14px' }}>No commands found for &quot;{search}&quot;</div>
           ) : (
             filteredOptions.map((opt, i) => (
               <div 

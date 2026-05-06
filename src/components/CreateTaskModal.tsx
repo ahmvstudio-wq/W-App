@@ -212,7 +212,7 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId }
                 <Zap size={16} /> <span style={{ fontSize: '13px', fontWeight: 700 }}>System Challenge</span>
               </div>
               <p style={{ fontSize: '14px', marginBottom: '12px', color: '#f0ede8', fontStyle: 'italic' }}>
-                "{challengeResult.scope_question}"
+                &quot;{challengeResult.scope_question}&quot;
               </p>
               <div style={{ fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace' }}>
                 AI SUGGESTION: Priority updated to {challengeResult.priority?.toUpperCase()} ({challengeResult.priority_reasoning}). Time box set to {challengeResult.time_box_minutes}m.
