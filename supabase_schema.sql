@@ -165,6 +165,25 @@ CREATE TABLE profiles (
   updated_at timestamptz DEFAULT now()
 );
 
+-- FOCUS SESSIONS
+CREATE TABLE focus_sessions (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  workspace_id uuid REFERENCES workspaces(id) ON DELETE CASCADE,
+  task_id uuid REFERENCES tasks(id) ON DELETE SET NULL,
+  project_id uuid REFERENCES projects(id) ON DELETE SET NULL,
+  mode text DEFAULT 'freeform' CHECK (mode IN ('freeform','task','pomodoro')),
+  target_minutes integer NOT NULL DEFAULT 25,
+  duration_minutes integer,
+  completed boolean DEFAULT false,
+  interrupted boolean DEFAULT false,
+  interruption_reason text,
+  notes text,
+  started_at timestamptz DEFAULT now(),
+  ended_at timestamptz,
+  created_at timestamptz DEFAULT now()
+);
+
 -- DISABLE RLS ON ALL TABLES FOR NOW
 ALTER TABLE workspaces DISABLE ROW LEVEL SECURITY;
 ALTER TABLE projects DISABLE ROW LEVEL SECURITY;
@@ -175,9 +194,28 @@ ALTER TABLE calendar_events DISABLE ROW LEVEL SECURITY;
 ALTER TABLE meetings DISABLE ROW LEVEL SECURITY;
 ALTER TABLE daily_logs DISABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE focus_sessions DISABLE ROW LEVEL SECURITY;
+
+-- PROFILE TRIGGER
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, name, avatar_url)
+  VALUES (
+    new.id,
+    COALESCE(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+    new.raw_user_meta_data->>'avatar_url'
+  );
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- SYNC EXISTING USERS TO PROFILES (Safety)
 INSERT INTO profiles (id, name, avatar_url)
-SELECT id, COALESCE(raw_user_meta_data->>'name', email), raw_user_meta_data->>'avatar_url'
+SELECT id, COALESCE(raw_user_meta_data->>'name', split_part(email, '@', 1)), raw_user_meta_data->>'avatar_url'
 FROM auth.users
 ON CONFLICT (id) DO NOTHING;

@@ -81,24 +81,30 @@ const StickyNoteNode = ({ data, selected }: any) => {
   )
 }
 
+import { Priority, TaskStatus } from '@/types'
+
 const TaskCardNode = ({ data, selected }: any) => {
-  const task = data.task
+  const task = data.task as Task
   if (!task) return null
+
+  const priorityColor = PRIORITY_CONFIG[task.priority as Priority]?.color || '#6b6e75'
+  const priorityLabel = PRIORITY_CONFIG[task.priority as Priority]?.label || task.priority
+  const statusLabel = TASK_STATUS_CONFIG[task.status as TaskStatus]?.label || task.status
 
   return (
     <div style={{ 
-      background: '#1c1e22', borderLeft: `4px solid ${PRIORITY_CONFIG[task.priority]?.color || '#6b6e75'}`, 
+      background: '#1c1e22', borderLeft: `4px solid ${priorityColor}`, 
       borderRadius: '8px', padding: '16px', width: '280px', 
       boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
       border: selected ? '1px solid #c8f135' : '1px solid #252729'
     }}>
       <Handle type="target" position={Position.Top} style={{ background: '#555' }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-        <span style={{ fontSize: '10px', fontWeight: 700, color: PRIORITY_CONFIG[task.priority]?.color, textTransform: 'uppercase' }}>
-          {PRIORITY_CONFIG[task.priority]?.label}
+        <span style={{ fontSize: '10px', fontWeight: 700, color: priorityColor, textTransform: 'uppercase' }}>
+          {priorityLabel}
         </span>
         <div style={{ fontSize: '10px', color: '#6b6e75', background: '#141618', padding: '2px 8px', borderRadius: '4px', border: '1px solid #252729' }}>
-          {TASK_STATUS_CONFIG[task.status]?.label}
+          {statusLabel}
         </div>
       </div>
       <div style={{ fontSize: '14px', fontWeight: 600, color: '#f0ede8', marginBottom: '16px', lineHeight: 1.4 }}>{task.title}</div>
@@ -183,8 +189,8 @@ interface ProjectWhiteboardProps {
 import { uploadAsset, saveAsset } from '@/lib/supabase/storage'
 
 export default function ProjectWhiteboard({ project }: ProjectWhiteboardProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState([])
-  const [edges, setEdges, onEdgesChange] = useEdgesState([])
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const [saving, setSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [tool, setTool] = useState<'select' | 'sticky' | 'task' | 'text' | 'frame'>('select')
@@ -269,7 +275,7 @@ export default function ProjectWhiteboard({ project }: ProjectWhiteboardProps) {
           setNodes((nds) => {
             const next = nds.map((node) => node.id === id ? { ...node, data: { ...node.data, text: val } } : node)
             debouncedSave(next, edges)
-            return next
+            return next as Node[]
           })
         }
       },
@@ -333,6 +339,14 @@ export default function ProjectWhiteboard({ project }: ProjectWhiteboardProps) {
     debouncedSave(newNodes, newEdges)
   }
 
+  const deleteSelected = useCallback(() => {
+    const nextNodes = nodes.filter((n) => !n.selected)
+    const nextEdges = edges.filter((e) => !e.selected)
+    setNodes(nextNodes)
+    setEdges(nextEdges)
+    debouncedSave(nextNodes, nextEdges)
+  }, [nodes, edges, setNodes, setEdges, debouncedSave])
+
   return (
     <div ref={reactFlowWrapper} style={{ height: '100%', width: '100%', position: 'relative' }}>
       <ReactFlow
@@ -347,7 +361,7 @@ export default function ProjectWhiteboard({ project }: ProjectWhiteboardProps) {
         <Background color="#252729" variant={BackgroundVariant.Dots} />
         <Controls style={{ background: '#141618', border: '1px solid #252729', borderRadius: '4px' }} />
 
-        <Panel position="left" style={{ 
+        <Panel position="top-left" style={{ 
           display: 'flex', flexDirection: 'column', gap: '8px', 
           background: '#141618', padding: '8px', borderRadius: '12px', border: '1px solid #252729',
           boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)'
@@ -380,6 +394,9 @@ export default function ProjectWhiteboard({ project }: ProjectWhiteboardProps) {
             style={{ display: 'none' }} 
           />
           <div style={{ width: '20px', height: '1px', background: '#252729', margin: '4px auto' }} />
+          <button onClick={deleteSelected} title="Delete Selection" style={toolButtonStyle} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 68, 68, 0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+            <Trash2 size={18} color="#ff4444" />
+          </button>
           <button onClick={generateDependencyGraph} title="Auto-Generate Dependency Graph" style={{ ...toolButtonStyle, background: 'rgba(200,241,53,0.05)' }}>
             <Activity size={18} color="#c8f135" />
           </button>

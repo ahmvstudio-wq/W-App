@@ -5,11 +5,11 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Heading from '@tiptap/extension-heading'
-import Table from '@tiptap/extension-table'
+import { Table } from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
-import { ArrowLeft, Save, Zap, ChevronRight, CheckSquare } from 'lucide-react'
+import { ArrowLeft, Save, Zap, ChevronRight, CheckSquare, Plus } from 'lucide-react'
 import Link from 'next/link'
 
 export default function DocumentEditorPage({ params }: { params: { id: string } }) {

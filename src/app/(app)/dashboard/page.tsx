@@ -155,10 +155,14 @@ export default function DashboardPage() {
             {formatDateTime(new Date())}
           </p>
         </div>
-        <button className="btn-accent" style={{ 
-          padding: '8px 16px', borderRadius: '6px', border: 'none', 
-          display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer'
-        }}>
+        <button 
+          onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+          className="btn-accent" 
+          style={{ 
+            padding: '8px 16px', borderRadius: '6px', border: 'none', 
+            display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer'
+          }}
+        >
           <Play size={14} /> New Action
         </button>
       </header>

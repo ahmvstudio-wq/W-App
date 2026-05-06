@@ -6,7 +6,11 @@ import { Plus, Search, Filter, LayoutGrid, List as ListIcon, Calendar, X, Zap } 
 import { PRIORITY_CONFIG, TASK_STATUS_CONFIG, cn, getInitials } from '@/lib/utils'
 import type { Task, Priority, TaskStatus } from '@/types'
 import { challengeTask } from '@/lib/groq/client'
+import { format } from 'date-fns'
 import Link from 'next/link'
+import { toast } from 'sonner'
+
+import CreateTaskModal from '@/components/CreateTaskModal'
 
 export default function TasksPage() {
   const [view, setView] = useState<'board' | 'list' | 'timeline'>('board')
@@ -16,13 +20,29 @@ export default function TasksPage() {
 
   async function fetchTasks() {
     setLoading(true)
-    const { data } = await supabase
-      .from('tasks')
-      .select('*, project:projects(id, name), owner:profiles(id, name)')
-      .order('updated_at', { ascending: false })
-    
-    if (data) setTasks(data)
-    setLoading(false)
+    console.log('FETCHING ALL TASKS...')
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (error) {
+        console.error('SUPABASE FETCH ERROR:', error.message)
+        toast.error(`Fetch failed: ${error.message}`)
+      } else {
+        console.log('TASKS FETCHED SUCCESS:', data?.length || 0, 'tasks found')
+        setTasks(data || [])
+        if (data && data.length > 0) {
+          toast.success(`${data.length} tasks discovered`)
+        }
+      }
+    } catch (err: any) {
+      console.error('UNEXPECTED FETCH ERROR:', err)
+      toast.error('Sync failed. Retrying...')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -42,7 +62,26 @@ export default function TasksPage() {
   const columns: TaskStatus[] = ['todo', 'in_progress', 'blocked', 'shipped', 'killed']
 
   async function updateTaskStatus(taskId: string, newStatus: TaskStatus) {
-    await supabase.from('tasks').update({ status: newStatus }).eq('id', taskId)
+    const { error } = await supabase.from('tasks').update({ status: newStatus }).eq('id', taskId)
+    if (error) {
+      console.error('FAILED TO UPDATE TASK STATUS:', error.message)
+      toast.error(`Update failed: ${error.message}`)
+      return
+    }
+    toast.success(`Task status updated to ${newStatus}`)
+    fetchTasks()
+  }
+
+  async function deleteTask(taskId: string) {
+    if (!confirm('Are you sure? This action is irreversible.')) return
+    const { error } = await supabase.from('tasks').delete().eq('id', taskId)
+    if (error) {
+      console.error('FAILED TO DELETE TASK:', error.message)
+      toast.error(`Delete failed: ${error.message}`)
+      return
+    }
+    toast.success('Task deleted')
+    fetchTasks()
   }
 
   return (
@@ -109,16 +148,22 @@ export default function TasksPage() {
                     </div>
                     <div style={{ fontWeight: 500, fontSize: '14px', marginBottom: '12px', lineHeight: 1.4 }}>{task.title}</div>
                     
-                    <div style={{ marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
                       <select 
                         value={task.status} 
                         onChange={(e) => updateTaskStatus(task.id, e.target.value as TaskStatus)}
-                        style={{ width: '100%', padding: '4px 8px', background: '#141618', border: '1px solid #252729', borderRadius: '4px', color: '#6b6e75', fontSize: '11px', outline: 'none' }}
+                        style={{ flex: 1, padding: '4px 8px', background: '#141618', border: '1px solid #252729', borderRadius: '4px', color: '#6b6e75', fontSize: '11px', outline: 'none' }}
                       >
                         {columns.map(col => (
                            <option key={col} value={col}>{TASK_STATUS_CONFIG[col].label}</option>
                         ))}
                       </select>
+                      <button 
+                        onClick={() => window.dispatchEvent(new CustomEvent('toggle-focus-timer', { detail: { taskId: task.id, taskTitle: task.title, timeBox: task.time_box_minutes } }))}
+                        style={{ padding: '4px 8px', background: 'rgba(200, 241, 53, 0.1)', border: '1px solid rgba(200, 241, 53, 0.3)', borderRadius: '4px', color: '#c8f135', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <Zap size={10} /> <span style={{ fontSize: '10px', fontWeight: 700 }}>FOCUS</span>
+                      </button>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#6b6e75', fontSize: '11px', fontFamily: 'DM Mono, monospace' }}>
@@ -149,43 +194,71 @@ export default function TasksPage() {
               </tr>
             </thead>
             <tbody>
-              {tasks.map(task => (
-                <tr key={task.id} style={{ borderBottom: '1px solid #252729' }}>
-                  <td style={{ padding: '16px', fontWeight: 500, fontSize: '13px' }}>{task.title}</td>
-                  <td style={{ padding: '16px' }}><span style={{ color: PRIORITY_CONFIG[task.priority].color, fontSize: '12px', fontWeight: 600, fontFamily: 'DM Mono, monospace' }}>{PRIORITY_CONFIG[task.priority].label}</span></td>
-                  <td style={{ padding: '16px' }}>
-                    <select 
-                      value={task.status} 
-                      onChange={(e) => updateTaskStatus(task.id, e.target.value as TaskStatus)}
-                      style={{ padding: '4px 8px', background: 'transparent', border: '1px solid #252729', borderRadius: '4px', color: TASK_STATUS_CONFIG[task.status].color, fontSize: '11px', outline: 'none', fontWeight: 600, fontFamily: 'DM Mono, monospace' }}
-                    >
-                      {columns.map(col => (
-                          <option key={col} value={col}>{TASK_STATUS_CONFIG[col].label}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td style={{ padding: '16px', fontSize: '13px', color: '#6b6e75' }}>
-                    {task.project ? (
-                      <Link href={`/projects/${(task.project as any).id}`} style={{ color: '#c8f135', textDecoration: 'none' }}>
-                        {(task.project as any).name}
-                      </Link>
-                    ) : '--'}
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#252729', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700 }}>
-                        {getInitials((task.owner as any)?.name)}
+              {tasks.length === 0 ? (
+                <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#6b6e75' }}>No tasks found. Create one to get started.</td></tr>
+              ) : (
+                tasks.map(task => (
+                  <tr key={task.id} style={{ borderBottom: '1px solid #252729' }}>
+                    <td style={{ padding: '16px', fontWeight: 500, fontSize: '13px' }}>{task.title}</td>
+                    <td style={{ padding: '16px' }}><span style={{ color: PRIORITY_CONFIG[task.priority].color, fontSize: '12px', fontWeight: 600, fontFamily: 'DM Mono, monospace' }}>{PRIORITY_CONFIG[task.priority].label}</span></td>
+                    <td style={{ padding: '16px' }}>
+                      <select 
+                        value={task.status} 
+                        onChange={(e) => updateTaskStatus(task.id, e.target.value as TaskStatus)}
+                        style={{ padding: '4px 8px', background: 'transparent', border: '1px solid #252729', borderRadius: '4px', color: TASK_STATUS_CONFIG[task.status].color, fontSize: '11px', outline: 'none', fontWeight: 600, fontFamily: 'DM Mono, monospace' }}
+                      >
+                        {columns.map(col => (
+                            <option key={col} value={col}>{TASK_STATUS_CONFIG[col].label}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td style={{ padding: '16px', fontSize: '13px', color: '#6b6e75' }}>
+                      {task.project ? (
+                        <Link href={`/projects/${(task.project as any).id}`} style={{ color: '#c8f135', textDecoration: 'none' }}>
+                          {(task.project as any).name}
+                        </Link>
+                      ) : '--'}
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#252729', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700 }}>
+                          {getInitials((task.owner as any)?.name)}
+                        </div>
+                        <span style={{ fontSize: '13px' }}>{(task.owner as any)?.name || 'Unknown'}</span>
                       </div>
-                      <span style={{ fontSize: '13px' }}>{(task.owner as any)?.name}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px', fontSize: '13px', fontFamily: 'DM Mono, monospace', color: '#6b6e75' }}>{task.time_box_minutes}m</td>
-                </tr>
-              ))}
+                    </td>
+                    <td style={{ padding: '16px', fontSize: '13px', fontFamily: 'DM Mono, monospace', color: '#6b6e75' }}>{task.time_box_minutes}m</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
-      ) : null}
+      ) : (
+        <div style={{ flex: 1, background: '#141618', border: '1px solid #252729', borderRadius: '12px', padding: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', color: '#6b6e75' }}>
+          <Calendar size={48} style={{ opacity: 0.2 }} />
+          <div style={{ textAlign: 'center' }}>
+            <h3 style={{ color: '#f0ede8', marginBottom: '8px' }}>Timeline View</h3>
+            <p style={{ maxWidth: '400px' }}>Visualizing the critical path. All tasks with due dates will appear here sequentially.</p>
+          </div>
+          <div style={{ width: '100%', maxWidth: '800px', marginTop: '24px' }}>
+             {tasks.filter(t => t.due_date).sort((a,b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime()).map(task => (
+               <div key={task.id} style={{ display: 'flex', gap: '20px', marginBottom: '16px' }}>
+                 <div style={{ width: '100px', fontSize: '11px', fontFamily: 'DM Mono, monospace', textAlign: 'right', paddingTop: '4px' }}>
+                   {format(new Date(task.due_date!), 'MMM d, HH:mm')}
+                 </div>
+                 <div style={{ position: 'relative', flex: 1, padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '8px', borderLeft: `4px solid ${PRIORITY_CONFIG[task.priority].color}` }}>
+                   <div style={{ fontSize: '14px', fontWeight: 600, color: '#f0ede8' }}>{task.title}</div>
+                   <div style={{ fontSize: '11px', color: '#6b6e75', marginTop: '4px' }}>{(task.project as any)?.name || 'NO PROJECT'} • {task.status.toUpperCase()}</div>
+                 </div>
+               </div>
+             ))}
+             {tasks.filter(t => t.due_date).length === 0 && (
+               <div style={{ textAlign: 'center', opacity: 0.5 }}>No tasks with deadlines found.</div>
+             )}
+          </div>
+        </div>
+      )}
 
       {isCreateModalOpen && (
         <CreateTaskModal onClose={() => setIsCreateModalOpen(false)} onSuccess={fetchTasks} />
@@ -194,131 +267,3 @@ export default function TasksPage() {
   )
 }
 
-function CreateTaskModal({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
-  const [title, setTitle] = useState('')
-  const [output, setOutput] = useState('')
-  const [timeBox, setTimeBox] = useState('')
-  const [priority, setPriority] = useState<Priority>('p2')
-  
-  const [challengeResult, setChallengeResult] = useState<any>(null)
-  const [loadingChallenge, setLoadingChallenge] = useState(false)
-  const [saving, setSaving] = useState(false)
-
-  async function handleChallenge() {
-    if (!title || !output) return
-    setLoadingChallenge(true)
-    const result = await challengeTask(title, output)
-    setChallengeResult(result)
-    if (result.priority) setPriority(result.priority as Priority)
-    if (result.time_box_minutes) setTimeBox(result.time_box_minutes.toString())
-    setLoadingChallenge(false)
-  }
-
-  async function handleCreateTask() {
-    if (!challengeResult) return
-    setSaving(true)
-
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      setSaving(false)
-      return
-    }
-
-    let { data: workspaces } = await supabase.from('workspaces').select('id').eq('owner_id', session.user.id).limit(1)
-    let workspaceId = workspaces?.[0]?.id
-
-    if (!workspaceId) {
-      const { data: newWs } = await supabase.from('workspaces').insert({
-        owner_id: session.user.id,
-        name: 'My Workspace'
-      }).select().single()
-      workspaceId = newWs?.id
-    }
-
-    if (workspaceId) {
-      const { error } = await supabase.from('tasks').insert({
-        workspace_id: workspaceId,
-        owner_id: session.user.id,
-        title,
-        output_description: output,
-        priority: challengeResult.priority,
-        time_box_minutes: challengeResult.time_box_minutes || parseInt(timeBox) || 60,
-        status: 'todo'
-      })
-      if (!error) {
-        onSuccess()
-        onClose()
-      } else {
-        console.error('Failed to create task:', error)
-      }
-    }
-    setSaving(false)
-  }
-
-  return (
-    <div className="modal-backdrop" style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <div style={{ background: '#141618', border: '1px solid #252729', borderRadius: '12px', width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
-        <div style={{ padding: '24px', borderBottom: '1px solid #252729', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '18px' }}>Create Task</h2>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#6b6e75', cursor: 'pointer' }}><X size={20} /></button>
-        </div>
-        
-        <div style={{ padding: '24px', overflowY: 'auto' }}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Task Title (Action-oriented)</label>
-            <input value={title} onChange={e => setTitle(e.target.value)} type="text" placeholder="e.g. Write database schema" style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} />
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Expected Output (What ships?)</label>
-            <textarea value={output} onChange={e => setOutput(e.target.value)} placeholder="e.g. A SQL file committed to main containing 10 tables." rows={3} style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none', resize: 'none' }} />
-          </div>
-
-          <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Priority</label>
-              <select value={priority} onChange={e => setPriority(e.target.value as Priority)} style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none', appearance: 'none' }}>
-                <option value="p0">P0 - Critical</option>
-                <option value="p1">P1 - High</option>
-                <option value="p2">P2 - Medium</option>
-                <option value="p3">P3 - Low</option>
-              </select>
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Time Box (Minutes)</label>
-              <input value={timeBox} onChange={e => setTimeBox(e.target.value)} type="number" placeholder="60" style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} />
-            </div>
-          </div>
-
-          {!challengeResult && (
-            <button onClick={handleChallenge} disabled={!title || !output || loadingChallenge} style={{ width: '100%', padding: '12px', background: 'rgba(200, 241, 53, 0.1)', border: '1px solid rgba(200, 241, 53, 0.3)', color: '#c8f135', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: (!title || !output) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-              <Zap size={16} /> {loadingChallenge ? 'Challenging Scope...' : 'AI Challenge Scope (Required)'}
-            </button>
-          )}
-
-          {challengeResult && (
-            <div style={{ background: '#1c1e22', border: '1px solid #c8f135', borderRadius: '8px', padding: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#c8f135' }}>
-                <Zap size={16} /> <span style={{ fontSize: '13px', fontWeight: 700 }}>System Challenge</span>
-              </div>
-              <p style={{ fontSize: '14px', marginBottom: '12px', color: '#f0ede8', fontStyle: 'italic' }}>
-                "{challengeResult.scope_question}"
-              </p>
-              <div style={{ fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace' }}>
-                AI SUGGESTION: Priority updated to {challengeResult.priority.toUpperCase()} ({challengeResult.priority_reasoning}). Time box set to {challengeResult.time_box_minutes}m.
-              </div>
-            </div>
-          )}
-
-        </div>
-        
-        <div style={{ padding: '24px', borderTop: '1px solid #252729', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-          <button onClick={onClose} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}>Cancel</button>
-          <button onClick={handleCreateTask} disabled={!challengeResult || saving} className="btn-accent" style={{ padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: (!challengeResult || saving) ? 'not-allowed' : 'pointer', fontSize: '13px', opacity: (!challengeResult || saving) ? 0.5 : 1 }}>
-            {saving ? 'Creating...' : 'Create Task'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}

@@ -8,7 +8,7 @@ import { getInitials } from '@/lib/utils'
 export default function AIPage() {
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<{role: 'user'|'assistant', content: string}[]>([
-    { role: 'assistant', content: 'FOCUS OS System Intelligence initialized. I hold the standard for output, speed, and ownership. I will challenge your scope and cut your fluff. What is the priority?' }
+    { role: 'assistant', content: 'W System Intelligence initialized. I hold the standard for output, speed, and ownership. I will challenge your scope and cut your fluff. What is the priority?' }
   ])
   const [loading, setLoading] = useState(false)
 
@@ -95,7 +95,7 @@ export default function AIPage() {
             }}>
               
               <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: msg.role === 'user' ? '#252729' : '#c8f135', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: msg.role === 'user' ? '#f0ede8' : '#000', fontWeight: 800, fontSize: '14px', fontFamily: 'Syne, sans-serif' }}>
-                {msg.role === 'user' ? getInitials('W') : 'F'}
+                {msg.role === 'user' ? getInitials('W') : 'W'}
               </div>
 
               <div style={{ 
@@ -117,7 +117,7 @@ export default function AIPage() {
           ))}
           {loading && (
             <div style={{ display: 'flex', gap: '16px', maxWidth: '800px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#c8f135', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#000', fontWeight: 800, fontSize: '14px', fontFamily: 'Syne, sans-serif' }}>F</div>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#c8f135', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#000', fontWeight: 800, fontSize: '14px', fontFamily: 'Syne, sans-serif' }}>W</div>
               <div style={{ padding: '6px 0', color: '#6b6e75', fontSize: '15px', fontFamily: 'DM Mono, monospace' }}>Processing intelligence...</div>
             </div>
           )}

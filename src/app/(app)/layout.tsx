@@ -10,6 +10,8 @@ import {
   LayoutDashboard, FolderKanban, CheckSquare, FileText, 
   Users, Zap, BarChart2, Settings, LogOut, ChevronDown
 } from 'lucide-react'
+import CommandPalette from '@/components/CommandPalette'
+import FocusTimer from '@/components/FocusTimer'
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -76,21 +78,42 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     router.push('/')
   }
 
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setIsCommandPaletteOpen(prev => !prev)
+      }
+    }
+
+    const handleOpenPalette = () => setIsCommandPaletteOpen(true)
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('open-command-palette', handleOpenPalette)
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('open-command-palette', handleOpenPalette)
+    }
+  }, [])
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', background: '#0c0d0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '36px', height: '36px', background: '#c8f135', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-            <span style={{ color: '#000', fontWeight: 800, fontFamily: 'Syne, sans-serif', fontSize: '16px' }}>F</span>
-          </div>
+          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '32px', color: '#c8f135', marginBottom: '16px' }}>W</div>
           <div style={{ color: '#6b6e75', fontSize: '13px', fontFamily: 'DM Mono, monospace' }}>Loading...</div>
         </div>
       </div>
     )
   }
 
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#0c0d0f' }}>
+      <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
+      <FocusTimer />
       {/* Sidebar */}
       <aside style={{
         width: '240px', flexShrink: 0, background: '#141618',
@@ -100,10 +123,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Logo + workspace */}
         <div style={{ padding: '20px 20px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-            <div style={{ width: '28px', height: '28px', background: '#c8f135', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ color: '#000', fontWeight: 800, fontFamily: 'Syne, sans-serif', fontSize: '13px' }}>F</span>
-            </div>
-            <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '15px', letterSpacing: '-0.02em' }}>FOCUS OS</span>
+            <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '20px', letterSpacing: '-0.02em', color: '#c8f135' }}>W</span>
           </div>
 
           {/* Workspace pill */}

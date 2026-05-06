@@ -81,16 +81,10 @@ export default function AuthPage() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '12px',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px',
           }}>
-            <div style={{
-              width: '36px', height: '36px', background: '#c8f135', borderRadius: '8px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <span style={{ color: '#000', fontWeight: 800, fontFamily: 'Syne, sans-serif', fontSize: '16px' }}>F</span>
-            </div>
-            <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '22px', letterSpacing: '-0.02em' }}>
-              FOCUS OS
+            <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '48px', letterSpacing: '-0.02em', color: '#c8f135' }}>
+              W
             </span>
           </div>
           <p style={{ color: '#6b6e75', fontSize: '13px' }}>

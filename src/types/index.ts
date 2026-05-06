@@ -41,6 +41,8 @@ export interface Project {
   priority: Priority
   owner?: User
   tasks?: Task[]
+  whiteboard_state?: any
+  whiteboard_updated_at?: string
 }
 
 export interface Task {
@@ -55,9 +57,10 @@ export interface Task {
   time_box_minutes?: number
   started_at?: string
   completed_at?: string
+  due_date?: string
   output_description?: string
   blocked_reason?: string
-  blocked_by_user_id?: string
+  blocked_by_task_id?: string
   created_at: string
   updated_at: string
   owner?: User
@@ -126,3 +129,33 @@ export interface WorkspaceStats {
   velocityLastWeek: number
   velocityDelta: number
 }
+
+export interface CalendarEvent {
+  id: string
+  workspace_id: string
+  project_id?: string
+  task_id?: string
+  owner_id: string
+  title: string
+  description?: string
+  start_time: string
+  end_time: string
+  all_day: boolean
+  color: string
+  event_type: 'event' | 'deadline' | 'milestone' | 'meeting'
+  created_at: string
+  updated_at: string
+}
+
+export interface Asset {
+  id: string
+  project_id: string
+  workspace_id: string
+  owner_id: string
+  name: string
+  url: string
+  file_size: number
+  mime_type: string
+  created_at: string
+}
+

@@ -13,7 +13,7 @@ import {
   MapPin, Users, Star, Diamond
 } from 'lucide-react'
 import { PRIORITY_CONFIG, cn } from '@/lib/utils'
-import type { Task } from '@/types'
+import type { Task, CalendarEvent } from '@/types'
 
 interface ProjectCalendarProps {
   projectId: string
@@ -21,18 +21,6 @@ interface ProjectCalendarProps {
 }
 
 type CalendarView = 'month' | 'week' | 'day'
-
-interface CalendarEvent {
-  id: string
-  title: string
-  description?: string
-  start_time: string
-  end_time: string
-  all_day: boolean
-  color: string
-  event_type: 'event' | 'deadline' | 'milestone' | 'meeting'
-  task_id?: string
-}
 
 export default function ProjectCalendar({ projectId, workspaceId }: ProjectCalendarProps) {
   const [view, setView] = useState<CalendarView>('month')
@@ -80,7 +68,7 @@ export default function ProjectCalendar({ projectId, workspaceId }: ProjectCalen
       .gte('start_time', start.toISOString())
       .lte('start_time', end.toISOString())
 
-    if (tasksData) setTasks(tasksData)
+    if (tasksData) setTasks(tasksData as Task[])
     if (eventsData) setEvents(eventsData)
     setLoading(false)
   }
@@ -134,7 +122,7 @@ export default function ProjectCalendar({ projectId, workspaceId }: ProjectCalen
             currentDate={currentDate} 
             tasks={tasks} 
             events={events} 
-            onDateClick={(date) => { setSelectedDate(date); setIsModalOpen(true); }} 
+            onDateClick={(date: Date) => { setSelectedDate(date); setIsModalOpen(true); }} 
           />
         )}
         {view === 'week' && <WeekView currentDate={currentDate} tasks={tasks} events={events} />}
@@ -154,7 +142,14 @@ export default function ProjectCalendar({ projectId, workspaceId }: ProjectCalen
   )
 }
 
-function MonthView({ currentDate, tasks, events, onDateClick }: any) {
+interface MonthViewProps {
+  currentDate: Date
+  tasks: Task[]
+  events: CalendarEvent[]
+  onDateClick: (date: Date) => void
+}
+
+function MonthView({ currentDate, tasks, events, onDateClick }: MonthViewProps) {
   const start = startOfWeek(startOfMonth(currentDate))
   const end = endOfWeek(endOfMonth(currentDate))
   const days = eachDayOfInterval({ start, end })
@@ -167,8 +162,8 @@ function MonthView({ currentDate, tasks, events, onDateClick }: any) {
         </div>
       ))}
       {days.map((day, i) => {
-        const dayTasks = tasks.filter((t: any) => isSameDay(new Date(t.due_date), day))
-        const dayEvents = events.filter((e: any) => isSameDay(new Date(e.start_time), day))
+        const dayTasks = tasks.filter((t) => t.due_date && isSameDay(new Date(t.due_date), day))
+        const dayEvents = events.filter((e) => isSameDay(new Date(e.start_time), day))
         const isToday = isSameDay(day, new Date())
         const isCurrentMonth = isSameMonth(day, currentDate)
 
@@ -191,17 +186,17 @@ function MonthView({ currentDate, tasks, events, onDateClick }: any) {
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden' }}>
-              {dayTasks.map((t: any) => (
+              {dayTasks.map(t => (
                 <div key={t.id} style={{ 
-                  fontSize: '10px', background: `${PRIORITY_CONFIG[t.priority as keyof typeof PRIORITY_CONFIG].color}22`, 
-                  color: PRIORITY_CONFIG[t.priority as keyof typeof PRIORITY_CONFIG].color, 
+                  fontSize: '10px', background: `${PRIORITY_CONFIG[t.priority].color}22`, 
+                  color: PRIORITY_CONFIG[t.priority].color, 
                   padding: '2px 6px', borderRadius: '3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  border: `1px solid ${PRIORITY_CONFIG[t.priority as keyof typeof PRIORITY_CONFIG].color}33`
+                  border: `1px solid ${PRIORITY_CONFIG[t.priority].color}33`
                 }}>
                   {t.title}
                 </div>
               ))}
-              {dayEvents.map((e: any) => (
+              {dayEvents.map(e => (
                 <div key={e.id} style={{ 
                   fontSize: '10px', background: `${e.color}33`, color: e.color, 
                   padding: '2px 6px', borderRadius: '3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -220,15 +215,128 @@ function MonthView({ currentDate, tasks, events, onDateClick }: any) {
   )
 }
 
-function WeekView({ currentDate, tasks, events }: any) {
-  return <div style={{ padding: '48px', textAlign: 'center', color: '#6b6e75' }}>Week View Implementation in Progress</div>
+interface ViewProps {
+  currentDate: Date
+  tasks: Task[]
+  events: CalendarEvent[]
 }
 
-function DayView({ currentDate, tasks, events }: any) {
-  return <div style={{ padding: '48px', textAlign: 'center', color: '#6b6e75' }}>Day View Implementation in Progress</div>
+function WeekView({ currentDate, tasks, events }: ViewProps) {
+  const start = startOfWeek(currentDate)
+  const days = Array.from({ length: 7 }, (_, i) => addDays(start, i))
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', height: '100%', minHeight: '600px' }}>
+      {days.map((day, i) => {
+        const dayTasks = tasks.filter(t => t.due_date && isSameDay(new Date(t.due_date), day))
+        const dayEvents = events.filter(e => isSameDay(new Date(e.start_time), day))
+        const isToday = isSameDay(day, new Date())
+
+        return (
+          <div key={i} style={{ borderRight: '1px solid #252729', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+            <div style={{ 
+              padding: '12px', borderBottom: '1px solid #252729', textAlign: 'center',
+              background: isToday ? 'rgba(200, 241, 53, 0.05)' : '#1c1e22'
+            }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#6b6e75', textTransform: 'uppercase', marginBottom: '4px' }}>
+                {format(day, 'EEE')}
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: isToday ? '#c8f135' : '#f0ede8' }}>
+                {format(day, 'd')}
+              </div>
+            </div>
+            
+            <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {dayEvents.map(e => (
+                <div key={e.id} style={{ 
+                  padding: '8px', borderRadius: '6px', background: `${e.color}11`, borderLeft: `3px solid ${e.color}`
+                }}>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: e.color, marginBottom: '2px' }}>
+                    {format(new Date(e.start_time), 'HH:mm')}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#f0ede8', fontWeight: 500 }}>{e.title}</div>
+                </div>
+              ))}
+              {dayTasks.map(t => (
+                <div key={t.id} style={{ 
+                  padding: '8px', borderRadius: '6px', background: 'rgba(107, 110, 117, 0.05)', 
+                  borderLeft: `3px solid ${PRIORITY_CONFIG[t.priority].color}`
+                }}>
+                  <div style={{ fontSize: '10px', color: '#6b6e75', marginBottom: '2px' }}>TASK</div>
+                  <div style={{ fontSize: '12px', color: '#f0ede8' }}>{t.title}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
-function CreateEventModal({ projectId, workspaceId, initialDate, onClose, onSuccess }: any) {
+function DayView({ currentDate, tasks, events }: ViewProps) {
+  const dayTasks = tasks.filter(t => t.due_date && isSameDay(new Date(t.due_date), currentDate))
+  const dayEvents = events.filter(e => isSameDay(new Date(e.start_time), currentDate))
+  
+  const hours = Array.from({ length: 24 }, (_, i) => i)
+
+  return (
+    <div style={{ height: '100%', overflowY: 'auto', padding: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '48px', paddingTop: '12px' }}>
+          {hours.map(h => (
+            <div key={h} style={{ fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textAlign: 'right' }}>
+              {h.toString().padStart(2, '0')}:00
+            </div>
+          ))}
+        </div>
+        
+        <div style={{ position: 'relative', borderLeft: '1px solid #252729', minHeight: '1200px' }}>
+          {dayEvents.map((e) => {
+            const start = new Date(e.start_time)
+            const top = (start.getHours() * 60 + start.getMinutes()) * (1200 / 1440)
+            return (
+              <div key={e.id} style={{ 
+                position: 'absolute', top: `${top}px`, left: '12px', right: '12px',
+                padding: '12px', borderRadius: '8px', background: `${e.color}15`, 
+                border: `1px solid ${e.color}33`, borderLeft: `4px solid ${e.color}`
+              }}>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: e.color, marginBottom: '4px' }}>
+                  {format(new Date(e.start_time), 'HH:mm')} — {format(new Date(e.end_time), 'HH:mm')}
+                </div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#f0ede8' }}>{e.title}</div>
+                {e.description && <div style={{ fontSize: '12px', color: '#6b6e75', marginTop: '4px' }}>{e.description}</div>}
+              </div>
+            )
+          })}
+          
+          <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+             <h4 style={{ fontSize: '12px', color: '#6b6e75', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Deadlines & Tasks</h4>
+             {dayTasks.map(t => (
+               <div key={t.id} style={{ padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                 <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: t.priority ? PRIORITY_CONFIG[t.priority].color : PRIORITY_CONFIG.p2.color }} />
+                 <div style={{ flex: 1 }}>
+                   <div style={{ fontSize: '14px', fontWeight: 500 }}>{t.title}</div>
+                   <div style={{ fontSize: '11px', color: '#6b6e75' }}>Due at {t.due_date ? format(new Date(t.due_date), 'HH:mm') : '--'}</div>
+                 </div>
+               </div>
+             ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface CreateEventModalProps {
+  projectId: string
+  workspaceId: string
+  initialDate: Date
+  onClose: () => void
+  onSuccess: () => void
+}
+
+function CreateEventModal({ projectId, workspaceId, initialDate, onClose, onSuccess }: CreateEventModalProps) {
   const [title, setTitle] = useState('')
   const [type, setType] = useState('event')
   const [startTime, setStartTime] = useState(format(initialDate, "yyyy-MM-dd'T'HH:mm"))

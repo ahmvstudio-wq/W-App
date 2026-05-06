@@ -1,39 +1,37 @@
 import { NextResponse } from 'next/server'
 import Groq from 'groq-sdk'
+import { Anthropic } from '@anthropic-ai/sdk'
+import { buildUserContext } from '@/lib/ai/buildContext'
+import { createClient } from '@/lib/supabase/server'
 
-// Initialize Groq only on the server
+const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null
 const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null
 
-const SYSTEM_PROMPT = `You are the operating intelligence of FOCUS OS.
-You hold one standard: output over activity, speed over safety, 
-specificity over vagueness, one owner over shared responsibility.
-You never validate. You challenge, clarify, and cut.
-Every response is under 150 words unless you are drafting a document.
-You have full context of this workspace injected below.
-[WORKSPACE_CONTEXT]`
-
 export async function POST(request: Request) {
-  if (!groq) {
-    return NextResponse.json({ error: 'Groq API Key not configured' }, { status: 500 })
-  }
-
   try {
-    const { action, payload } = await request.json()
+    const supabase = createClient()
+    const body = await request.json()
+    const { action, payload, messages, workspaceId } = body
 
-    if (action === 'callGroq') {
-      const { messages, workspaceContext } = payload
-      const systemContent = workspaceContext 
-        ? SYSTEM_PROMPT.replace('[WORKSPACE_CONTEXT]', workspaceContext)
-        : SYSTEM_PROMPT.replace('[WORKSPACE_CONTEXT]', '')
+    // AUTH CHECK
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    if (!groq) return NextResponse.json({ error: 'Groq API Key not configured' }, { status: 500 })
+
+    if (action === 'callGroq' || !action) {
+      
+      // Build live context from real data using server-side client
+      const context = await buildUserContext(supabase, user.id, workspaceId || payload?.workspaceId)
 
       const response = await groq.chat.completions.create({
-        model: 'llama-3.1-8b-instant',
+        model: 'llama-3.3-70b-versatile',
         messages: [
-          { role: 'system', content: systemContent },
-          ...messages,
+          { role: 'system', content: context },
+          ...(messages || payload?.messages || [])
         ],
-        max_tokens: 500,
-        temperature: 0.7,
+        max_tokens: 1024,
+        temperature: 0.5,
       })
 
       return NextResponse.json({ result: response.choices[0]?.message?.content || '' })
@@ -60,7 +58,10 @@ export async function POST(request: Request) {
       
       const text = response.choices[0]?.message?.content || ''
       try {
-        return NextResponse.json({ result: JSON.parse(text) })
+        // Try to find JSON in the text if the model added fluff
+        const jsonMatch = text.match(/\{[\s\S]*\}/)
+        const jsonText = jsonMatch ? jsonMatch[0] : text
+        return NextResponse.json({ result: JSON.parse(jsonText) })
       } catch {
         return NextResponse.json({
           result: {
@@ -117,7 +118,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error: any) {
-    console.error('Groq API Error:', error)
+    console.error('AI API Error:', error)
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 })
   }
 }

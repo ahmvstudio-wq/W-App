@@ -5,10 +5,11 @@ import { supabase } from '@/lib/supabase/client'
 import { 
   ArrowLeft, Clock, Target, AlertTriangle, CheckSquare, 
   Calendar, FileText, Activity, Layers, Image as ImageIcon,
-  Plus, Settings, Share2, MoreVertical
+  Plus, Settings, Share2, MoreVertical, Trash2
 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { toast } from 'sonner'
 import { getProjectHealth, formatDateTime, getInitials, daysUntil } from '@/lib/utils'
 import type { Project, Task } from '@/types'
 
@@ -24,7 +25,7 @@ export default function SingleProjectPage() {
   
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'whiteboard' | 'assets'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'whiteboard' | 'assets' | 'calendar'>('overview')
 
   async function fetchProject() {
     const { data: { session } } = await supabase.auth.getSession()
@@ -197,30 +198,46 @@ export default function SingleProjectPage() {
              <ProjectAssets projectId={project.id} workspaceId={project.workspace_id} />
           </div>
         )}
-
-        {activeTab === 'assets' && project.workspace_id && (
-          <ProjectAssets projectId={project.id} workspaceId={project.workspace_id} />
-        )}
       </div>
     </div>
   )
 }
 
+import CreateTaskModal from '@/components/CreateTaskModal'
+
 function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string, workspaceId: string, onUpdate: () => void }) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [newTaskTitle, setNewTaskTitle] = useState('')
 
   async function fetchTasks() {
-    const { data } = await supabase
-      .from('tasks')
-      .select('*, owner:profiles(id, name)')
-      .eq('project_id', projectId)
-      .order('created_at', { ascending: false })
+    if (!projectId) return
+    console.log('ProjectTasks: Fetching tasks for project', projectId)
+    setLoading(true)
     
-    if (data) setTasks(data)
-    setLoading(false)
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false })
+      
+      if (error) {
+        console.error('ProjectTasks: Error fetching tasks:', error)
+        toast.error(`Fetch failed: ${error.message}`)
+      } else {
+        console.log('ProjectTasks: Fetched', data?.length || 0, 'tasks')
+        setTasks(data || [])
+        if (data && data.length > 0) {
+          toast.success(`${data.length} tasks synced`)
+        }
+      }
+    } catch (err: any) {
+      console.error('ProjectTasks: Unexpected error:', err)
+      toast.error('Connection failed. Re-syncing...')
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -228,6 +245,7 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
     
     const channel = supabase.channel(`project-tasks-${projectId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `project_id=eq.${projectId}` }, () => {
+        console.log('ProjectTasks: Realtime update received')
         fetchTasks()
       })
       .subscribe()
@@ -237,36 +255,24 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
     }
   }, [projectId])
 
-  async function handleCreateTask() {
-    if (!newTaskTitle) return
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { error } = await supabase.from('tasks').insert({
-      project_id: projectId,
-      workspace_id: workspaceId,
-      owner_id: user.id,
-      title: newTaskTitle,
-      status: 'todo',
-      priority: 'p2'
-    })
-
-    if (!error) {
-      setNewTaskTitle('')
-      setIsModalOpen(false)
-      fetchTasks()
-      onUpdate()
+  async function updateTaskStatus(taskId: string, status: string) {
+    const { error } = await supabase.from('tasks').update({ status }).eq('id', taskId)
+    if (error) {
+       toast.error(`Failed to update: ${error.message}`)
+    } else {
+       fetchTasks()
+       onUpdate()
     }
   }
 
-  async function updateTaskStatus(taskId: string, status: string) {
-    await supabase.from('tasks').update({ status }).eq('id', taskId)
-    onUpdate()
-  }
-
   async function updateTaskDueDate(taskId: string, dueDate: string) {
-    await supabase.from('tasks').update({ due_date: dueDate }).eq('id', taskId)
-    onUpdate()
+    const { error } = await supabase.from('tasks').update({ due_date: dueDate }).eq('id', taskId)
+    if (error) {
+      toast.error(`Failed to update due date: ${error.message}`)
+    } else {
+      fetchTasks()
+      onUpdate()
+    }
   }
 
   async function scheduleWorkBlock(task: Task) {
@@ -276,7 +282,7 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
     const start = new Date()
     const end = new Date(start.getTime() + (task.time_box_minutes || 60) * 60000)
 
-    await supabase.from('calendar_events').insert({
+    const { error } = await supabase.from('calendar_events').insert({
       project_id: projectId,
       workspace_id: workspaceId,
       owner_id: user.id,
@@ -287,10 +293,27 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
       color: '#c8f135',
       event_type: 'event'
     })
-    alert('Work block scheduled for right now!')
+
+    if (error) {
+      toast.error(`Failed to schedule: ${error.message}`)
+    } else {
+      toast.success('Work block scheduled for right now!')
+    }
   }
 
-  if (loading) return <div style={{ color: '#6b6e75' }}>Loading tasks...</div>
+  async function deleteTask(taskId: string) {
+    if (!confirm('Are you sure you want to kill this task?')) return
+    const { error } = await supabase.from('tasks').delete().eq('id', taskId)
+    if (error) {
+      toast.error(`Failed to delete: ${error.message}`)
+    } else {
+      toast.success('Task eliminated')
+      fetchTasks()
+      onUpdate()
+    }
+  }
+
+  if (loading) return <div style={{ color: '#6b6e75', padding: '20px' }}>Syncing tasks...</div>
 
   return (
     <div style={{ maxWidth: '1000px' }}>
@@ -302,22 +325,14 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
       </div>
 
       {isModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: '400px', background: '#141618', border: '1px solid #252729', borderRadius: '12px', padding: '24px' }}>
-            <h3 style={{ marginBottom: '16px' }}>Quick Task</h3>
-            <input 
-              autoFocus
-              value={newTaskTitle} 
-              onChange={e => setNewTaskTitle(e.target.value)} 
-              placeholder="What needs to be done?" 
-              style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', marginBottom: '16px' }} 
-            />
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button onClick={() => setIsModalOpen(false)} style={{ flex: 1, padding: '10px', background: '#252729', border: 'none', borderRadius: '6px', color: '#f0ede8' }}>Cancel</button>
-              <button onClick={handleCreateTask} className="btn-accent" style={{ flex: 1, padding: '10px', border: 'none', borderRadius: '6px' }}>Create Task</button>
-            </div>
-          </div>
-        </div>
+        <CreateTaskModal 
+          initialProjectId={projectId} 
+          onClose={() => setIsModalOpen(false)} 
+          onSuccess={() => {
+            fetchTasks()
+            onUpdate()
+          }} 
+        />
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -378,6 +393,14 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
                   <option value="shipped">SHIPPED</option>
                   <option value="killed">KILLED</option>
                 </select>
+                <button 
+                  onClick={() => deleteTask(task.id)}
+                  style={{ background: 'transparent', border: 'none', color: '#6b6e75', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#ff4444'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#6b6e75'}
+                >
+                   <Trash2 size={18} />
+                </button>
                 <button style={{ background: 'transparent', border: 'none', color: '#6b6e75', cursor: 'pointer' }}>
                    <MoreVertical size={18} />
                 </button>
