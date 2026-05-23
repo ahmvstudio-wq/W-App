@@ -18,9 +18,7 @@ const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/projects', label: 'Projects', icon: FolderKanban },
   { href: '/tasks', label: 'Tasks', icon: CheckSquare },
-  { href: '/meetings', label: 'Meetings', icon: Users },
   { href: '/ai', label: 'AI', icon: Zap },
-  { href: '/analytics', label: 'Analytics', icon: BarChart2 },
 ]
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

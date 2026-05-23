@@ -59,7 +59,15 @@ export default function TasksPage() {
   const columns: TaskStatus[] = ['todo', 'in_progress', 'blocked', 'shipped', 'killed']
 
   async function updateTaskStatus(taskId: string, newStatus: TaskStatus) {
-    const { error } = await supabase.from('tasks').update({ status: newStatus }).eq('id', taskId)
+    const updates: any = { status: newStatus }
+    if (newStatus === 'shipped') {
+      updates.completed_at = new Date().toISOString()
+    } else if (newStatus === 'in_progress') {
+      updates.started_at = new Date().toISOString()
+    } else {
+      updates.completed_at = null
+    }
+    const { error } = await supabase.from('tasks').update(updates).eq('id', taskId)
     if (error) {
       console.error('FAILED TO UPDATE TASK STATUS:', error.message)
       toast.error(`Update failed: ${error.message}`)
@@ -255,28 +263,103 @@ export default function TasksPage() {
           </table>
         </div>
       ) : (
-        <div style={{ flex: 1, background: '#141618', border: '1px solid #252729', borderRadius: '12px', padding: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', color: '#6b6e75' }}>
-          <Calendar size={48} style={{ opacity: 0.2 }} />
-          <div style={{ textAlign: 'center' }}>
-            <h3 style={{ color: '#f0ede8', marginBottom: '8px' }}>Timeline View</h3>
-            <p style={{ maxWidth: '400px' }}>Visualizing the critical path. All tasks with due dates will appear here sequentially.</p>
+        <div style={{ flex: 1, background: '#141618', border: '1px solid #252729', borderRadius: '12px', padding: '32px', overflowY: 'auto' }}>
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{ color: '#f0ede8', marginBottom: '8px', fontSize: '16px', fontWeight: 600 }}>Critical Path Timeline</h3>
+            <p style={{ color: '#6b6e75', fontSize: '13px' }}>Sequential visualization of all scheduled tasks and deadlines on the critical path.</p>
           </div>
-          <div style={{ width: '100%', maxWidth: '800px', marginTop: '24px' }}>
-             {tasks.filter(t => t.due_date).sort((a,b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime()).map(task => (
-               <div key={task.id} style={{ display: 'flex', gap: '20px', marginBottom: '16px' }}>
-                 <div style={{ width: '100px', fontSize: '11px', fontFamily: 'DM Mono, monospace', textAlign: 'right', paddingTop: '4px' }}>
-                   {format(new Date(task.due_date!), 'MMM d, HH:mm')}
-                 </div>
-                 <div style={{ position: 'relative', flex: 1, padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '8px', borderLeft: `4px solid ${PRIORITY_CONFIG[task.priority].color}` }}>
-                   <div style={{ fontSize: '14px', fontWeight: 600, color: '#f0ede8' }}>{task.title}</div>
-                   <div style={{ fontSize: '11px', color: '#6b6e75', marginTop: '4px' }}>{(task.project as any)?.name || 'NO PROJECT'} • {task.status.toUpperCase()}</div>
-                 </div>
-               </div>
-             ))}
-             {tasks.filter(t => t.due_date).length === 0 && (
-               <div style={{ textAlign: 'center', opacity: 0.5 }}>No tasks with deadlines found.</div>
-             )}
-          </div>
+          
+          {tasks.filter(t => t.due_date || t.start_time).length === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', gap: '16px', color: '#6b6e75' }}>
+              <Calendar size={48} style={{ opacity: 0.2 }} />
+              <div style={{ textAlign: 'center', fontSize: '14px' }}>No scheduled tasks or deadlines discovered.</div>
+            </div>
+          ) : (
+            <div style={{ position: 'relative', paddingLeft: '32px', marginTop: '16px' }}>
+              {/* Vertical timeline line */}
+              <div style={{ position: 'absolute', left: '15px', top: '8px', bottom: '8px', width: '2px', background: '#252729' }} />
+              
+              {tasks
+                .filter(t => t.due_date || t.start_time)
+                .sort((a, b) => {
+                  const dateA = new Date(a.start_time || a.due_date!).getTime()
+                  const dateB = new Date(b.start_time || b.due_date!).getTime()
+                  return dateA - dateB
+                })
+                .map((task, idx) => {
+                  const taskDate = new Date(task.start_time || task.due_date!)
+                  const isScheduled = !!task.start_time
+                  const priorityColor = PRIORITY_CONFIG[task.priority].color
+                  
+                  return (
+                    <div key={task.id} style={{ position: 'relative', marginBottom: '24px', display: 'flex', gap: '20px' }}>
+                      {/* Timeline dot */}
+                      <div style={{ 
+                        position: 'absolute', left: '-23px', top: '6px', 
+                        width: '10px', height: '10px', borderRadius: '50%', 
+                        background: priorityColor, border: '2px solid #141618',
+                        boxShadow: `0 0 8px ${priorityColor}`
+                      }} />
+                      
+                      {/* Time indicator */}
+                      <div style={{ width: '120px', flexShrink: 0, paddingTop: '2px' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#f0ede8', fontFamily: 'DM Mono, monospace' }}>
+                          {format(taskDate, 'MMM d, yyyy')}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', marginTop: '2px' }}>
+                          {format(taskDate, 'HH:mm')} {isScheduled ? 'START' : 'DUE'}
+                        </div>
+                      </div>
+                      
+                      {/* Task Card */}
+                      <div className="card-hover" style={{ 
+                        flex: 1, padding: '16px', background: '#1c1e22', 
+                        border: '1px solid #252729', borderRadius: '8px',
+                        borderLeft: `4px solid ${priorityColor}`
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '12px' }}>
+                          <span style={{ fontSize: '14px', fontWeight: 600, color: '#f0ede8' }}>{task.title}</span>
+                          <span style={{ 
+                            fontSize: '10px', fontFamily: 'DM Mono, monospace', 
+                            color: TASK_STATUS_CONFIG[task.status].color, 
+                            border: `1px solid ${TASK_STATUS_CONFIG[task.status].color}33`,
+                            background: `${TASK_STATUS_CONFIG[task.status].color}11`,
+                            padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700
+                          }}>
+                            {TASK_STATUS_CONFIG[task.status].label}
+                          </span>
+                        </div>
+                        
+                        {task.output_description && (
+                          <div style={{ fontSize: '12px', color: '#6b6e75', marginBottom: '12px', fontStyle: 'italic' }}>
+                            Output: {task.output_description}
+                          </div>
+                        )}
+                        
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace' }}>
+                          <div>
+                            {task.project ? (
+                              <Link href={`/projects/${(task.project as any).id}`} style={{ color: '#c8f135', textDecoration: 'none', fontWeight: 600 }}>
+                                {(task.project as any).name}
+                              </Link>
+                            ) : 'GENERAL TASK'}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span>{task.time_box_minutes} MINS</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#252729', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 700 }}>
+                                {getInitials((task.owner as any)?.name)}
+                              </div>
+                              <span>{(task.owner as any)?.name}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+            </div>
+          )}
         </div>
       )}
 

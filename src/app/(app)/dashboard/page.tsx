@@ -9,6 +9,7 @@ import {
   Play, Check, X, RefreshCw, MessageSquare, ChevronRight, Zap
 } from 'lucide-react'
 import type { Task, Project, User } from '@/types'
+import { toast } from 'sonner'
 
 export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -118,11 +119,57 @@ export default function DashboardPage() {
     setAiLoading(false)
   }
 
+  async function shipTask(taskId: string) {
+    const { error } = await supabase
+      .from('tasks')
+      .update({ 
+        status: 'shipped',
+        completed_at: new Date().toISOString()
+      })
+      .eq('id', taskId)
+      
+    if (error) {
+      toast.error(`Failed to ship task: ${error.message}`)
+    } else {
+      toast.success('Task shipped!')
+      fetchData(true)
+    }
+  }
+
   // Derived stats
-  const shippedToday = tasks.filter(t => t.status === 'shipped' && new Date(t.updated_at).toDateString() === new Date().toDateString()).length
+  const shippedToday = tasks.filter(t => t.status === 'shipped' && t.completed_at && new Date(t.completed_at).toDateString() === new Date().toDateString()).length
   const activeBlockers = tasks.filter(t => t.status === 'blocked')
   const atRiskProjects = projects.filter(p => getProjectHealth(p as any) === 'red')
   
+  const velocityDelta = (() => {
+    const now = Date.now()
+    const oneDay = 24 * 60 * 60 * 1000
+    const sevenDaysAgo = now - 7 * oneDay
+    const fourteenDaysAgo = now - 14 * oneDay
+
+    const shippedThisWeek = tasks.filter(t => 
+      t.status === 'shipped' && 
+      t.completed_at && 
+      new Date(t.completed_at).getTime() >= sevenDaysAgo
+    ).length
+
+    const shippedLastWeek = tasks.filter(t => 
+      t.status === 'shipped' && 
+      t.completed_at && 
+      new Date(t.completed_at).getTime() >= fourteenDaysAgo && 
+      new Date(t.completed_at).getTime() < sevenDaysAgo
+    ).length
+
+    if (shippedLastWeek === 0) {
+      return shippedThisWeek > 0 ? `+${shippedThisWeek * 100}%` : '0%'
+    }
+    const delta = ((shippedThisWeek - shippedLastWeek) / shippedLastWeek) * 100
+    return `${delta >= 0 ? '+' : ''}${Math.round(delta)}%`
+  })()
+
+  const isPositiveVelocity = !velocityDelta.startsWith('-') && velocityDelta !== '0%'
+  const velocityColor = velocityDelta === '0%' ? '#6b6e75' : (isPositiveVelocity ? '#00c853' : '#ff4444')
+
   const activeTasks = tasks.filter(t => (t.priority === 'p0' || t.priority === 'p1') && t.status !== 'shipped' && t.status !== 'killed')
   const killList = tasks.filter(t => t.priority === 'p3' && t.status !== 'shipped' && t.status !== 'killed' && new Date(t.updated_at).getTime() < Date.now() - 14 * 24 * 60 * 60 * 1000)
 
@@ -200,8 +247,8 @@ export default function DashboardPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#6b6e75' }}>
             <TrendingUp size={16} /> <span style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Velocity Delta</span>
           </div>
-          <div style={{ fontSize: '32px', fontWeight: 800, fontFamily: 'Syne, sans-serif', color: '#00c853', display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            +12% <span style={{ fontSize: '12px', color: '#6b6e75', fontWeight: 500, fontFamily: 'Inter, sans-serif' }}>vs last week</span>
+          <div style={{ fontSize: '32px', fontWeight: 800, fontFamily: 'Syne, sans-serif', color: velocityColor, display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+            {velocityDelta} <span style={{ fontSize: '12px', color: '#6b6e75', fontWeight: 500, fontFamily: 'Inter, sans-serif' }}>vs last week</span>
           </div>
         </div>
       </div>
@@ -266,10 +313,15 @@ export default function DashboardPage() {
                         )}
                       </div>
                     </div>
-                    <button style={{ 
-                      width: '32px', height: '32px', borderRadius: '6px', background: '#1c1e22', border: '1px solid #252729',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6b6e75', transition: 'all 150ms'
-                    }} onMouseEnter={e => { e.currentTarget.style.background = '#00c853'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#00c853' }} onMouseLeave={e => { e.currentTarget.style.background = '#1c1e22'; e.currentTarget.style.color = '#6b6e75'; e.currentTarget.style.borderColor = '#252729' }}>
+                    <button 
+                      onClick={() => shipTask(task.id)}
+                      style={{ 
+                        width: '32px', height: '32px', borderRadius: '6px', background: '#1c1e22', border: '1px solid #252729',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6b6e75', transition: 'all 150ms'
+                      }} 
+                      onMouseEnter={e => { e.currentTarget.style.background = '#00c853'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#00c853' }} 
+                      onMouseLeave={e => { e.currentTarget.style.background = '#1c1e22'; e.currentTarget.style.color = '#6b6e75'; e.currentTarget.style.borderColor = '#252729' }}
+                    >
                       <Check size={16} />
                     </button>
                   </div>

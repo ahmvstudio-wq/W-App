@@ -274,7 +274,15 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
   }, [projectId])
 
   async function updateTaskStatus(taskId: string, status: string) {
-    const { error } = await supabase.from('tasks').update({ status }).eq('id', taskId)
+    const updates: any = { status }
+    if (status === 'shipped') {
+      updates.completed_at = new Date().toISOString()
+    } else if (status === 'in_progress') {
+      updates.started_at = new Date().toISOString()
+    } else {
+      updates.completed_at = null
+    }
+    const { error } = await supabase.from('tasks').update(updates).eq('id', taskId)
     if (error) {
        toast.error(`Failed to update: ${error.message}`)
     } else {
