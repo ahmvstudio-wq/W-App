@@ -66,6 +66,16 @@ export interface Task {
   owner?: User
   project?: Project
   blocked_by?: User
+  
+  // Interconnected Calendar Fields
+  start_time?: string
+  end_time?: string
+  all_day?: boolean
+  event_type?: 'task' | 'event' | 'deadline' | 'milestone' | 'meeting'
+  attendees?: { user_id: string; name: string }[]
+  location?: string
+  color?: string
+  linked_task_id?: string
 }
 
 export interface Document {

@@ -11,19 +11,65 @@ interface CreateTaskModalProps {
   onClose: () => void
   onSuccess: () => void
   initialProjectId?: string
+  initialDate?: Date
 }
 
-export default function CreateTaskModal({ onClose, onSuccess, initialProjectId }: CreateTaskModalProps) {
+export default function CreateTaskModal({ onClose, onSuccess, initialProjectId, initialDate }: CreateTaskModalProps) {
   const [title, setTitle] = useState('')
   const [output, setOutput] = useState('')
   const [timeBox, setTimeBox] = useState('60')
   const [priority, setPriority] = useState<Priority>('p2')
   const [projectId, setProjectId] = useState<string>(initialProjectId || '')
   
+  // Helper to format date to yyyy-MM-ddTHH:mm
+  const formatLocal = (d: Date) => {
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const hours = String(d.getHours()).padStart(2, '0')
+    const minutes = String(d.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day}T${hours}:${minutes}`
+  }
+
+  const getInitialDates = () => {
+    if (initialDate) {
+      const start = new Date(initialDate)
+      if (start.getHours() === 0 && start.getMinutes() === 0) {
+        start.setHours(9, 0, 0, 0)
+      }
+      const end = new Date(start.getTime() + 60 * 60 * 1000)
+      return {
+        due: formatLocal(start),
+        start: formatLocal(start),
+        end: formatLocal(end)
+      }
+    }
+    return { due: '', start: '', end: '' }
+  }
+
+  const initialDates = getInitialDates()
+  
+  const [dueDate, setDueDate] = useState(initialDates.due)
+  const [startTime, setStartTime] = useState(initialDates.start)
+  const [endTime, setEndTime] = useState(initialDates.end)
+  
   const [projects, setProjects] = useState<Project[]>([])
   const [challengeResult, setChallengeResult] = useState<any>(null)
   const [loadingChallenge, setLoadingChallenge] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (initialDate) {
+      const start = new Date(initialDate)
+      if (start.getHours() === 0 && start.getMinutes() === 0) {
+        start.setHours(9, 0, 0, 0)
+      }
+      const end = new Date(start.getTime() + 60 * 60 * 1000)
+      setDueDate(formatLocal(start))
+      setStartTime(formatLocal(start))
+      setEndTime(formatLocal(end))
+    }
+  }, [initialDate])
 
   useEffect(() => {
     async function fetchProjects() {
@@ -83,6 +129,14 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId }
         workspaceId = newWs?.id
       }
 
+      const start = startTime ? new Date(startTime) : null
+      let end = endTime ? new Date(endTime) : null
+      
+      if (start && !end) {
+        const minutes = challengeResult?.time_box_minutes || parseInt(timeBox) || 60
+        end = new Date(start.getTime() + minutes * 60 * 1000)
+      }
+
       const taskData = {
         workspace_id: workspaceId,
         owner_id: user.id,
@@ -91,7 +145,11 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId }
         output_description: output,
         priority: challengeResult?.priority || priority,
         time_box_minutes: challengeResult?.time_box_minutes || parseInt(timeBox) || 60,
-        status: 'todo'
+        status: 'todo',
+        due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        start_time: start ? start.toISOString() : null,
+        end_time: end ? end.toISOString() : null,
+        event_type: start ? 'event' : 'task'
       }
 
       console.log('SAVING TASK:', taskData)
@@ -172,6 +230,42 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId }
               rows={3} 
               style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none', resize: 'none' }} 
             />
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Due Date / Deadline (Optional)</label>
+            <input 
+              type="datetime-local" 
+              value={dueDate} 
+              onChange={e => setDueDate(e.target.value)} 
+              style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} 
+            />
+          </div>
+
+          <div style={{ border: '1px solid #252729', borderRadius: '8px', padding: '16px', marginBottom: '20px', background: '#141618' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: '#c8f135', marginBottom: '12px', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Schedule Time Block on Calendar (Optional)
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Start Time</label>
+                <input 
+                  type="datetime-local" 
+                  value={startTime} 
+                  onChange={e => setStartTime(e.target.value)} 
+                  style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} 
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>End Time</label>
+                <input 
+                  type="datetime-local" 
+                  value={endTime} 
+                  onChange={e => setEndTime(e.target.value)} 
+                  style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} 
+                />
+              </div>
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>

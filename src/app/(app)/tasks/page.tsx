@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { Plus, Search, Filter, LayoutGrid, List as ListIcon, Calendar, X, Zap } from 'lucide-react'
+import { Plus, Search, Filter, LayoutGrid, List as ListIcon, Calendar, X, Zap, Trash2 } from 'lucide-react'
 import { PRIORITY_CONFIG, TASK_STATUS_CONFIG, cn, getInitials } from '@/lib/utils'
 import type { Task, Priority, TaskStatus } from '@/types'
 import { challengeTask } from '@/lib/groq/client'
@@ -18,13 +18,13 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]) 
   const [loading, setLoading] = useState(true)
 
-  async function fetchTasks() {
-    setLoading(true)
+  async function fetchTasks(silent = false) {
+    if (!silent) setLoading(true)
     console.log('FETCHING ALL TASKS...')
     try {
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
+        .select('*, owner:profiles(*), project:projects(*)')
         .order('created_at', { ascending: false })
       
       if (error) {
@@ -33,9 +33,6 @@ export default function TasksPage() {
       } else {
         console.log('TASKS FETCHED SUCCESS:', data?.length || 0, 'tasks found')
         setTasks(data || [])
-        if (data && data.length > 0) {
-          toast.success(`${data.length} tasks discovered`)
-        }
       }
     } catch (err: any) {
       console.error('UNEXPECTED FETCH ERROR:', err)
@@ -46,11 +43,11 @@ export default function TasksPage() {
   }
 
   useEffect(() => {
-    fetchTasks()
+    fetchTasks(false)
     
     const channel = supabase.channel('tasks_channel')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
-        fetchTasks()
+        fetchTasks(true)
       })
       .subscribe()
       
@@ -69,7 +66,7 @@ export default function TasksPage() {
       return
     }
     toast.success(`Task status updated to ${newStatus}`)
-    fetchTasks()
+    fetchTasks(true)
   }
 
   async function deleteTask(taskId: string) {
@@ -172,7 +169,18 @@ export default function TasksPage() {
                           {(task.project as any).name}
                         </Link>
                       ) : <span>--</span>}
-                      <span>{task.time_box_minutes}m</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{task.time_box_minutes}m</span>
+                        <button
+                          onClick={() => deleteTask(task.id)}
+                          style={{ background: 'transparent', border: 'none', color: '#6b6e75', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
+                          onMouseEnter={e => e.currentTarget.style.color = '#ff4444'}
+                          onMouseLeave={e => e.currentTarget.style.color = '#6b6e75'}
+                          title="Delete Task"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -191,6 +199,7 @@ export default function TasksPage() {
                 <th style={{ padding: '12px 16px', color: '#6b6e75', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Project</th>
                 <th style={{ padding: '12px 16px', color: '#6b6e75', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Owner</th>
                 <th style={{ padding: '12px 16px', color: '#6b6e75', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Time Box</th>
+                <th style={{ padding: '12px 16px', color: '#6b6e75', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -228,6 +237,17 @@ export default function TasksPage() {
                       </div>
                     </td>
                     <td style={{ padding: '16px', fontSize: '13px', fontFamily: 'DM Mono, monospace', color: '#6b6e75' }}>{task.time_box_minutes}m</td>
+                    <td style={{ padding: '16px' }}>
+                      <button 
+                        onClick={() => deleteTask(task.id)}
+                        style={{ background: 'transparent', border: 'none', color: '#6b6e75', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        onMouseEnter={e => e.currentTarget.style.color = '#ff4444'}
+                        onMouseLeave={e => e.currentTarget.style.color = '#6b6e75'}
+                        title="Delete Task"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}

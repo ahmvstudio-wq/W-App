@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import CommandPalette from '@/components/CommandPalette'
 import FocusTimer from '@/components/FocusTimer'
+import CreateTaskModal from '@/components/CreateTaskModal'
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -79,6 +80,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
+
+  useEffect(() => {
+    const handleOpenModal = () => setIsCreateTaskOpen(true)
+    window.addEventListener('open-create-task-modal', handleOpenModal)
+    return () => window.removeEventListener('open-create-task-modal', handleOpenModal)
+  }, [])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -113,6 +121,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#0c0d0f' }}>
       <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
+      {isCreateTaskOpen && (
+        <CreateTaskModal onClose={() => setIsCreateTaskOpen(false)} onSuccess={() => {}} />
+      )}
       <FocusTimer />
       {/* Sidebar */}
       <aside style={{

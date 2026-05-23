@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { Plus, Search, Filter, FolderKanban, Activity, Target, X, Zap } from 'lucide-react'
+import { Plus, Search, Filter, FolderKanban, Activity, Target, X, Zap, Trash2 } from 'lucide-react'
 import { getProjectHealth, getInitials, daysUntil, daysSince } from '@/lib/utils'
 import type { Project } from '@/types'
 import { stressTestProject } from '@/lib/groq/client'
@@ -14,6 +14,16 @@ export default function ProjectsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+
+  async function handleDeleteProject(id: string) {
+    if (!confirm('Are you sure you want to delete this project? This will also delete all associated tasks, assets, and calendar events.')) return
+    const { error } = await supabase.from('projects').delete().eq('id', id)
+    if (error) {
+      alert(`Failed to delete project: ${error.message}`)
+    } else {
+      fetchProjects()
+    }
+  }
 
   async function fetchProjects() {
     setLoading(true)
@@ -85,9 +95,24 @@ export default function ProjectsPage() {
                         <div className={`health-dot ${health}`} />
                         <h3 style={{ fontSize: '16px' }}>{project.name}</h3>
                       </div>
-                      <span className="status-pill" style={{ background: '#1c1e22', color: '#6b6e75' }}>
-                        {project.status}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="status-pill" style={{ background: '#1c1e22', color: '#6b6e75' }}>
+                          {project.status}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleDeleteProject(project.id)
+                          }}
+                          style={{ background: 'transparent', border: 'none', color: '#6b6e75', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', padding: '4px' }}
+                          onMouseEnter={e => e.currentTarget.style.color = '#ff4444'}
+                          onMouseLeave={e => e.currentTarget.style.color = '#6b6e75'}
+                          title="Delete Project"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                     
                     <p style={{ color: '#6b6e75', fontSize: '13px', marginBottom: '20px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>

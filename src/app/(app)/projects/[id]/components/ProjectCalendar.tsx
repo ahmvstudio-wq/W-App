@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { PRIORITY_CONFIG, cn } from '@/lib/utils'
 import type { Task, CalendarEvent } from '@/types'
+import CreateTaskModal from '@/components/CreateTaskModal'
 
 interface ProjectCalendarProps {
   projectId: string
@@ -26,50 +27,34 @@ export default function ProjectCalendar({ projectId, workspaceId }: ProjectCalen
   const [view, setView] = useState<CalendarView>('month')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [tasks, setTasks] = useState<Task[]>([])
-  const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
   useEffect(() => {
-    fetchData()
+    fetchData(false)
+    
+    const channel = supabase.channel(`project-calendar-${projectId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `project_id=eq.${projectId}` }, () => {
+        fetchData(true)
+      })
+      .subscribe()
+      
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [projectId, currentDate, view])
 
-  async function fetchData() {
-    setLoading(true)
+  async function fetchData(silent = false) {
+    if (!silent) setLoading(true)
     
-    // Calculate range based on view
-    let start, end
-    if (view === 'month') {
-      start = startOfWeek(startOfMonth(currentDate))
-      end = endOfWeek(endOfMonth(currentDate))
-    } else if (view === 'week') {
-      start = startOfWeek(currentDate)
-      end = endOfWeek(currentDate)
-    } else {
-      start = startOfDay(currentDate)
-      end = endOfDay(currentDate)
-    }
-
-    // Fetch tasks with due dates in range
+    // Fetch all tasks and calendar events (which are now tasks) for this project
     const { data: tasksData } = await supabase
       .from('tasks')
       .select('*')
       .eq('project_id', projectId)
-      .not('due_date', 'is', null)
-      .gte('due_date', start.toISOString())
-      .lte('due_date', end.toISOString())
-
-    // Fetch calendar events in range
-    const { data: eventsData } = await supabase
-      .from('calendar_events')
-      .select('*')
-      .eq('project_id', projectId)
-      .gte('start_time', start.toISOString())
-      .lte('start_time', end.toISOString())
 
     if (tasksData) setTasks(tasksData as Task[])
-    if (eventsData) setEvents(eventsData)
     setLoading(false)
   }
 
@@ -120,19 +105,30 @@ export default function ProjectCalendar({ projectId, workspaceId }: ProjectCalen
         {view === 'month' && (
           <MonthView 
             currentDate={currentDate} 
-            tasks={tasks} 
-            events={events} 
+            tasks={tasks.filter(t => t.due_date && !t.start_time)} 
+            events={tasks.filter(t => t.start_time) as any} 
             onDateClick={(date: Date) => { setSelectedDate(date); setIsModalOpen(true); }} 
           />
         )}
-        {view === 'week' && <WeekView currentDate={currentDate} tasks={tasks} events={events} />}
-        {view === 'day' && <DayView currentDate={currentDate} tasks={tasks} events={events} />}
+        {view === 'week' && (
+          <WeekView 
+            currentDate={currentDate} 
+            tasks={tasks.filter(t => t.due_date && !t.start_time)} 
+            events={tasks.filter(t => t.start_time) as any} 
+          />
+        )}
+        {view === 'day' && (
+          <DayView 
+            currentDate={currentDate} 
+            tasks={tasks.filter(t => t.due_date && !t.start_time)} 
+            events={tasks.filter(t => t.start_time) as any} 
+          />
+        )}
       </div>
 
       {isModalOpen && (
-        <CreateEventModal 
-          projectId={projectId} 
-          workspaceId={workspaceId} 
+        <CreateTaskModal 
+          initialProjectId={projectId} 
           initialDate={selectedDate || currentDate}
           onClose={() => { setIsModalOpen(false); setSelectedDate(null); }}
           onSuccess={() => { fetchData(); setIsModalOpen(false); }}
@@ -328,84 +324,7 @@ function DayView({ currentDate, tasks, events }: ViewProps) {
   )
 }
 
-interface CreateEventModalProps {
-  projectId: string
-  workspaceId: string
-  initialDate: Date
-  onClose: () => void
-  onSuccess: () => void
-}
 
-function CreateEventModal({ projectId, workspaceId, initialDate, onClose, onSuccess }: CreateEventModalProps) {
-  const [title, setTitle] = useState('')
-  const [type, setType] = useState('event')
-  const [startTime, setStartTime] = useState(format(initialDate, "yyyy-MM-dd'T'HH:mm"))
-  const [endTime, setEndTime] = useState(format(addDays(initialDate, 0), "yyyy-MM-dd'T'HH:mm"))
-  const [saving, setSaving] = useState(false)
-
-  async function handleSave() {
-    setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { error } = await supabase
-      .from('calendar_events')
-      .insert({
-        project_id: projectId,
-        workspace_id: workspaceId,
-        owner_id: user.id,
-        title,
-        event_type: type,
-        start_time: new Date(startTime).toISOString(),
-        end_time: new Date(endTime).toISOString(),
-        color: type === 'deadline' ? '#ff4444' : (type === 'milestone' ? '#f5a623' : '#c8f135')
-      })
-    
-    if (!error) onSuccess()
-    setSaving(false)
-  }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: '450px', background: '#141618', border: '1px solid #252729', borderRadius: '12px', padding: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-          <h3>New Event</h3>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#6b6e75' }}><X size={20} /></button>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div>
-            <label style={labelStyle}>Event Title</label>
-            <input value={title} onChange={e => setTitle(e.target.value)} style={inputStyle} placeholder="Sprint Planning, etc." />
-          </div>
-          <div>
-            <label style={labelStyle}>Type</label>
-            <select value={type} onChange={e => setType(e.target.value)} style={inputStyle}>
-              <option value="event">General Event</option>
-              <option value="deadline">Deadline</option>
-              <option value="milestone">Milestone</option>
-              <option value="meeting">Meeting</option>
-            </select>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div>
-              <label style={labelStyle}>Start</label>
-              <input type="datetime-local" value={startTime} onChange={e => setStartTime(e.target.value)} style={inputStyle} />
-            </div>
-            <div>
-              <label style={labelStyle}>End</label>
-              <input type="datetime-local" value={endTime} onChange={e => setEndTime(e.target.value)} style={inputStyle} />
-            </div>
-          </div>
-          
-          <button onClick={handleSave} disabled={!title || saving} className="btn-accent" style={{ marginTop: '12px', padding: '12px', borderRadius: '6px', border: 'none', fontWeight: 600 }}>
-            {saving ? 'Creating...' : 'Create Event'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 const navButtonStyle: React.CSSProperties = {
   padding: '6px',

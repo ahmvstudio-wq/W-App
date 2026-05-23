@@ -8,7 +8,7 @@ import {
   Plus, Settings, Share2, MoreVertical, Trash2
 } from 'lucide-react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { getProjectHealth, formatDateTime, getInitials, daysUntil } from '@/lib/utils'
 import type { Project, Task } from '@/types'
@@ -21,11 +21,23 @@ import ProjectOverview from './components/ProjectOverview'
 
 export default function SingleProjectPage() {
   const params = useParams()
+  const router = useRouter()
   const projectId = params.id as string
   
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'whiteboard' | 'assets' | 'calendar'>('overview')
+
+  async function deleteProject() {
+    if (!confirm('Are you sure you want to delete this project? This will also delete all associated tasks, assets, and calendar events.')) return
+    const { error } = await supabase.from('projects').delete().eq('id', projectId)
+    if (error) {
+      toast.error(`Failed to delete project: ${error.message}`)
+    } else {
+      toast.success('Project deleted')
+      router.push('/projects')
+    }
+  }
 
   async function fetchProject() {
     const { data: { session } } = await supabase.auth.getSession()
@@ -138,6 +150,15 @@ export default function SingleProjectPage() {
           <button style={{ background: 'transparent', border: 'none', color: '#6b6e75', cursor: 'pointer' }}>
             <Settings size={18} />
           </button>
+          <button 
+            onClick={deleteProject}
+            style={{ background: 'transparent', border: 'none', color: '#6b6e75', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#ff4444'}
+            onMouseLeave={e => e.currentTarget.style.color = '#6b6e75'}
+            title="Delete Project"
+          >
+            <Trash2 size={18} />
+          </button>
         </div>
       </div>
 
@@ -210,10 +231,10 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  async function fetchTasks() {
+  async function fetchTasks(silent = false) {
     if (!projectId) return
     console.log('ProjectTasks: Fetching tasks for project', projectId)
-    setLoading(true)
+    if (!silent) setLoading(true)
     
     try {
       const { data, error } = await supabase
@@ -228,9 +249,6 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
       } else {
         console.log('ProjectTasks: Fetched', data?.length || 0, 'tasks')
         setTasks(data || [])
-        if (data && data.length > 0) {
-          toast.success(`${data.length} tasks synced`)
-        }
       }
     } catch (err: any) {
       console.error('ProjectTasks: Unexpected error:', err)
@@ -241,12 +259,12 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
   }
 
   useEffect(() => {
-    fetchTasks()
+    fetchTasks(false)
     
     const channel = supabase.channel(`project-tasks-${projectId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `project_id=eq.${projectId}` }, () => {
         console.log('ProjectTasks: Realtime update received')
-        fetchTasks()
+        fetchTasks(true)
       })
       .subscribe()
       
@@ -260,7 +278,7 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
     if (error) {
        toast.error(`Failed to update: ${error.message}`)
     } else {
-       fetchTasks()
+       fetchTasks(true)
        onUpdate()
     }
   }
@@ -270,34 +288,29 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
     if (error) {
       toast.error(`Failed to update due date: ${error.message}`)
     } else {
-      fetchTasks()
+      fetchTasks(true)
       onUpdate()
     }
   }
 
   async function scheduleWorkBlock(task: Task) {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
     const start = new Date()
     const end = new Date(start.getTime() + (task.time_box_minutes || 60) * 60000)
 
-    const { error } = await supabase.from('calendar_events').insert({
-      project_id: projectId,
-      workspace_id: workspaceId,
-      owner_id: user.id,
-      task_id: task.id,
-      title: `WORK: ${task.title}`,
-      start_time: start.toISOString(),
-      end_time: end.toISOString(),
-      color: '#c8f135',
-      event_type: 'event'
-    })
+    const { error } = await supabase
+      .from('tasks')
+      .update({
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+      })
+      .eq('id', task.id)
 
     if (error) {
       toast.error(`Failed to schedule: ${error.message}`)
     } else {
       toast.success('Work block scheduled for right now!')
+      fetchTasks(true)
+      onUpdate()
     }
   }
 

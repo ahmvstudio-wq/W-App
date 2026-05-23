@@ -46,7 +46,7 @@ export default function CommandPalette({ isOpen, onClose }: { isOpen: boolean, o
       label: 'New Task', 
       icon: <Plus size={18} />, 
       category: 'Actions',
-      action: () => { toast.info('Open Task Modal'); onClose(); } 
+      action: () => { window.dispatchEvent(new CustomEvent('open-create-task-modal')); onClose(); } 
     },
     { 
       id: 'new-project', 
@@ -96,7 +96,7 @@ export default function CommandPalette({ isOpen, onClose }: { isOpen: boolean, o
       label: 'New Calendar Event', 
       icon: <Calendar size={18} />, 
       category: 'Actions',
-      action: () => { toast.info('Open Calendar Modal'); onClose(); } 
+      action: () => { window.dispatchEvent(new CustomEvent('open-create-task-modal')); onClose(); } 
     }
   ]
 

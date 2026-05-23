@@ -23,11 +23,11 @@ export default function DashboardPage() {
   const [aiLoading, setAiLoading] = useState(false)
 
   useEffect(() => {
-    fetchData()
+    fetchData(false)
     
     const channel = supabase.channel('dashboard_channel')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => fetchData(true))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => fetchData(true))
       .subscribe()
       
     return () => {
@@ -35,8 +35,8 @@ export default function DashboardPage() {
     }
   }, [])
 
-  async function fetchData() {
-    setLoading(true)
+  async function fetchData(silent = false) {
+    if (!silent) setLoading(true)
     
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
