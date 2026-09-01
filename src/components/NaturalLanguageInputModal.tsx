@@ -124,18 +124,13 @@ export default function NaturalLanguageInputModal({
       <div className="bg-white border border-black/[0.08] rounded-3xl w-full max-w-4xl max-h-[92vh] shadow-2xl flex flex-col overflow-hidden font-body">
         {/* Header */}
         <div className="p-6 border-b border-black/[0.06] flex items-center justify-between bg-white flex-shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-black text-white flex items-center justify-center">
-              <Sparkles size={16} />
+          <div>
+            <div className="text-xs font-mono text-[#6b7280] uppercase tracking-wider font-light">
+              EXECUTIVE SYNTHESIS ENGINE
             </div>
-            <div>
-              <div className="text-xs font-mono text-[#6b7280] uppercase tracking-wider font-light">
-                EXECUTIVE SYNTHESIS ENGINE
-              </div>
-              <h2 className="text-base font-normal text-black tracking-tight">
-                {plan ? 'Review & Confirm Staged Execution Plan' : 'What needs to get done?'}
-              </h2>
-            </div>
+            <h2 className="text-base font-normal text-black tracking-tight">
+              {plan ? 'Review & Confirm Staged Execution Plan' : 'What needs to get done?'}
+            </h2>
           </div>
 
           <button
@@ -179,9 +174,8 @@ export default function NaturalLanguageInputModal({
                     <button
                       key={idx}
                       onClick={() => setInput(sample.text)}
-                      className="px-3.5 py-2 bg-white hover:bg-black/[0.03] border border-black/[0.08] rounded-xl text-xs text-black font-light text-left transition-all cursor-pointer flex items-center gap-2 shadow-xs"
+                      className="px-3.5 py-2 bg-white hover:bg-black/[0.03] border border-black/[0.08] rounded-xl text-xs text-black font-light text-left transition-all cursor-pointer shadow-xs"
                     >
-                      <Sparkles size={12} className="text-indigo-600" />
                       <span>{sample.title}</span>
                     </button>
                   ))}
@@ -396,10 +390,7 @@ export default function NaturalLanguageInputModal({
                       <span>Decomposing Blueprint...</span>
                     </>
                   ) : (
-                    <>
-                      <Sparkles size={13} />
-                      <span>Synthesize Plan</span>
-                    </>
+                    <span>Synthesize Plan</span>
                   )}
                 </button>
               </div>

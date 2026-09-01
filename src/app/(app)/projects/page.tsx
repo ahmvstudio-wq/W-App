@@ -77,9 +77,8 @@ export default function ProjectsPage() {
         <div className="flex items-center gap-3 font-body">
           <button
             onClick={() => setIsSynthesizeOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 text-indigo-950 border border-indigo-200/80 font-medium text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
           >
-            <Sparkles size={14} className="text-indigo-600" />
             <span>Synthesize from Text</span>
           </button>
 

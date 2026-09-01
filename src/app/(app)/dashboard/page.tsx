@@ -198,10 +198,9 @@ export default function DashboardPage() {
               <span>{shippedTasks.length} tasks finished</span>
             </div>
 
-            {/* AI Executive Intelligence Brief */}
+            {/* Executive Intelligence Brief */}
             <div className="p-4 rounded-2xl bg-[#f8f9fc] border border-black/[0.05]">
-              <div className="flex items-center gap-2 text-xs font-mono text-black font-medium mb-1.5">
-                <Sparkles size={13} />
+              <div className="text-xs font-mono text-black font-medium mb-1.5 uppercase">
                 <span>DAILY SUMMARY &amp; NEXT STEPS</span>
               </div>
               <div className="text-xs text-[#4b5563] whitespace-pre-line leading-relaxed font-body font-light">

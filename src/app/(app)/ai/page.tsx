@@ -97,10 +97,7 @@ export default function AIPage() {
       <div className="flex-1 flex flex-col justify-between bg-[#fbfbfd]">
         {/* Header */}
         <header className="px-8 py-4 border-b border-black/[0.06] bg-white flex items-center justify-between font-body">
-          <div className="flex items-center gap-2.5">
-            <Sparkles size={16} className="text-black" />
-            <h1 className="text-sm font-normal text-black">AI Chief of Staff</h1>
-          </div>
+          <h1 className="text-sm font-normal text-black">Executive Chief of Staff</h1>
           <span className="text-[10px] font-mono text-[#6b7280] bg-black/[0.04] px-2 py-0.5 rounded font-light">
             SYNCED TO WORKSPACE
           </span>
@@ -118,7 +115,7 @@ export default function AIPage() {
               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 font-medium ${
                 msg.role === 'user' ? 'bg-black text-white' : 'bg-black/[0.05] text-black'
               }`}>
-                {msg.role === 'user' ? 'You' : 'CM'}
+                {msg.role === 'user' ? 'You' : 'AI'}
               </div>
 
               <div className={`p-4 rounded-3xl text-xs leading-relaxed font-light ${
@@ -134,7 +131,7 @@ export default function AIPage() {
           {loading && (
             <div className="flex gap-3 max-w-2xl mr-auto">
               <div className="w-7 h-7 rounded-full bg-black/[0.05] text-black flex items-center justify-center text-xs flex-shrink-0 font-medium">
-                CM
+                AI
               </div>
               <div className="p-4 rounded-3xl bg-white border border-black/[0.06] text-xs text-[#9ca3af] font-mono font-light shadow-sm">
                 Thinking & analyzing workspace...

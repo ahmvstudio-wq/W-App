@@ -222,23 +222,21 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId, 
             </div>
           </div>
 
-          {/* AI Challenge Section */}
+          {/* Scope Challenge Section */}
           {!challengeResult && (
             <button 
               onClick={handleChallenge} 
               disabled={!title || !output || loadingChallenge} 
               className="w-full py-2.5 px-4 bg-[#fafafa] hover:bg-[#f5f5f7] border border-black/[0.08] text-black rounded-xl text-xs font-normal transition-all cursor-pointer flex items-center justify-center gap-2"
             >
-              <Sparkles size={14} />
-              <span>{loadingChallenge ? 'Challenging Scope with AI...' : 'AI Scope Challenge'}</span>
+              <span>{loadingChallenge ? 'Challenging Scope...' : 'Scope Challenge & Clarification'}</span>
             </button>
           )}
 
           {challengeResult && (
             <div className="p-4 rounded-2xl bg-[#fafafa] border border-black/[0.08] space-y-1">
-              <div className="flex items-center gap-1.5 text-[10px] font-mono text-black font-medium">
-                <Sparkles size={12} />
-                <span>AI SCOPE VERIFICATION</span>
+              <div className="text-[10px] font-mono text-black font-medium uppercase">
+                <span>SCOPE CLARIFICATION</span>
               </div>
               <p className="text-xs text-[#4b5563] italic font-light">
                 &quot;{challengeResult.scope_question}&quot;

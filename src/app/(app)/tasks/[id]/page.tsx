@@ -422,10 +422,9 @@ export default function DedicatedTaskPage() {
               <button
                 onClick={handleAiDecompose}
                 disabled={generatingAi}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 text-indigo-950 border border-indigo-200/80 rounded-xl text-xs font-medium transition-all cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 bg-[#fafafa] hover:bg-[#f0f0f2] text-black border border-black/[0.08] rounded-xl text-xs font-normal transition-all cursor-pointer disabled:opacity-50"
               >
-                <Sparkles size={13} className="text-indigo-600" />
-                <span>{generatingAi ? 'Decomposing...' : '✦ Decompose with AI'}</span>
+                <span>{generatingAi ? 'Decomposing...' : 'Break Into Micro-Tasks'}</span>
               </button>
             </div>
 
@@ -611,12 +610,11 @@ export default function DedicatedTaskPage() {
             </div>
           </div>
 
-          {/* AI Scope Audit Card */}
-          <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-50/60 to-purple-50/60 border border-indigo-100/80 space-y-4">
+          {/* Scope Advice Card */}
+          <div className="p-6 rounded-3xl bg-[#fafafa] border border-black/[0.06] space-y-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-indigo-950 font-medium text-xs">
-                <Sparkles size={14} className="text-indigo-600" />
-                <span>AI Scope Advice</span>
+              <div className="text-black font-medium text-xs">
+                <span>Scope Guidance</span>
               </div>
               <button
                 onClick={handleRunAiReview}

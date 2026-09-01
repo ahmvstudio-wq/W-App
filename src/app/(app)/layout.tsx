@@ -112,11 +112,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#fbfbfd] flex items-center justify-center font-sans">
-        <div className="text-center">
-          <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center mx-auto mb-3 shadow-sm font-normal text-sm">
-            CM
-          </div>
-          <div className="text-[#8a8d95] text-xs font-mono tracking-wider uppercase font-light">Loading CallMy Mgmt...</div>
+        <div className="text-center space-y-1">
+          <div className="text-sm font-normal text-black tracking-tight">CallMy Mgmt</div>
+          <div className="text-[#8a8d95] text-xs font-mono tracking-wider uppercase font-light">Loading workspace...</div>
         </div>
       </div>
     )
@@ -134,14 +132,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 h-16 bg-white/80 backdrop-blur-xl border-b border-black/[0.06] px-6 sm:px-10 flex items-center justify-between">
         {/* Left: Brand Identity */}
         <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-xl bg-black text-white font-medium text-xs flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-              CM
-            </div>
-            <div>
-              <span className="font-normal text-sm tracking-tight text-black block leading-none">CallMy Mgmt</span>
-              <span className="text-[9px] text-[#9ca3af] font-mono block tracking-wider mt-0.5 font-light">[CALLMY_MGMT]</span>
-            </div>
+          <Link href="/dashboard" className="flex items-center group">
+            <span className="font-normal text-sm tracking-tight text-black group-hover:opacity-80 transition-opacity">
+              CallMy Mgmt
+            </span>
           </Link>
         </div>
 
@@ -195,10 +189,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* Synthesize One-Input Engine */}
           <button
             onClick={() => setIsSynthesizeOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 text-indigo-950 border border-indigo-200/80 font-medium text-xs rounded-xl shadow-xs transition-all cursor-pointer"
-            title="What needs to get done? Synthesize project & tasks"
+            className="flex items-center px-3.5 py-1.5 bg-[#fafafa] hover:bg-[#f0f0f2] text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            title="Synthesize project directives and tasks"
           >
-            <Sparkles size={13} className="text-indigo-600" />
             <span>Synthesize</span>
           </button>
 

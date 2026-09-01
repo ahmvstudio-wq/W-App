@@ -223,7 +223,7 @@ export default function TaskDetailDrawer({ task, onClose, onUpdate }: TaskDetail
         {[
           { id: 'details', label: 'Details & Edit', icon: CheckSquare },
           { id: 'subtasks', label: `Checklist (${completedSubtasks}/${subtasks.length})`, icon: ListChecks },
-          { id: 'ai', label: 'AI Review', icon: Sparkles },
+          { id: 'ai', label: 'Scope Guidance', icon: CheckSquare },
           { id: 'activity', label: 'Activity', icon: MessageSquare },
         ].map((tab) => (
           <button
@@ -389,10 +389,9 @@ export default function TaskDetailDrawer({ task, onClose, onUpdate }: TaskDetail
                     toast.error('AI decomposition failed')
                   }
                 }}
-                className="text-[11px] text-indigo-600 hover:underline flex items-center gap-1 font-mono cursor-pointer"
+                className="text-[11px] text-[#6b7280] hover:text-black flex items-center gap-1 font-mono cursor-pointer"
               >
-                <Sparkles size={12} />
-                <span>✦ Decompose with AI</span>
+                <span>Break into Subtasks</span>
               </button>
             </div>
 
@@ -449,11 +448,10 @@ export default function TaskDetailDrawer({ task, onClose, onUpdate }: TaskDetail
 
         {activeTab === 'ai' && (
           <div className="space-y-4">
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50/60 to-purple-50/60 border border-indigo-100/80 space-y-3">
+            <div className="p-5 rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-indigo-950 font-medium text-xs">
-                  <Sparkles size={14} className="text-indigo-600" />
-                  <span>AI Chief of Staff Review</span>
+                <div className="text-black font-medium text-xs">
+                  <span>Scope Guidance</span>
                 </div>
                 <button
                   onClick={handleAiScopeChallenge}
