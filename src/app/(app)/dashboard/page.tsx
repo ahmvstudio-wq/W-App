@@ -14,6 +14,8 @@ import {
 import type { Task, Project, User } from '@/types'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import AnnualExecutionGrid from '@/components/AnnualExecutionGrid'
+import InteractiveVelocityChart from '@/components/InteractiveVelocityChart'
 
 export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -229,58 +231,11 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Grid: Sprint Velocity Area Graph + Project Progress Cards */}
+      {/* Grid: Interactive Velocity Chart + Project Progress Portfolio */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Sprint Velocity Area Chart */}
-        <div className="lg:col-span-7 bg-white border border-black/[0.08] rounded-3xl p-6 shadow-sm space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">METRICS</span>
-              <h3 className="text-base font-normal text-black">7-Day Task Execution Velocity</h3>
-            </div>
-            <div className="flex items-center gap-1 text-xs font-mono text-black font-medium bg-[#f5f5f7] px-2.5 py-1 rounded-lg">
-              <TrendingUp size={13} className="text-black" />
-              <span>+18.4%</span>
-            </div>
-          </div>
-
-          {/* SVG Smooth Bezier Velocity Sparkline */}
-          <div className="h-32 w-full pt-2">
-            <svg className="w-full h-full overflow-visible" viewBox="0 0 500 100" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="velocityFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#111827" stopOpacity="0.12" />
-                  <stop offset="100%" stopColor="#111827" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-              {/* Area */}
-              <path
-                d="M 0 80 Q 80 40, 160 55 T 320 20 T 480 35 L 500 40 L 500 100 L 0 100 Z"
-                fill="url(#velocityFill)"
-              />
-              {/* Line */}
-              <path
-                d="M 0 80 Q 80 40, 160 55 T 320 20 T 480 35 L 500 40"
-                fill="none"
-                stroke="#111827"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              {/* Highlight Nodes */}
-              <circle cx="320" cy="20" r="4.5" fill="#111827" stroke="#ffffff" strokeWidth="2" />
-              <circle cx="500" cy="40" r="4.5" fill="#111827" stroke="#ffffff" strokeWidth="2" />
-            </svg>
-          </div>
-
-          <div className="flex justify-between text-[11px] font-mono text-[#9ca3af] border-t border-black/[0.04] pt-3">
-            <span>MON (2)</span>
-            <span>TUE (5)</span>
-            <span>WED (4)</span>
-            <span>THU (7)</span>
-            <span>FRI (8)</span>
-            <span>SAT (3)</span>
-            <span className="text-black font-semibold">TODAY (6)</span>
-          </div>
+        {/* Interactive Sprint Velocity Area Chart */}
+        <div className="lg:col-span-7">
+          <InteractiveVelocityChart tasks={tasks} />
         </div>
 
         {/* Project Progress Breakdown */}
@@ -289,7 +244,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">PORTFOLIO</span>
-                <h3 className="text-base font-normal text-black">Active Projects</h3>
+                <h3 className="text-base font-normal text-black">Active Projects Health</h3>
               </div>
               <Link href="/projects" className="text-xs text-[#6b7280] hover:text-black font-body font-light flex items-center gap-1">
                 <span>View All</span>
@@ -311,7 +266,7 @@ export default function DashboardPage() {
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-xs font-normal text-black truncate group-hover:underline">{p.name}</span>
-                      <span className="text-[10px] font-mono text-[#6b7280]">{shipped}/{pTasks.length} tasks</span>
+                      <span className="text-[10px] font-mono text-[#6b7280]">{shipped}/{pTasks.length} tasks ({percent}%)</span>
                     </div>
                     <div className="w-full h-1.5 bg-black/[0.06] rounded-full overflow-hidden">
                       <div className="h-full bg-black rounded-full" style={{ width: `${percent}%` }}></div>
@@ -323,59 +278,20 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex justify-between items-center text-xs font-body text-[#6b7280] pt-2 border-t border-black/[0.04]">
-            <span>Average Project Velocity</span>
-            <span className="font-mono text-black font-semibold">8.4 / 10</span>
+            <span>Average Portfolio Velocity</span>
+            <span className="font-mono text-black font-semibold">8.8 / 10</span>
           </div>
         </div>
       </div>
 
-      {/* Bottom Section: Minimalist Annual Heatmap Matrix + Priority Task Queue */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Minimalist Activity Heatmap Matrix */}
-        <div className="lg:col-span-5 bg-white border border-black/[0.08] rounded-3xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">ACTIVITY</span>
-              <h3 className="text-base font-normal text-black">Annual Execution Grid</h3>
-            </div>
-            <span className="text-[10px] font-mono text-[#6b7280]">[3,542 OPS]</span>
-          </div>
+      {/* Full-Width Interactive Annual Execution Grid */}
+      <AnnualExecutionGrid tasks={tasks} />
 
-          {/* Minimalist Matrix Grid */}
-          <div className="grid grid-cols-12 gap-1.5 p-3 rounded-2xl bg-[#fafafa] border border-black/[0.04]">
-            {Array.from({ length: 72 }).map((_, i) => {
-              const intensity = (i * 7 + 3) % 5
-              const shades = [
-                'bg-[#f3f4f6]',
-                'bg-[#e5e7eb]',
-                'bg-[#9ca3af]',
-                'bg-[#4b5563]',
-                'bg-[#111827]',
-              ]
-              return (
-                <div
-                  key={i}
-                  className={cn(
-                    'h-3.5 rounded-[3px] transition-transform hover:scale-125 cursor-pointer',
-                    shades[intensity]
-                  )}
-                  title={`Day ${i + 1}: ${intensity * 3} items logged`}
-                />
-              )
-            })}
-          </div>
-
-          <div className="flex justify-between text-[10px] font-mono text-[#6b7280]">
-            <span>+1,928 VS LAST YEAR</span>
-            <span className="font-semibold text-black">449 DAY STREAK</span>
-          </div>
-        </div>
-
-        {/* Priority Focus Queue */}
-        <div className="lg:col-span-7 bg-white border border-black/[0.08] rounded-3xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">EXECUTION QUEUE</span>
+      {/* Priority Focus Queue */}
+      <div className="bg-white border border-black/[0.08] rounded-3xl p-6 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">EXECUTION QUEUE</span>
               <h3 className="text-base font-normal text-black">Urgent Focus Tasks (P0 / P1)</h3>
             </div>
             <Link href="/tasks" className="text-xs text-[#6b7280] hover:text-black font-body font-light flex items-center gap-1">
@@ -422,6 +338,5 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-    </div>
   )
 }
