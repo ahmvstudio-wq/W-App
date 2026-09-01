@@ -41,13 +41,12 @@ export async function POST(req: NextRequest) {
     if (groq) {
       try {
         const completion = await groq.chat.completions.create({
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-20b',
           messages: [
             { role: 'system', content: SYSTEM_PROMPT },
             { role: 'user', content: text.trim() }
           ],
-          response_format: { type: 'json_object' },
-          temperature: 0.2,
+          temperature: 0.1,
           max_tokens: 2500
         })
         const content = completion.choices[0]?.message?.content

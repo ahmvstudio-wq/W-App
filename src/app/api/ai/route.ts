@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       const context = await buildUserContext(supabase, user.id, workspaceId || payload?.workspaceId)
 
       const response = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-20b',
         messages: [
           { role: 'system', content: context },
           ...(messages || payload?.messages || [])
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     if (action === 'challengeTask') {
       const { title, output } = payload
       const response = await groq.chat.completions.create({
-        model: 'llama-3.1-8b-instant',
+        model: 'openai/gpt-oss-20b',
         messages: [
           {
             role: 'system',
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     if (action === 'stressTestProject') {
       const { project } = payload
       const response = await groq.chat.completions.create({
-        model: 'llama-3.1-8b-instant',
+        model: 'openai/gpt-oss-20b',
         messages: [
           {
             role: 'system',
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
     if (action === 'generateMorningBrief') {
       const { context } = payload
       const response = await groq.chat.completions.create({
-        model: 'llama-3.1-8b-instant',
+        model: 'openai/gpt-oss-20b',
         messages: [
           {
             role: 'system',
