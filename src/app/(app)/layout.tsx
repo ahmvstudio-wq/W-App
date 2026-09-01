@@ -13,6 +13,7 @@ import {
 import CommandPalette from '@/components/CommandPalette'
 import FocusTimer from '@/components/FocusTimer'
 import CreateTaskModal from '@/components/CreateTaskModal'
+import NaturalLanguageInputModal from '@/components/NaturalLanguageInputModal'
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -32,6 +33,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
+  const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -190,13 +192,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </kbd>
           </button>
 
+          {/* Synthesize One-Input Engine */}
+          <button
+            onClick={() => setIsSynthesizeOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 text-indigo-950 border border-indigo-200/80 font-medium text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            title="What needs to get done? Synthesize project & tasks"
+          >
+            <Sparkles size={13} className="text-indigo-600" />
+            <span>Synthesize</span>
+          </button>
+
           {/* New Task Trigger */}
           <button
             onClick={() => setIsCreateTaskOpen(true)}
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer"
           >
             <Plus size={14} />
-            <span>Create Task</span>
+            <span className="hidden sm:inline">Create Task</span>
           </button>
 
           {/* User Profile Avatar with Dropdown */}
@@ -243,6 +255,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 p-6 sm:p-10 max-w-[1500px] w-full mx-auto">
         {children}
       </main>
+
+      <NaturalLanguageInputModal
+        isOpen={isSynthesizeOpen}
+        onClose={() => setIsSynthesizeOpen(false)}
+      />
     </div>
   )
 }

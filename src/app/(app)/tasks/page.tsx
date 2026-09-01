@@ -15,10 +15,12 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import CreateTaskModal from '@/components/CreateTaskModal'
 import TaskDetailDrawer from '@/components/TaskDetailDrawer'
+import NaturalLanguageInputModal from '@/components/NaturalLanguageInputModal'
 
 export default function TasksPage() {
   const [view, setView] = useState<'board' | 'list'>('board')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
   const [tasks, setTasks] = useState<Task[]>([]) 
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -199,6 +201,14 @@ export default function TasksPage() {
               <span>Table List</span>
             </button>
           </div>
+
+          <button
+            onClick={() => setIsSynthesizeOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 text-indigo-950 border border-indigo-200/80 font-medium text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+          >
+            <Sparkles size={14} className="text-indigo-600" />
+            <span>Synthesize Directives</span>
+          </button>
 
           <button
             onClick={() => setIsCreateModalOpen(true)}
@@ -567,6 +577,12 @@ export default function TasksPage() {
           </div>
         </div>
       )}
+
+      <NaturalLanguageInputModal
+        isOpen={isSynthesizeOpen}
+        onClose={() => setIsSynthesizeOpen(false)}
+        onSuccess={() => fetchTasks(true)}
+      />
     </div>
   )
 }

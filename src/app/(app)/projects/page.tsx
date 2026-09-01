@@ -2,17 +2,19 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { Plus, Search, Filter, FolderKanban, Activity, Target, X, Zap, Trash2, ChevronRight, Clock, TrendingUp, Layers, CheckCircle2 } from 'lucide-react'
+import { Plus, Search, Filter, FolderKanban, Activity, Target, X, Zap, Trash2, ChevronRight, Clock, TrendingUp, Layers, CheckCircle2, Sparkles } from 'lucide-react'
 import { getProjectHealth, getInitials, daysUntil, daysSince, cn } from '@/lib/utils'
 import type { Project } from '@/types'
 import { stressTestProject } from '@/lib/groq/client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import NaturalLanguageInputModal from '@/components/NaturalLanguageInputModal'
 
 export default function ProjectsPage() {
   const router = useRouter()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -72,13 +74,23 @@ export default function ProjectsPage() {
           </h1>
         </div>
 
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer font-body"
-        >
-          <Plus size={15} />
-          <span>New Project</span>
-        </button>
+        <div className="flex items-center gap-3 font-body">
+          <button
+            onClick={() => setIsSynthesizeOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 text-indigo-950 border border-indigo-200/80 font-medium text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+          >
+            <Sparkles size={14} className="text-indigo-600" />
+            <span>Synthesize from Text</span>
+          </button>
+
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer font-body"
+          >
+            <Plus size={15} />
+            <span>New Project</span>
+          </button>
+        </div>
       </div>
 
       {/* Portfolio Data Visualizations with Ambient Soft Glows */}
@@ -244,6 +256,12 @@ export default function ProjectsPage() {
       {isCreateModalOpen && (
         <CreateProjectWizard onClose={() => setIsCreateModalOpen(false)} onSuccess={fetchProjects} />
       )}
+
+      <NaturalLanguageInputModal
+        isOpen={isSynthesizeOpen}
+        onClose={() => setIsSynthesizeOpen(false)}
+        onSuccess={fetchProjects}
+      />
     </div>
   )
 }
