@@ -7,8 +7,8 @@
   },
   "servers": [
     {
-      "url": "https://YOUR_DOMAIN.vercel.app",
-      "description": "Focus OS Production Server (Replace with your actual domain or ngrok URL)"
+      "url": "https://callmy-mgmt.vercel.app",
+      "description": "Focus OS Production Server"
     }
   ],
   "paths": {
