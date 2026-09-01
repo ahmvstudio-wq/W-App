@@ -25,6 +25,7 @@ export default function DocumentEditorPage({ params }: { params: { id: string } 
   const [aiMessages, setAiMessages] = useState<{role: 'user'|'assistant', content: string}[]>([])
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       Placeholder.configure({ placeholder: 'Start typing your document memo...' }),
