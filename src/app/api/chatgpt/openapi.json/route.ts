@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
+
 export async function GET(req: NextRequest) {
   const host = req.headers.get('host') || 'localhost:3000'
   const protocol = host.includes('localhost') ? 'http' : 'https'
@@ -8,9 +11,9 @@ export async function GET(req: NextRequest) {
   const openApiSpec = {
     openapi: '3.1.0',
     info: {
-      title: 'Focus OS AI Chief of Staff API',
+      title: 'CallMy Mgmt AI Chief of Staff API',
       description:
-        'Official API for ChatGPT Custom GPT Actions to read and manage tasks, projects, documents, blockers, and daily logs in Focus OS.',
+        'Official API for ChatGPT Custom GPT Actions to read and manage tasks, projects, documents, blockers, and daily logs in CallMy Mgmt.',
       version: '1.0.0',
     },
     servers: [

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyApiAuth, unauthorizedResponse } from '@/lib/api/auth'
 import { getApiClient, getDefaultWorkspaceId, getDefaultUserId } from '@/lib/supabase/admin'
 
+export const dynamic = 'force-dynamic'
+
+
 export async function GET(req: NextRequest) {
   const auth = verifyApiAuth(req)
   if (!auth.authenticated) return unauthorizedResponse(auth.error)

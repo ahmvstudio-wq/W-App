@@ -28,8 +28,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'Inter', '-apple-system', 'sans-serif'],
-        display: ['Syne', 'Plus Jakarta Sans', 'sans-serif'],
+        sans: ['Poppins', 'Inter', '-apple-system', 'sans-serif'],
+        display: ['Poppins', 'sans-serif'],
+        body: ['Inter', 'sans-serif'],
         mono: ['DM Mono', 'JetBrains Mono', 'monospace'],
       },
       borderRadius: {

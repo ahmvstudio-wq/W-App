@@ -1,33 +1,24 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&family=Inter:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg: #0c0d0f;
-  --surface: #141618;
-  --surface-elevated: #1c1e22;
-  --border: #252729;
-  --border-light: rgba(255, 255, 255, 0.08);
-  --text-primary: #f0ede8;
-  --text-secondary: #8a8d95;
-  --text-muted: #52545a;
+  --bg: #fbfbfd;
+  --surface: #ffffff;
+  --surface-elevated: #f5f5f7;
+  --border: #e5e7eb;
+  --border-light: rgba(0, 0, 0, 0.06);
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
   
-  --accent: #c8f135;
-  --purple: #8b5cf6;
-  --lavender: #a594f9;
-  --coral: #ff4d2e;
-  --orange: #ff6b4a;
-  --blue: #3b82f6;
-  --danger: #ff4444;
-  --warning: #f5a623;
-  --success: #00c853;
-  
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  --accent: #111827;
+  --accent-light: #f3f4f6;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --success: #10b981;
 }
 
 * {
@@ -39,9 +30,10 @@
 html, body {
   background: var(--bg);
   color: var(--text-primary);
-  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
+  font-family: 'Poppins', 'Inter', -apple-system, sans-serif;
+  font-weight: 300; /* Poppins Light */
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
@@ -56,105 +48,60 @@ html, body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.22);
 }
 
 /* Typography Defaults */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Poppins', sans-serif;
   color: var(--text-primary);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  font-weight: 300; /* Light by default */
+  line-height: 1.25;
+  letter-spacing: -0.015em;
 }
 
-.font-display {
-  font-family: 'Syne', sans-serif;
+.font-body {
+  font-family: 'Inter', sans-serif;
 }
 
 .font-mono-code {
-  font-family: 'DM Mono', 'JetBrains Mono', monospace;
+  font-family: 'DM Mono', monospace;
 }
 
-/* Topographic & Grid Textures */
+/* Minimalist Clean Topo & Grid Textures */
 .bg-topo-pattern {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
 .bg-grid-tech {
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
   background-size: 32px 32px;
 }
 
-/* Glassmorphism Styles */
-.glass-panel {
-  background: rgba(20, 22, 24, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Minimalist Card & Glass Panels */
+.clean-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+  border-radius: 20px;
 }
 
-.glass-panel-light {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.glass-pill {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.glass-pill:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-}
-
-/* Striped Progress Bar Track */
-.striped-track {
-  background-image: repeating-linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.06),
-    rgba(255, 255, 255, 0.06) 10px,
-    rgba(255, 255, 255, 0.02) 10px,
-    rgba(255, 255, 255, 0.02) 20px
-  );
-}
-
-/* Apple-style Interactive Hover */
-.apple-card-hover {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
-}
-.apple-card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.4);
-  border-color: rgba(255, 255, 255, 0.18);
-}
-
-/* Shimmer Animation */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-.animate-shimmer {
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 3s infinite;
+.clean-card-elevated {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+  border-radius: 24px;
 }
 
 /* Selection */
 ::selection {
-  background: rgba(200, 241, 53, 0.25);
-  color: #ffffff;
+  background: rgba(0, 0, 0, 0.08);
+  color: #000000;
 }
