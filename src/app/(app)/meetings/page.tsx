@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
 import { cn, getInitials } from '@/lib/utils'
 import type { FathomMeeting, FathomActionItem } from '@/lib/fathom/client'
+import type { GoogleCalendarEvent } from '@/lib/google/calendar'
 import type { Task, Priority } from '@/types'
 import Link from 'next/link'
 
@@ -28,23 +29,26 @@ interface UnifiedCalendarEvent {
   date: Date
   time: string
   durationMinutes: number
-  type: 'meeting' | 'task'
+  type: 'meeting' | 'task' | 'google'
   priority?: 'p0' | 'p1' | 'p2' | 'p3'
   status?: string
   project?: string
   attendees?: string[]
   meetingData?: FathomMeeting
   taskData?: Task
+  googleData?: GoogleCalendarEvent
 }
 
 export default function MeetingsPage() {
   const [activeMainTab, setActiveMainTab] = useState<'calendar' | 'fathom'>('calendar')
   
-  // Fathom State
+  // Data State
   const [meetings, setMeetings] = useState<FathomMeeting[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
+  const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([])
+  const [googleConnected, setGoogleConnected] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [syncingFathom, setSyncingFathom] = useState(false)
+  const [syncingAll, setSyncingAll] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedMeeting, setSelectedMeeting] = useState<FathomMeeting | null>(null)
   const [loadingDetail, setLoadingDetail] = useState(false)
@@ -76,13 +80,31 @@ export default function MeetingsPage() {
       if (tasksData) setTasks(tasksData as Task[])
 
       // 2. Fetch Fathom meetings
-      const res = await fetch('/api/fathom/meetings')
-      const data = await res.json()
-      if (data.success && Array.isArray(data.meetings)) {
-        setMeetings(data.meetings)
+      try {
+        const res = await fetch('/api/fathom/meetings')
+        const data = await res.json()
+        if (data.success && Array.isArray(data.meetings)) {
+          setMeetings(data.meetings)
+        }
+      } catch (e) {
+        console.warn('Fathom fetch error:', e)
+      }
+
+      // 3. Fetch Google Calendar events
+      try {
+        const gRes = await fetch('/api/calendar/google/events')
+        const gData = await gRes.json()
+        if (gData.success) {
+          setGoogleConnected(Boolean(gData.connected))
+          if (Array.isArray(gData.events)) {
+            setGoogleEvents(gData.events)
+          }
+        }
+      } catch (e) {
+        console.warn('Google Calendar fetch error:', e)
       }
     } catch {
-      toast.error('Failed to load calendar and meetings data')
+      toast.error('Failed to refresh calendar and meetings data')
     } finally {
       setLoading(false)
     }
@@ -92,13 +114,13 @@ export default function MeetingsPage() {
     fetchAllData(false)
   }, [fetchAllData])
 
-  async function handleSyncFathom() {
-    setSyncingFathom(true)
+  async function handleSyncAll() {
+    setSyncingAll(true)
     try {
       await fetchAllData(true)
-      toast.success('Live synced all meetings and tasks!')
+      toast.success('Live synced Google Calendar, Fathom AI, and Tasks!')
     } finally {
-      setSyncingFathom(false)
+      setSyncingAll(false)
     }
   }
 
@@ -191,7 +213,7 @@ export default function MeetingsPage() {
   const unifiedEvents: UnifiedCalendarEvent[] = useMemo(() => {
     const list: UnifiedCalendarEvent[] = []
 
-    // Map Fathom Meetings
+    // 1. Map Fathom Meetings
     meetings.forEach((m) => {
       const date = new Date(m.recorded_at || Date.now())
       list.push({
@@ -206,14 +228,30 @@ export default function MeetingsPage() {
       })
     })
 
-    // Map Real Tasks & Deadlines
+    // 2. Map Google Calendar Events
+    googleEvents.forEach((g) => {
+      const date = new Date(g.start)
+      const duration = Math.max(15, Math.round((new Date(g.end).getTime() - date.getTime()) / 60000))
+      list.push({
+        id: `gcal-${g.id}`,
+        title: g.title,
+        date,
+        time: format(date, 'hh:mm a'),
+        durationMinutes: duration || 30,
+        type: 'google',
+        attendees: g.attendees,
+        googleData: g
+      })
+    })
+
+    // 3. Map Real Tasks & Deadlines
     tasks.forEach((t) => {
       const date = t.due_date ? new Date(t.due_date) : new Date(t.created_at)
       list.push({
         id: `task-${t.id}`,
         title: t.title,
         date,
-        time: t.due_date ? format(new Date(t.due_date), 'hh:mm a') : 'Due Today',
+        time: t.due_date ? format(new Date(t.due_date), 'hh:mm a') : 'Scheduled',
         durationMinutes: t.time_box_minutes || 45,
         type: 'task',
         priority: t.priority as any,
@@ -224,11 +262,11 @@ export default function MeetingsPage() {
     })
 
     return list
-  }, [meetings, tasks])
+  }, [meetings, googleEvents, tasks])
 
   // Filtered Events
   const filteredEvents = useMemo(() => {
-    if (eventFilter === 'meetings') return unifiedEvents.filter(e => e.type === 'meeting')
+    if (eventFilter === 'meetings') return unifiedEvents.filter(e => e.type === 'meeting' || e.type === 'google')
     if (eventFilter === 'tasks') return unifiedEvents.filter(e => e.type === 'task')
     return unifiedEvents
   }, [unifiedEvents, eventFilter])
@@ -239,12 +277,6 @@ export default function MeetingsPage() {
     const end = endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 })
     return eachDayOfInterval({ start, end })
   }, [currentDate])
-
-  // Today's Agenda items
-  const todayAgenda = useMemo(() => {
-    const today = startOfDay(new Date())
-    return unifiedEvents.filter(e => isSameDay(e.date, today))
-  }, [unifiedEvents])
 
   // Fathom Analytics
   const totalMinutes = meetings.reduce((acc, m) => acc + m.duration_minutes, 0)
@@ -296,6 +328,9 @@ export default function MeetingsPage() {
             >
               <CalendarIcon size={14} className={activeMainTab === 'calendar' ? 'text-indigo-600' : ''} />
               <span>Master Calendar</span>
+              <span className="px-1.5 py-0.2 bg-black/[0.05] rounded-full text-[10px] font-mono">
+                {unifiedEvents.length}
+              </span>
             </button>
 
             <button
@@ -309,20 +344,20 @@ export default function MeetingsPage() {
             >
               <Video size={14} className={activeMainTab === 'fathom' ? 'text-purple-600' : ''} />
               <span>Fathom AI Calls</span>
-              <span className="px-1.5 py-0.2 bg-black/[0.05] rounded-full text-[10px] font-mono">
+              <span className="px-1.5 py-0.2 bg-purple-100 text-purple-900 rounded-full text-[10px] font-mono font-medium">
                 {meetings.length}
               </span>
             </button>
           </div>
 
-          {/* Sync Button */}
+          {/* Sync All Button */}
           <button
-            onClick={handleSyncFathom}
-            disabled={syncingFathom}
+            onClick={handleSyncAll}
+            disabled={syncingAll}
             className="flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-[#f5f5f7] border border-black/[0.08] rounded-xl text-xs font-normal text-black transition-all cursor-pointer shadow-xs disabled:opacity-50"
           >
-            <RefreshCw size={13} className={cn(syncingFathom && 'animate-spin')} />
-            <span>Sync</span>
+            <RefreshCw size={13} className={cn(syncingAll && 'animate-spin')} />
+            <span>{syncingAll ? 'Syncing...' : 'Sync All'}</span>
           </button>
         </div>
       </div>
@@ -349,7 +384,11 @@ export default function MeetingsPage() {
                   <ChevronLeft size={16} />
                 </button>
                 <button
-                  onClick={() => setCurrentDate(new Date())}
+                  onClick={() => {
+                    const now = new Date()
+                    setCurrentDate(now)
+                    setSelectedCalendarDay(now)
+                  }}
                   className="px-2.5 py-1 text-[11px] font-mono font-medium hover:bg-white rounded-lg text-black transition-colors cursor-pointer uppercase"
                 >
                   Today
@@ -377,7 +416,7 @@ export default function MeetingsPage() {
                       eventFilter === f ? 'bg-white text-black font-medium shadow-xs' : 'text-[#6b7280] hover:text-black'
                     )}
                   >
-                    {f === 'all' ? 'All Events' : f === 'meetings' ? 'Meetings' : 'Tasks'}
+                    {f === 'all' ? 'All' : f === 'meetings' ? 'Meetings & Calls' : 'Tasks'}
                   </button>
                 ))}
               </div>
@@ -401,7 +440,7 @@ export default function MeetingsPage() {
               {/* Add New Event Button */}
               <button
                 onClick={() => {
-                  setSelectedCalendarDay(new Date())
+                  setSelectedCalendarDay(selectedCalendarDay || new Date())
                   setShowCreateEventModal(true)
                 }}
                 className="flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs"
@@ -458,7 +497,7 @@ export default function MeetingsPage() {
                         </span>
 
                         {dayEvents.length > 0 && (
-                          <span className="text-[10px] font-mono text-[#9ca3af]">
+                          <span className="text-[10px] font-mono text-black font-semibold bg-black/[0.04] px-1.5 py-0.2 rounded-md">
                             {dayEvents.length}
                           </span>
                         )}
@@ -476,20 +515,22 @@ export default function MeetingsPage() {
                             className={cn(
                               'px-1.5 py-0.5 rounded-md text-[10px] font-normal truncate transition-all',
                               event.type === 'meeting'
-                                ? 'bg-purple-50 text-purple-900 border border-purple-200/80 hover:bg-purple-100'
+                                ? 'bg-purple-50 text-purple-900 border border-purple-200/80 hover:bg-purple-100 font-medium'
+                                : event.type === 'google'
+                                ? 'bg-blue-50 text-blue-900 border border-blue-200/80 hover:bg-blue-100 font-medium'
                                 : 'bg-black/[0.05] text-black hover:bg-black/10'
                             )}
                             title={`${event.time} - ${event.title}`}
                           >
-                            <span className="font-mono text-[9px] mr-1 opacity-70">
-                              {event.type === 'meeting' ? '📹' : '✓'}
+                            <span className="font-mono text-[9px] mr-1 opacity-80">
+                              {event.type === 'meeting' ? '📹' : event.type === 'google' ? '📅' : '✓'}
                             </span>
                             {event.title}
                           </div>
                         ))}
 
                         {dayEvents.length > 3 && (
-                          <div className="text-[9px] font-mono text-[#9ca3af] pl-1">
+                          <div className="text-[9px] font-mono text-[#9ca3af] pl-1 font-medium">
                             +{dayEvents.length - 3} more
                           </div>
                         )}
@@ -500,7 +541,7 @@ export default function MeetingsPage() {
               </div>
             </div>
 
-            {/* Right Column: Selected Day Details & Today's Agenda */}
+            {/* Right Column: Selected Day Details & Connections */}
             <div className="lg:col-span-4 space-y-6 font-body">
               {/* Selected Day Agenda Box */}
               <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-sm space-y-4">
@@ -510,12 +551,15 @@ export default function MeetingsPage() {
                       SCHEDULE FOR
                     </span>
                     <h3 className="text-base font-normal text-black">
-                      {selectedCalendarDay ? format(selectedCalendarDay, 'EEEE, MMM d') : 'Today'}
+                      {selectedCalendarDay ? format(selectedCalendarDay, 'EEEE, MMM d') : format(new Date(), 'EEEE, MMM d')}
                     </h3>
                   </div>
 
                   <button
-                    onClick={() => setShowCreateEventModal(true)}
+                    onClick={() => {
+                      setSelectedCalendarDay(selectedCalendarDay || new Date())
+                      setShowCreateEventModal(true)
+                    }}
                     className="p-1.5 text-black hover:bg-black/[0.05] rounded-xl transition-colors cursor-pointer"
                     title="Add Event"
                   >
@@ -531,8 +575,8 @@ export default function MeetingsPage() {
                   if (dayEvents.length === 0) {
                     return (
                       <div className="py-10 text-center text-xs text-[#9ca3af] border border-dashed border-black/[0.08] rounded-2xl space-y-1 font-light">
-                        <p className="text-black font-medium">No events scheduled</p>
-                        <p>Click &quot;Add Event&quot; or sync with Google Calendar.</p>
+                        <p className="text-black font-medium">No events for this date</p>
+                        <p>Click &quot;Add Event&quot; or check adjacent days.</p>
                       </div>
                     )
                   }
@@ -548,13 +592,15 @@ export default function MeetingsPage() {
                           className={cn(
                             'p-3.5 rounded-2xl border transition-all flex flex-col gap-1.5 cursor-pointer shadow-xs',
                             e.type === 'meeting'
-                              ? 'bg-purple-50/40 hover:bg-purple-50 border-purple-200/80'
+                              ? 'bg-purple-50/50 hover:bg-purple-50 border-purple-200/80'
+                              : e.type === 'google'
+                              ? 'bg-blue-50/50 hover:bg-blue-50 border-blue-200/80'
                               : 'bg-[#fafafa] hover:bg-[#f5f5f7] border-black/[0.06]'
                           )}
                         >
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-mono text-[#6b7280] flex items-center gap-1">
-                              <Clock size={11} className={e.type === 'meeting' ? 'text-purple-600' : 'text-indigo-600'} />
+                              <Clock size={11} className={e.type === 'meeting' ? 'text-purple-600' : e.type === 'google' ? 'text-blue-600' : 'text-indigo-600'} />
                               <span>{e.time}</span>
                               <span>•</span>
                               <span>{e.durationMinutes}m</span>
@@ -562,9 +608,9 @@ export default function MeetingsPage() {
 
                             <span className={cn(
                               'px-2 py-0.5 rounded-md text-[9px] font-mono uppercase font-semibold',
-                              e.type === 'meeting' ? 'bg-purple-100 text-purple-900' : 'bg-black text-white'
+                              e.type === 'meeting' ? 'bg-purple-100 text-purple-900' : e.type === 'google' ? 'bg-blue-100 text-blue-900' : 'bg-black text-white'
                             )}>
-                              {e.type === 'meeting' ? 'Meeting' : 'Task'}
+                              {e.type === 'meeting' ? 'Fathom Call' : e.type === 'google' ? 'Google Cal' : 'Task'}
                             </span>
                           </div>
 
@@ -573,9 +619,15 @@ export default function MeetingsPage() {
                           </h4>
 
                           {e.attendees && e.attendees.length > 0 && (
-                            <div className="text-[10px] text-[#9ca3af] font-light truncate">
-                              With: {e.attendees.slice(0, 3).join(', ')}
+                            <div className="text-[10px] text-[#6b7280] font-light truncate">
+                              Attendees: {e.attendees.slice(0, 3).join(', ')}
                             </div>
+                          )}
+
+                          {e.type === 'meeting' && (
+                            <span className="text-[10px] font-mono text-purple-700 font-medium">
+                              ✦ Click to inspect AI summary &amp; transcript
+                            </span>
                           )}
 
                           {e.project && (
@@ -590,25 +642,59 @@ export default function MeetingsPage() {
                 })()}
               </div>
 
-              {/* Google Calendar Quick Sync Banner */}
-              <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-50/60 to-purple-50/60 border border-indigo-100/80 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-indigo-950 font-medium text-xs">
-                    <CalendarIcon size={14} className="text-indigo-600" />
-                    <span>Google Calendar Sync</span>
+              {/* Connected Services Status Box */}
+              <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-sm space-y-4">
+                <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block">
+                  CALENDAR &amp; MEETING CONNECTIONS
+                </span>
+
+                <div className="space-y-3 text-xs">
+                  {/* Fathom Status */}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[#fafafa] border border-black/[0.04]">
+                    <div className="flex items-center gap-2.5">
+                      <Video size={15} className="text-purple-600" />
+                      <div>
+                        <span className="text-black font-medium block">Fathom Video AI</span>
+                        <span className="text-[10px] text-[#9ca3af] font-mono">{meetings.length} calls synced</span>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 font-mono text-[10px] rounded-md font-medium border border-emerald-200">
+                      Live
+                    </span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-mono font-medium">
-                    Active
-                  </span>
+
+                  {/* Google Calendar Status */}
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-[#fafafa] border border-black/[0.04]">
+                    <div className="flex items-center gap-2.5">
+                      <CalendarIcon size={15} className="text-indigo-600" />
+                      <div>
+                        <span className="text-black font-medium block">Google Calendar</span>
+                        <span className="text-[10px] text-[#9ca3af] font-mono">
+                          {googleConnected ? `${googleEvents.length} events loaded` : '1-Click OAuth Sync'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {googleConnected ? (
+                      <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 font-mono text-[10px] rounded-md font-medium border border-emerald-200">
+                        Connected
+                      </span>
+                    ) : (
+                      <a
+                        href="/api/auth/google"
+                        className="px-2.5 py-1 bg-black text-white hover:bg-neutral-800 rounded-lg text-[10px] font-normal transition-colors"
+                      >
+                        Authorize
+                      </a>
+                    )}
+                  </div>
                 </div>
-                <p className="text-xs text-[#4b5563] font-light leading-relaxed">
-                  Subscribe to your live 1-Click calendar feed or sync tasks directly with your Google account.
-                </p>
+
                 <Link
                   href="/settings"
-                  className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:underline font-mono"
+                  className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline font-mono pt-1"
                 >
-                  <span>Manage in Settings</span>
+                  <span>Open Integrations &amp; Feed URL</span>
                   <ChevronRight size={13} />
                 </Link>
               </div>
@@ -778,7 +864,7 @@ export default function MeetingsPage() {
                   required
                   value={newEventTitle}
                   onChange={(e) => setNewEventTitle(e.target.value)}
-                  placeholder="e.g. Weekly Strategy Sync with Team"
+                  placeholder="e.g. Strategy Sync with Team"
                   className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
                 />
               </div>

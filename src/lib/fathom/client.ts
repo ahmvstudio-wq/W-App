@@ -39,7 +39,8 @@ export interface FathomMeeting {
   attendees: FathomAttendee[]
 }
 
-const FATHOM_API_KEY = process.env.FATHOM_API_KEY || 'VB4MPQZrn0K7K_hFiXCsRg.mfJeDGKBdb_HZwMgjmgfa_eI_Ultt1J3SGJuN1h2VKY'
+const FATHOM_API_KEY = process.env.FATHOM_API_KEY || ''
+const GROQ_API_KEY = process.env.GROQ_API_KEY || ''
 
 /**
  * Fetch all real meetings from Fathom API
@@ -95,15 +96,15 @@ export async function fetchFathomMeetings(): Promise<FathomMeeting[]> {
         id: item.recording_id ? String(item.recording_id) : (item.url ? item.url.split('/').pop() : String(Date.now())),
         recording_id: item.recording_id,
         title: cleanTitle,
-        recorded_at: startTime || new Date().toISOString(),
+        recorded_at: startTime || item.created_at || new Date().toISOString(),
         duration_minutes: durationMinutes,
         video_url: item.url,
         share_url: item.share_url || item.url,
         meeting_url: item.meeting_url,
-        summary: item.default_summary || 'Fathom AI recording processed. Open to view summary and transcript.',
+        summary: item.default_summary || 'Fathom AI recording processed. Click to view full transcript and extract action items.',
         key_takeaways: item.highlights ? item.highlights.map((h: any) => h.text || h) : [
-          `Meeting recorded with ${attendees.length} participants.`,
-          `Recorded via ${item.meeting_url ? 'Google Meet' : 'Zoom'}.`
+          `Meeting recorded with ${attendees.length} participant(s).`,
+          `Call link: ${item.meeting_url || item.url || 'Online video conference'}`
         ],
         chapters: [],
         action_items: Array.isArray(item.action_items) ? item.action_items.map((a: any, idx: number) => ({
@@ -202,6 +203,54 @@ export async function fetchFathomRecordingDetail(recordingId: number | string): 
     }
   } catch (e) {
     console.warn(`[Fathom Client] Failed fetching transcript for ${recordingId}:`, e)
+  }
+
+  // 3. If summary or action items are missing, generate via Groq
+  if (result.transcript.length > 0 && (!result.summary || result.action_items.length === 0)) {
+    try {
+      const transcriptText = result.transcript.slice(0, 40).map((t: any) => `${t.speaker}: ${t.text}`).join('\n')
+      
+      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'openai/gpt-oss-20b',
+          temperature: 0.1,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an executive chief of staff. Given a meeting transcript, output JSON with "summary" (concise executive summary) and "action_items" (array of strings for specific tasks mentioned).'
+            },
+            {
+              role: 'user',
+              content: `Meeting Transcript:\n${transcriptText}\n\nRespond with valid JSON: {"summary": "...", "action_items": ["...", "..."]}`
+            }
+          ],
+          response_format: { type: 'json_object' }
+        })
+      })
+
+      if (groqRes.ok) {
+        const gData = await groqRes.json()
+        const parsed = JSON.parse(gData.choices?.[0]?.message?.content || '{}')
+        if (parsed.summary && !result.summary) {
+          result.summary = parsed.summary
+        }
+        if (Array.isArray(parsed.action_items) && parsed.action_items.length > 0) {
+          result.action_items = parsed.action_items.map((text: string, idx: number) => ({
+            id: `groq-act-${idx}`,
+            text,
+            assignee: 'Team',
+            converted_to_task: false
+          }))
+        }
+      }
+    } catch (err) {
+      console.warn('[Fathom Groq AI Synthesis error]', err)
+    }
   }
 
   return result
