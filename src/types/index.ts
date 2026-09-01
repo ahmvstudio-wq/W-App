@@ -29,6 +29,7 @@ export interface Project {
   id: string
   workspace_id: string
   name: string
+  master_project?: string // e.g. "Tadbeer TT"
   description?: string
   status: ProjectStatus
   owner_id: string
@@ -43,6 +44,7 @@ export interface Project {
   tasks?: Task[]
   whiteboard_state?: any
   whiteboard_updated_at?: string
+  color?: string
 }
 
 export interface Task {

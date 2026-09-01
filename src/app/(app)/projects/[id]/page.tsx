@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { 
   ArrowLeft, Clock, Target, AlertTriangle, CheckSquare, 
   Calendar, FileText, Activity, Layers, Image as ImageIcon,
-  Plus, Settings, Share2, MoreVertical, Trash2, Edit3
+  Plus, Settings, Share2, MoreVertical, Trash2, Edit3, Building2
 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
@@ -124,10 +124,18 @@ export default function SingleProjectPage() {
           </Link>
           <div className="flex items-center gap-2.5">
             <span className={cn(
-              'w-2 h-2 rounded-full',
-              health === 'green' ? 'bg-emerald-500' : health === 'amber' ? 'bg-amber-500' : 'bg-red-500'
+              'w-2.5 h-2.5 rounded-full shadow-sm',
+              health === 'green' ? 'bg-emerald-500 shadow-emerald-200' : health === 'amber' ? 'bg-amber-500 shadow-amber-200' : 'bg-red-500 shadow-red-200'
             )} />
-            <h1 className="text-base font-normal text-black tracking-tight">{project.name}</h1>
+            
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-md text-[10px] font-mono uppercase bg-emerald-50 text-emerald-800 border border-emerald-200 inline-flex items-center gap-1 font-medium">
+                <Building2 size={11} className="text-emerald-600" />
+                {project.master_project || 'Tadbeer TT'}
+              </span>
+              <span className="text-xs text-[#9ca3af] font-mono">/</span>
+              <h1 className="text-base font-normal text-black tracking-tight">{project.name}</h1>
+            </div>
           </div>
         </div>
 
