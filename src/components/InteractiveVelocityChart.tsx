@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { format, subDays } from 'date-fns'
-import { TrendingUp, CheckCircle2, Clock, Sparkles } from 'lucide-react'
+import { format, subDays, startOfDay } from 'date-fns'
+import { TrendingUp, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Task } from '@/types'
 
@@ -17,30 +17,32 @@ interface VelocityDay {
   tasksShipped: number
   minutesLogged: number
   topDeliverable: string
-  score: number // 0-10
 }
 
 export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityChartProps) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
 
-  const daysData: VelocityDay[] = useMemo(() => {
-    const today = new Date()
-    return Array.from({ length: 7 }).map((_, i) => {
+  const { daysData, totalLast7Days, percentChange } = useMemo(() => {
+    const today = startOfDay(new Date())
+
+    const days: VelocityDay[] = Array.from({ length: 7 }).map((_, i) => {
       const date = subDays(today, 6 - i)
       const dayName = format(date, 'EEE')
       const dateLabel = format(date, 'dd MMM')
+      const dateKey = format(date, 'yyyy-MM-dd')
 
-      // Filter real tasks for this day
+      // Filter REAL shipped tasks for this exact calendar day
       const dayTasks = tasks.filter(t => {
-        if (t.status === 'shipped' && t.completed_at) {
-          return format(new Date(t.completed_at), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+        if (t.status === 'shipped') {
+          const tDate = t.completed_at ? new Date(t.completed_at) : (t.updated_at ? new Date(t.updated_at) : new Date(t.created_at))
+          return format(tDate, 'yyyy-MM-dd') === dateKey
         }
         return false
       })
 
-      const count = dayTasks.length > 0 ? dayTasks.length : (i === 6 ? 4 : (i % 2 === 0 ? 3 : 2))
-      const mins = count * 45
-      const topTitle = dayTasks[0]?.title || (i === 6 ? 'Client CRM & E-Commerce Proposal' : 'Core Architecture & API Sync')
+      const count = dayTasks.length
+      const mins = dayTasks.reduce((sum, t) => sum + (t.time_box_minutes || 45), 0)
+      const topTitle = dayTasks[0]?.title || (count > 0 ? 'Completed Deliverable' : 'No tasks completed on this day')
 
       return {
         date,
@@ -48,16 +50,23 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
         dayName,
         tasksShipped: count,
         minutesLogged: mins,
-        topDeliverable: topTitle,
-        score: Math.min(10, Math.round((count * 2.2 + 2) * 10) / 10)
+        topDeliverable: topTitle
       }
     })
+
+    const total7 = days.reduce((sum, d) => sum + d.tasksShipped, 0)
+
+    return {
+      daysData: days,
+      totalLast7Days: total7,
+      percentChange: total7 > 0 ? '+100%' : '0%'
+    }
   }, [tasks])
 
   // Build SVG path coordinates
   const svgWidth = 500
   const svgHeight = 110
-  const maxTasks = 6
+  const maxTasks = Math.max(4, ...daysData.map(d => d.tasksShipped))
 
   const points = daysData.map((d, idx) => {
     const x = (idx / (daysData.length - 1)) * (svgWidth - 40) + 20
@@ -85,13 +94,13 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
       <div className="flex items-center justify-between">
         <div>
           <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">
-            METRICS & VELOCITY
+            WEEKLY PROGRESS
           </span>
-          <h3 className="text-base font-normal text-black">7-Day Task Execution Velocity</h3>
+          <h3 className="text-base font-normal text-black">Tasks Completed Over the Last 7 Days</h3>
         </div>
         <div className="flex items-center gap-1 text-xs font-mono text-black font-medium bg-[#f5f5f7] px-2.5 py-1 rounded-lg">
           <TrendingUp size={13} className="text-emerald-600" />
-          <span>+18.4% WoW</span>
+          <span>{totalLast7Days} {totalLast7Days === 1 ? 'task' : 'tasks'} this week</span>
         </div>
       </div>
 
@@ -160,16 +169,20 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
           <div className="flex items-center gap-2">
             <span className="text-black font-medium">{activeDay.dayName}, {activeDay.dateLabel}</span>
             <span>•</span>
-            <span className="text-emerald-700 font-semibold">{activeDay.tasksShipped} Shipped ({activeDay.minutesLogged}m)</span>
+            <span className="text-emerald-700 font-semibold">
+              {activeDay.tasksShipped} {activeDay.tasksShipped === 1 ? 'task' : 'tasks'} completed ({activeDay.minutesLogged}m focused)
+            </span>
           </div>
           <div className="text-[11px] text-[#6b7280] truncate font-light font-body">
-            Top: {activeDay.topDeliverable}
+            {activeDay.topDeliverable}
           </div>
         </div>
 
         <div className="text-right flex-shrink-0">
-          <span className="text-[10px] text-[#9ca3af] block uppercase">Velocity Score</span>
-          <span className="text-black font-semibold text-sm">{activeDay.score} / 10</span>
+          <span className="text-[10px] text-[#9ca3af] block uppercase">Day Status</span>
+          <span className="text-black font-semibold text-xs">
+            {activeDay.tasksShipped > 0 ? 'Active Work' : 'Rest Day'}
+          </span>
         </div>
       </div>
     </div>

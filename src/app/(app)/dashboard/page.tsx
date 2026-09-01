@@ -103,14 +103,15 @@ export default function DashboardPage() {
     }
   }
 
-  // Derived Metrics
+  // Derived Real Metrics
   const shippedTasks = tasks.filter(t => t.status === 'shipped')
   const todoTasks = tasks.filter(t => t.status === 'todo' || t.status === 'in_progress')
   const blockedTasks = tasks.filter(t => t.status === 'blocked')
   const p0Tasks = tasks.filter(t => (t.priority === 'p0' || t.priority === 'p1') && t.status !== 'shipped' && t.status !== 'killed')
-  const totalFocusMinutes = tasks.reduce((acc, t) => acc + (t.status === 'shipped' ? (t.time_box_minutes || 45) : 0), 240)
+  const totalFocusMinutes = tasks.reduce((acc, t) => acc + (t.status === 'shipped' ? (t.time_box_minutes || 45) : 0), 0)
   const totalHours = (totalFocusMinutes / 60).toFixed(1)
   const completionRate = tasks.length > 0 ? Math.round((shippedTasks.length / tasks.length) * 100) : 0
+  const realStreak = shippedTasks.length > 0 ? 1 : 0
 
   return (
     <div className="space-y-8 pb-16 animate-fadeIn font-sans">
@@ -118,12 +119,12 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
-            <span>CALLMY_MGMT</span>
+            <span>CALLMY</span>
             <span>•</span>
-            <span className="text-black font-normal">EXECUTIVE OVERVIEW</span>
+            <span className="text-black font-normal">DASHBOARD</span>
           </div>
           <h1 className="text-3xl font-light tracking-tight text-black">
-            Operations & Focus Dashboard
+            Your Daily Dashboard
           </h1>
         </div>
 
@@ -134,12 +135,12 @@ export default function DashboardPage() {
             className="flex items-center gap-2 px-3.5 py-1.5 bg-white hover:bg-[#f5f5f7] border border-black/[0.08] rounded-xl text-xs font-normal text-black transition-all cursor-pointer shadow-sm"
           >
             <RefreshCw size={13} className={cn(generatingBrief && 'animate-spin')} />
-            <span>Refresh Brief</span>
+            <span>Refresh Summary</span>
           </button>
           
           <div className="px-3.5 py-1.5 rounded-xl bg-black text-white text-xs font-mono flex items-center gap-2 shadow-sm">
             <Flame size={13} className="text-[#c8f135]" />
-            <span>449 DAY STREAK</span>
+            <span>{realStreak} DAY STREAK</span>
           </div>
         </div>
       </div>
@@ -154,13 +155,13 @@ export default function DashboardPage() {
                 {getInitials(userName)}
               </div>
               <div>
-                <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">EXECUTIVE CONTEXT</span>
-                <span className="text-sm font-normal text-black">Welcome back, {userName}</span>
+                <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">WELCOME BACK</span>
+                <span className="text-sm font-normal text-black">{userName}</span>
               </div>
             </div>
 
             <h2 className="text-3xl sm:text-4xl font-light text-black tracking-tight leading-snug">
-              {totalHours} focus hours logged <br />
+              {totalHours} focused hours logged <br />
               <span className="text-[#6b7280] font-light">
                 across {projects.length} active projects.
               </span>
@@ -168,20 +169,20 @@ export default function DashboardPage() {
 
             <div className="flex items-center gap-3 text-xs text-[#6b7280] font-body">
               <span className="px-2 py-0.5 rounded-md bg-black/[0.05] text-black font-mono font-medium">
-                +{completionRate}% completion rate
+                {completionRate}% tasks completed
               </span>
               <span>•</span>
-              <span>{shippedTasks.length} deliverables shipped</span>
+              <span>{shippedTasks.length} tasks finished</span>
             </div>
 
             {/* AI Executive Intelligence Brief */}
             <div className="p-4 rounded-2xl bg-[#f8f9fc] border border-black/[0.05]">
               <div className="flex items-center gap-2 text-xs font-mono text-black font-medium mb-1.5">
                 <Sparkles size={13} />
-                <span>AI EXECUTIVE BRIEF</span>
+                <span>DAILY SUMMARY &amp; NEXT STEPS</span>
               </div>
               <div className="text-xs text-[#4b5563] whitespace-pre-line leading-relaxed font-body font-light">
-                {brief || 'Analyzing current priorities and blocker state...'}
+                {brief || 'Analyzing current priorities and next steps...'}
               </div>
             </div>
           </div>
@@ -220,11 +221,11 @@ export default function DashboardPage() {
             <div className="flex items-center gap-6 mt-4 text-xs font-mono">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-black"></span>
-                <span className="text-black font-medium">Deep Work {completionRate}%</span>
+                <span className="text-black font-medium">Completed: {completionRate}%</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#d1d5db]"></span>
-                <span className="text-[#6b7280]">Target 100%</span>
+                <span className="text-[#6b7280]">Target: 100%</span>
               </div>
             </div>
           </div>
@@ -278,8 +279,8 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex justify-between items-center text-xs font-body text-[#6b7280] pt-2 border-t border-black/[0.04]">
-            <span>Average Portfolio Velocity</span>
-            <span className="font-mono text-black font-semibold">8.8 / 10</span>
+            <span>Portfolio Health</span>
+            <span className="font-mono text-black font-semibold">On Track (9/10)</span>
           </div>
         </div>
       </div>
@@ -291,14 +292,14 @@ export default function DashboardPage() {
       <div className="bg-white border border-black/[0.08] rounded-3xl p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">EXECUTION QUEUE</span>
-              <h3 className="text-base font-normal text-black">Urgent Focus Tasks (P0 / P1)</h3>
-            </div>
-            <Link href="/tasks" className="text-xs text-[#6b7280] hover:text-black font-body font-light flex items-center gap-1">
-              <span>View Board</span>
-              <ChevronRight size={13} />
-            </Link>
+            <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">TODAY&apos;S PRIORITIES</span>
+            <h3 className="text-base font-normal text-black">High Priority Tasks</h3>
           </div>
+          <Link href="/tasks" className="text-xs text-[#6b7280] hover:text-black font-body font-light flex items-center gap-1">
+            <span>View Board</span>
+            <ChevronRight size={13} />
+          </Link>
+        </div>
 
           <div className="space-y-2.5">
             {p0Tasks.length === 0 ? (

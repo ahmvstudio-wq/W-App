@@ -332,13 +332,13 @@ export default function DedicatedTaskPage() {
           <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-sm space-y-4">
             <div>
               <label className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block mb-1.5">
-                TASK DELIVERABLE TITLE
+                TASK TITLE
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="What needs to get accomplished?"
+                placeholder="What needs to get done?"
                 className="w-full text-xl font-normal text-black outline-none border-b border-transparent focus:border-black py-1 placeholder:text-[#9ca3af]"
               />
             </div>
@@ -366,7 +366,7 @@ export default function DedicatedTaskPage() {
                   onChange={(e) => setPriority(e.target.value as Priority)}
                   className="w-full p-2 bg-[#fafafa] border border-black/[0.06] rounded-xl text-xs text-black outline-none font-light"
                 >
-                  <option value="p0">P0 - Critical</option>
+                  <option value="p0">P0 - Urgent</option>
                   <option value="p1">P1 - High</option>
                   <option value="p2">P2 - Medium</option>
                   <option value="p3">P3 - Low</option>
@@ -405,10 +405,10 @@ export default function DedicatedTaskPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <CheckSquare size={16} className="text-emerald-600" />
-                  <h3 className="text-sm font-normal text-black">Micro-Tasks & Step Breakdown</h3>
+                  <h3 className="text-sm font-normal text-black">Micro-Tasks &amp; Checklist</h3>
                 </div>
                 <p className="text-[11px] text-[#9ca3af] font-mono mt-0.5">
-                  {completedMicrotasks} of {microtasks.length} steps complete • Total ~{totalMicroMinutes}m
+                  {completedMicrotasks} of {microtasks.length} steps completed • Total ~{totalMicroMinutes}m
                 </p>
               </div>
 
@@ -418,14 +418,14 @@ export default function DedicatedTaskPage() {
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 text-indigo-950 border border-indigo-200/80 rounded-xl text-xs font-medium transition-all cursor-pointer disabled:opacity-50"
               >
                 <Sparkles size={13} className="text-indigo-600" />
-                <span>{generatingAi ? 'Decomposing...' : '✦ Decompose with AI (Groq)'}</span>
+                <span>{generatingAi ? 'Decomposing...' : '✦ Decompose with AI'}</span>
               </button>
             </div>
 
             {/* Progress Bar */}
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs font-mono">
-                <span className="text-[#6b7280]">Micro-Task Progress</span>
+                <span className="text-[#6b7280]">Progress</span>
                 <span className="text-black font-semibold">{progressPercent}%</span>
               </div>
               <div className="w-full h-2.5 bg-black/[0.04] rounded-full overflow-hidden">
@@ -515,29 +515,29 @@ export default function DedicatedTaskPage() {
 
           {/* Outcome Artifact & Description */}
           <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-sm space-y-4">
-            <h3 className="text-sm font-normal text-black">Specification & Tangible Output</h3>
+            <h3 className="text-sm font-normal text-black">Description &amp; Deliverables</h3>
             <div>
               <label className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block mb-1">
-                DESCRIPTION & CONSTRAINTS
+                DESCRIPTION &amp; DETAILS
               </label>
               <textarea
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Context and deliverable constraints..."
+                placeholder="Context and details for this task..."
                 className="w-full p-3.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-2xl text-xs text-black outline-none resize-none font-light leading-relaxed"
               />
             </div>
 
             <div>
               <label className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block mb-1">
-                TANGIBLE PROOF OF SHIP (ARTIFACT / LINK)
+                COMPLETION PROOF / ATTACHMENT LINK (OPTIONAL)
               </label>
               <textarea
                 rows={2}
                 value={outputDescription}
                 onChange={(e) => setOutputDescription(e.target.value)}
-                placeholder="e.g. Pull Request link, Loom video URL, Figma design file, or signed document..."
+                placeholder="e.g. Pull Request link, Loom video URL, Figma link, or document link..."
                 className="w-full p-3.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-2xl text-xs text-black outline-none resize-none font-light leading-relaxed"
               />
             </div>
@@ -545,13 +545,13 @@ export default function DedicatedTaskPage() {
 
           {/* Progress Notes / Discussion */}
           <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-sm space-y-4">
-            <h3 className="text-sm font-normal text-black">Execution Notes & Stream</h3>
+            <h3 className="text-sm font-normal text-black">Notes &amp; Updates</h3>
             <form onSubmit={handleAddNote} className="flex gap-2">
               <input
                 type="text"
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
-                placeholder="Log a progress update, decision, or blocker note..."
+                placeholder="Add a progress update or note..."
                 className="flex-1 px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
               />
               <button
@@ -559,7 +559,7 @@ export default function DedicatedTaskPage() {
                 className="px-4 py-2.5 bg-black text-white rounded-xl text-xs hover:bg-neutral-800 cursor-pointer flex items-center gap-1.5"
               >
                 <Send size={12} />
-                <span>Log Note</span>
+                <span>Add Note</span>
               </button>
             </form>
 
@@ -582,7 +582,7 @@ export default function DedicatedTaskPage() {
           {/* Telemetry Card */}
           <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-sm space-y-4">
             <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block">
-              EXECUTION TELEMETRY
+              TASK TIMELINE
             </span>
             <div className="space-y-2.5 text-xs font-mono">
               <div className="flex justify-between pb-2 border-b border-black/[0.04]">
@@ -609,19 +609,19 @@ export default function DedicatedTaskPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-indigo-950 font-medium text-xs">
                 <Sparkles size={14} className="text-indigo-600" />
-                <span>AI Scope Challenge (Groq)</span>
+                <span>AI Scope Advice</span>
               </div>
               <button
                 onClick={handleRunAiReview}
                 disabled={auditingAi}
                 className="px-3 py-1 bg-black text-white rounded-lg text-xs font-normal hover:bg-neutral-800 cursor-pointer disabled:opacity-50"
               >
-                {auditingAi ? 'Auditing...' : 'Run Audit'}
+                {auditingAi ? 'Auditing...' : 'Review Scope'}
               </button>
             </div>
 
             <div className="text-xs text-[#374151] font-light leading-relaxed whitespace-pre-wrap bg-white/80 p-4 rounded-2xl border border-black/[0.04]">
-              {aiReview || 'Click "Run Audit" to test scope creep, optimal timebox, and deliverable priority.'}
+              {aiReview || 'Click "Review Scope" to get AI suggestions on timebox and deliverable focus.'}
             </div>
           </div>
 
@@ -629,7 +629,7 @@ export default function DedicatedTaskPage() {
           {task.project && (
             <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-sm space-y-3">
               <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block">
-                PARENT INITIATIVE
+                ASSOCIATED PROJECT
               </span>
               <div className="space-y-1">
                 <h4 className="text-sm font-normal text-black">{task.project.name}</h4>
