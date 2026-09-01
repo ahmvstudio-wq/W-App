@@ -168,49 +168,49 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Hero Insight Card: Clean Minimalist White Box */}
-      <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.08] p-8 shadow-sm">
+      {/* Hero Insight Card: High-Contrast Executive Card */}
+      <div className="relative overflow-hidden rounded-3xl bg-white border-2 border-black/[0.08] p-8 shadow-sm">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Left Column: Greeting & Big Punchy Metric */}
           <div className="lg:col-span-7 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-black text-white flex items-center justify-center font-medium text-xs">
+              <div className="w-8 h-8 rounded-xl bg-black text-white flex items-center justify-center font-medium text-xs shadow-xs">
                 {getInitials(userName)}
               </div>
               <div>
-                <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">WELCOME BACK</span>
-                <span className="text-sm font-normal text-black">{userName}</span>
+                <span className="text-xs font-mono text-[#4b5563] uppercase tracking-wider block font-semibold">WELCOME BACK</span>
+                <span className="text-sm font-semibold text-black">{userName}</span>
               </div>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl font-light text-black tracking-tight leading-snug">
+            <h2 className="text-3xl sm:text-4xl font-normal text-black tracking-tight leading-snug">
               {totalHours} focused hours logged <br />
-              <span className="text-[#6b7280] font-light">
+              <span className="text-[#4b5563] font-light">
                 across {projects.length} active projects.
               </span>
             </h2>
 
-            <div className="flex items-center gap-3 text-xs text-[#6b7280] font-body">
-              <span className="px-2 py-0.5 rounded-md bg-black/[0.05] text-black font-mono font-medium">
+            <div className="flex items-center gap-3 text-xs text-[#374151] font-body">
+              <span className="px-2.5 py-0.5 rounded-md bg-black text-white font-mono font-medium text-[11px]">
                 {completionRate}% tasks completed
               </span>
               <span>•</span>
-              <span>{shippedTasks.length} tasks finished</span>
+              <span className="font-medium text-black">{shippedTasks.length} tasks finished</span>
             </div>
 
             {/* Executive Intelligence Brief */}
-            <div className="p-4 rounded-2xl bg-[#f8f9fc] border border-black/[0.05]">
-              <div className="text-xs font-mono text-black font-medium mb-1.5 uppercase">
+            <div className="p-4 rounded-2xl bg-[#f8f9fa] border border-black/[0.08]">
+              <div className="text-xs font-mono text-black font-semibold mb-1.5 uppercase tracking-wide">
                 <span>DAILY SUMMARY &amp; NEXT STEPS</span>
               </div>
-              <div className="text-xs text-[#4b5563] whitespace-pre-line leading-relaxed font-body font-light">
+              <div className="text-xs text-[#1f2937] whitespace-pre-line leading-relaxed font-body font-normal">
                 {brief || 'Analyzing current priorities and next steps...'}
               </div>
             </div>
           </div>
 
           {/* Right Column: Radial Arc Donut Gauge */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 bg-[#fafafa] border border-black/[0.04] rounded-3xl">
+          <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 bg-[#f8f9fa] border border-black/[0.08] rounded-3xl">
             <div className="relative w-44 h-44 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                 <circle
@@ -218,7 +218,7 @@ export default function DashboardPage() {
                   cy="50"
                   r="40"
                   fill="transparent"
-                  stroke="rgba(0, 0, 0, 0.06)"
+                  stroke="rgba(0, 0, 0, 0.08)"
                   strokeWidth="8"
                 />
                 <circle
@@ -235,19 +235,19 @@ export default function DashboardPage() {
               </svg>
 
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-3xl font-light text-black tracking-tight">{totalFocusMinutes}</span>
-                <span className="text-[10px] text-[#6b7280] font-mono uppercase tracking-wider">Minutes Logged</span>
+                <span className="text-3xl font-medium text-black tracking-tight">{totalFocusMinutes}</span>
+                <span className="text-[10px] text-[#4b5563] font-mono uppercase tracking-wider font-semibold">Minutes Logged</span>
               </div>
             </div>
 
             <div className="flex items-center gap-6 mt-4 text-xs font-mono">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-black"></span>
-                <span className="text-black font-medium">Completed: {completionRate}%</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-black"></span>
+                <span className="text-black font-semibold">Completed: {completionRate}%</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#d1d5db]"></span>
-                <span className="text-[#6b7280]">Target: 100%</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#9ca3af]"></span>
+                <span className="text-[#4b5563] font-medium">Target: 100%</span>
               </div>
             </div>
           </div>

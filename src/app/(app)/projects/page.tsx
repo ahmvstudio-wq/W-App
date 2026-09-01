@@ -352,34 +352,34 @@ export default function ProjectsPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* ACTIVE MASTER PROGRAM COMMAND BANNER (DYNAMICALLY SHOWS SELECTED MASTER) */}
+      {/* ACTIVE MASTER PROGRAM COMMAND BANNER (CRYSTAL CLEAR HIGH-CONTRAST)         */}
       {/* ========================================================================= */}
-      <div className="p-8 rounded-3xl bg-gradient-to-br from-neutral-900 via-neutral-900 to-black text-white shadow-xl relative overflow-hidden font-body border border-neutral-800 animate-fadeIn">
-        {/* Subtle Ambient Background Elements */}
-        <div className="absolute right-0 top-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute left-1/3 bottom-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="p-8 rounded-3xl bg-white text-black shadow-md relative overflow-hidden font-body border-2 border-black/[0.08] animate-fadeIn">
+        {/* Subtle Ambient Background Accents */}
+        <div className="absolute right-0 top-0 w-80 h-80 bg-emerald-50/60 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute left-1/3 bottom-0 w-80 h-80 bg-indigo-50/50 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 space-y-6">
           {/* Top Row: Master Program Meta & Actions */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-white/[0.1]">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-black/[0.08]">
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-md bg-white/10 text-white font-mono text-[10px] uppercase tracking-wider font-semibold border border-white/15 flex items-center gap-1.5">
-                  <Building2 size={12} className="text-emerald-400" />
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-100/90 text-emerald-950 font-mono text-[10px] uppercase tracking-wider font-semibold border border-emerald-300 flex items-center gap-1.5 shadow-xs">
+                  <Building2 size={12} className="text-emerald-700" />
                   ACTIVE MASTER PROGRAM
                 </span>
-                <span className="text-white/40 text-xs font-mono">•</span>
-                <span className="text-emerald-400 text-xs font-mono font-medium">Command Hub</span>
+                <span className="text-black/30 text-xs font-mono">•</span>
+                <span className="text-emerald-700 text-xs font-mono font-semibold">Executive Command Hub</span>
               </div>
-              <h2 className="text-2xl font-light tracking-tight text-white flex items-center gap-3">
+              <h2 className="text-2xl font-normal tracking-tight text-black flex items-center gap-3">
                 <span>{activeMasterObj.name}</span>
                 {activeMasterObj.subtitle && (
-                  <span className="text-xs font-mono text-white/50 font-normal">
+                  <span className="text-xs font-mono text-[#4b5563] font-normal">
                     ({activeMasterObj.subtitle})
                   </span>
                 )}
               </h2>
-              <p className="text-xs text-white/60 font-light max-w-2xl leading-relaxed">
+              <p className="text-xs text-[#4b5563] font-normal max-w-2xl leading-relaxed">
                 {activeMasterObj.description}
               </p>
             </div>
@@ -390,10 +390,10 @@ export default function ProjectsPage() {
                   setSelectedMasterFilter(activeMasterObj.name)
                 }}
                 className={cn(
-                  'px-4 py-2 rounded-xl text-xs font-normal transition-all cursor-pointer border',
+                  'px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border shadow-xs',
                   selectedMasterFilter === activeMasterObj.name
-                    ? 'bg-white text-black border-white font-medium'
-                    : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
+                    ? 'bg-black text-white border-black'
+                    : 'bg-white hover:bg-neutral-100 text-black border-black/[0.15]'
                 )}
               >
                 {selectedMasterFilter === activeMasterObj.name ? `Filtered: ${activeMasterObj.name}` : `Filter ${activeMasterObj.name}`}
@@ -404,7 +404,7 @@ export default function ProjectsPage() {
                   setCreateInitialMasterProject(activeMasterObj.name)
                   setIsCreateModalOpen(true)
                 }}
-                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black rounded-xl text-xs font-medium transition-all cursor-pointer shadow-sm"
+                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium transition-all cursor-pointer shadow-sm"
               >
                 <Plus size={14} />
                 <span>Add Initiative to {activeMasterObj.name}</span>
@@ -414,12 +414,12 @@ export default function ProjectsPage() {
 
           {/* Middle Row: Sub-Initiatives Grid inside this Master Project */}
           <div className="space-y-2.5">
-            <span className="text-[10px] font-mono text-white/50 uppercase tracking-wider block font-light">
+            <span className="text-[10px] font-mono text-[#4b5563] uppercase tracking-wider block font-semibold">
               SUB-INITIATIVES UNDER {activeMasterObj.name.toUpperCase()} ({activeMasterProjects.length})
             </span>
 
             {activeMasterProjects.length === 0 ? (
-              <div className="py-8 text-center rounded-2xl bg-white/[0.03] border border-dashed border-white/10 text-white/50 text-xs font-light">
+              <div className="py-8 text-center rounded-2xl bg-neutral-50 border border-dashed border-black/[0.12] text-[#6b7280] text-xs font-light">
                 No initiatives assigned to {activeMasterObj.name} yet. Click &quot;Add Initiative to {activeMasterObj.name}&quot; above.
               </div>
             ) : (
@@ -433,27 +433,27 @@ export default function ProjectsPage() {
                     <Link
                       key={p.id}
                       href={`/projects/${p.id}`}
-                      className="p-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/20 transition-all block group space-y-2"
+                      className="p-4 rounded-2xl bg-[#f8f9fa] hover:bg-white border border-black/[0.08] hover:border-black/[0.22] hover:shadow-md transition-all block group space-y-2"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-medium text-white truncate group-hover:text-emerald-400 transition-colors">
+                        <span className="text-xs font-semibold text-black truncate group-hover:text-emerald-700 transition-colors">
                           {p.name}
                         </span>
-                        <ArrowUpRight size={13} className="text-white/40 group-hover:text-white transition-colors flex-shrink-0" />
+                        <ArrowUpRight size={13} className="text-[#6b7280] group-hover:text-black transition-colors flex-shrink-0" />
                       </div>
 
-                      <p className="text-[11px] text-white/60 line-clamp-1 font-light">
+                      <p className="text-[11px] text-[#4b5563] line-clamp-1 font-light">
                         {p.description || 'No description'}
                       </p>
 
                       <div className="space-y-1 pt-1">
-                        <div className="flex justify-between text-[10px] font-mono text-white/50">
-                          <span>{pShipped}/{pTasks.length} shipped</span>
-                          <span>{pProg}%</span>
+                        <div className="flex justify-between text-[10px] font-mono text-[#4b5563]">
+                          <span className="font-medium">{pShipped}/{pTasks.length} shipped</span>
+                          <span className="font-semibold text-black">{pProg}%</span>
                         </div>
-                        <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                        <div className="w-full h-1.5 bg-black/[0.08] rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-emerald-400 rounded-full transition-all duration-300"
+                            className="h-full bg-emerald-600 rounded-full transition-all duration-300"
                             style={{ width: `${pProg}%` }}
                           />
                         </div>
@@ -466,22 +466,22 @@ export default function ProjectsPage() {
           </div>
 
           {/* Bottom Row: Program Metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 border-t border-white/[0.08] text-xs font-mono text-white/80">
-            <div>
-              <span className="text-[10px] text-white/40 block uppercase">TOTAL INITIATIVES</span>
-              <span className="text-lg font-light text-white">{activeMasterProjects.length} Active</span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3 border-t border-black/[0.08] text-xs font-mono">
+            <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
+              <span className="text-[10px] text-[#6b7280] block uppercase font-medium">TOTAL INITIATIVES</span>
+              <span className="text-lg font-normal text-black">{activeMasterProjects.length} Active</span>
             </div>
-            <div>
-              <span className="text-[10px] text-white/40 block uppercase">OVERALL COMPLETION</span>
-              <span className="text-lg font-light text-emerald-400">{activeMasterProgress}% Shipped</span>
+            <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
+              <span className="text-[10px] text-[#6b7280] block uppercase font-medium">OVERALL COMPLETION</span>
+              <span className="text-lg font-semibold text-emerald-700">{activeMasterProgress}% Shipped</span>
             </div>
-            <div>
-              <span className="text-[10px] text-white/40 block uppercase">DELIVERABLES</span>
-              <span className="text-lg font-light text-white">{activeMasterShipped} / {activeMasterTasks.length} Done</span>
+            <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
+              <span className="text-[10px] text-[#6b7280] block uppercase font-medium">DELIVERABLES</span>
+              <span className="text-lg font-normal text-black">{activeMasterShipped} / {activeMasterTasks.length} Done</span>
             </div>
-            <div>
-              <span className="text-[10px] text-white/40 block uppercase">PROGRAM STATUS</span>
-              <span className="text-lg font-light text-indigo-300">High Velocity</span>
+            <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
+              <span className="text-[10px] text-[#6b7280] block uppercase font-medium">PROGRAM STATUS</span>
+              <span className="text-lg font-normal text-indigo-700">High Velocity</span>
             </div>
           </div>
         </div>
