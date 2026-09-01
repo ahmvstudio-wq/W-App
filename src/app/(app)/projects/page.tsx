@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { 
   Plus, Search, Filter, FolderKanban, Activity, Target, X, Zap, 
   Trash2, ChevronRight, Clock, TrendingUp, Layers, CheckCircle2, 
-  Building2, Briefcase, Sparkles, ArrowUpRight
+  Building2, Briefcase, Sparkles, ArrowUpRight, Palette, Edit3
 } from 'lucide-react'
 import { getProjectHealth, getInitials, daysUntil, daysSince, cn } from '@/lib/utils'
 import type { Project } from '@/types'
@@ -15,15 +15,80 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import NaturalLanguageInputModal from '@/components/NaturalLanguageInputModal'
 
+export interface MasterProjectInfo {
+  id: string
+  name: string
+  subtitle?: string
+  description?: string
+  colorTheme?: 'emerald' | 'indigo' | 'purple' | 'blue' | 'amber' | 'rose'
+}
+
+const DEFAULT_MASTER_PROJECTS: MasterProjectInfo[] = [
+  {
+    id: 'mp-tadbeer',
+    name: 'Tadbeer TT',
+    subtitle: 'Tadbeer Transformation Trading',
+    description: 'Centralized executive command hub grouping client CRM rollouts, commercial pricing packages, and e-commerce infrastructure.',
+    colorTheme: 'emerald'
+  },
+  {
+    id: 'mp-internal',
+    name: 'Internal Core',
+    subtitle: 'Platform Architecture & Tooling',
+    description: 'Internal infrastructure, core workflows, and development sprints for CallMy workspace.',
+    colorTheme: 'indigo'
+  }
+]
+
 export default function ProjectsPage() {
   const router = useRouter()
+  
+  // Modals & States
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [createInitialMasterProject, setCreateInitialMasterProject] = useState<string>('Tadbeer TT')
+  const [isCreateMasterModalOpen, setIsCreateMasterModalOpen] = useState(false)
   const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
+  const [createInitialMasterProject, setCreateInitialMasterProject] = useState<string>('Tadbeer TT')
+  
+  // Data States
   const [projects, setProjects] = useState<Project[]>([])
+  const [masterProjects, setMasterProjects] = useState<MasterProjectInfo[]>(DEFAULT_MASTER_PROJECTS)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  
+  // Selected Master Project for the Command Hub Banner & Filter
+  const [activeMasterProjectName, setActiveMasterProjectName] = useState<string>('Tadbeer TT')
   const [selectedMasterFilter, setSelectedMasterFilter] = useState<string>('all')
+
+  // Load custom master projects from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('callmy_master_projects')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Merge defaults with saved
+          const merged = [...DEFAULT_MASTER_PROJECTS]
+          parsed.forEach((p: MasterProjectInfo) => {
+            if (!merged.some(m => m.name.toLowerCase() === p.name.toLowerCase())) {
+              merged.push(p)
+            }
+          })
+          setMasterProjects(merged)
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load master projects from localStorage:', e)
+    }
+  }, [])
+
+  function saveMasterProjects(newList: MasterProjectInfo[]) {
+    setMasterProjects(newList)
+    try {
+      localStorage.setItem('callmy_master_projects', JSON.stringify(newList))
+    } catch (e) {
+      console.warn('Failed to save master projects:', e)
+    }
+  }
 
   async function handleDeleteProject(id: string) {
     if (!confirm('Are you sure you want to delete this project? This will also delete all associated tasks, assets, and calendar events.')) return
@@ -50,6 +115,24 @@ export default function ProjectsPage() {
         master_project: p.master_project || 'Tadbeer TT'
       }))
       setProjects(enriched)
+
+      // Auto-register any new master_project names found in database
+      const foundNames = Array.from(new Set(enriched.map(p => p.master_project || 'Tadbeer TT')))
+      setMasterProjects(prev => {
+        const updated = [...prev]
+        foundNames.forEach(name => {
+          if (!updated.some(m => m.name.toLowerCase() === name.toLowerCase())) {
+            updated.push({
+              id: `mp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+              name,
+              subtitle: 'Client Program & Portfolio',
+              description: `Master initiative hub for ${name}.`,
+              colorTheme: 'purple'
+            })
+          }
+        })
+        return updated
+      })
     }
     setLoading(false)
   }
@@ -58,15 +141,37 @@ export default function ProjectsPage() {
     fetchProjects()
   }, [])
 
-  // Extract all distinct Master Projects
-  const masterProjectsList = useMemo(() => {
-    const set = new Set<string>(['Tadbeer TT'])
-    projects.forEach(p => {
-      if (p.master_project) set.add(p.master_project)
-    })
+  // All distinct Master Project names
+  const allMasterNames = useMemo(() => {
+    const set = new Set<string>()
+    masterProjects.forEach(m => set.add(m.name))
+    projects.forEach(p => { if (p.master_project) set.add(p.master_project) })
     return Array.from(set)
-  }, [projects])
+  }, [masterProjects, projects])
 
+  // Active Master Project Object
+  const activeMasterObj = useMemo(() => {
+    const found = masterProjects.find(m => m.name.toLowerCase() === activeMasterProjectName.toLowerCase())
+    if (found) return found
+    return {
+      id: 'custom',
+      name: activeMasterProjectName,
+      subtitle: 'Program & Initiative Hub',
+      description: `Executive program tracking initiatives under ${activeMasterProjectName}.`,
+      colorTheme: 'emerald' as const
+    }
+  }, [masterProjects, activeMasterProjectName])
+
+  // Initiatives for Active Master Project
+  const activeMasterProjects = useMemo(() => {
+    return projects.filter(p => (p.master_project || 'Tadbeer TT').toLowerCase() === activeMasterProjectName.toLowerCase())
+  }, [projects, activeMasterProjectName])
+
+  const activeMasterTasks = activeMasterProjects.flatMap(p => p.tasks || [])
+  const activeMasterShipped = activeMasterTasks.filter((t: any) => t.status === 'shipped').length
+  const activeMasterProgress = activeMasterTasks.length > 0 ? Math.round((activeMasterShipped / activeMasterTasks.length) * 100) : 0
+
+  // Filtered Projects for Grid
   const filteredProjects = projects.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -86,24 +191,35 @@ export default function ProjectsPage() {
   const healthyCount = projects.filter(p => getProjectHealth(p as any) === 'green').length
   const atRiskCount = projects.filter(p => getProjectHealth(p as any) === 'amber' || getProjectHealth(p as any) === 'red').length
 
-  // Tadbeer TT Specific Analytics
-  const tadbeerProjects = projects.filter(p => (p.master_project || 'Tadbeer TT') === 'Tadbeer TT')
-  const tadbeerTasks = tadbeerProjects.flatMap(p => p.tasks || [])
-  const tadbeerShipped = tadbeerTasks.filter((t: any) => t.status === 'shipped').length
-  const tadbeerProgress = tadbeerTasks.length > 0 ? Math.round((tadbeerShipped / tadbeerTasks.length) * 100) : 0
+  function handleCreateNewMasterProject(info: { name: string; subtitle: string; description: string; colorTheme: any }) {
+    const newMp: MasterProjectInfo = {
+      id: `mp-${Date.now()}`,
+      name: info.name.trim(),
+      subtitle: info.subtitle.trim() || 'Master Client Program',
+      description: info.description.trim() || `Strategic initiatives for ${info.name.trim()}.`,
+      colorTheme: info.colorTheme || 'emerald'
+    }
+
+    const updated = [...masterProjects, newMp]
+    saveMasterProjects(updated)
+    setActiveMasterProjectName(newMp.name)
+    setSelectedMasterFilter(newMp.name)
+    toast.success(`Master Project "${newMp.name}" created!`)
+    setIsCreateMasterModalOpen(false)
+  }
 
   return (
     <div className="space-y-8 pb-16 font-sans">
-      {/* Header */}
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
             <span>CALLMY</span>
             <span>•</span>
-            <span className="text-black font-normal">{totalProjects} ACTIVE PORTFOLIO INITIATIVES</span>
+            <span className="text-black font-normal">{allMasterNames.length} MASTER PROGRAMS &amp; {totalProjects} INITIATIVES</span>
           </div>
           <h1 className="text-3xl font-light tracking-tight text-black">
-            Master Programs &amp; Initiatives
+            Master Projects &amp; Initiatives
           </h1>
         </div>
 
@@ -116,8 +232,16 @@ export default function ProjectsPage() {
           </button>
 
           <button
+            onClick={() => setIsCreateMasterModalOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+          >
+            <Building2 size={14} className="text-indigo-600" />
+            <span>New Master Project</span>
+          </button>
+
+          <button
             onClick={() => {
-              setCreateInitialMasterProject('Tadbeer TT')
+              setCreateInitialMasterProject(activeMasterProjectName)
               setIsCreateModalOpen(true)
             }}
             className="flex items-center gap-2 px-4 py-2 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer font-body"
@@ -129,9 +253,108 @@ export default function ProjectsPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* MASTER PROGRAM SHOWCASE: TADBEER TT (EXECUTIVE COMMAND BANNER)            */}
+      {/* MASTER PROGRAM SWITCHER CAROUSEL (TADBEER TT, INTERNAL CORE, + CREATE)    */}
       {/* ========================================================================= */}
-      <div className="p-8 rounded-3xl bg-gradient-to-br from-neutral-900 via-neutral-900 to-black text-white shadow-xl relative overflow-hidden font-body border border-neutral-800">
+      <div className="space-y-3 font-body">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">
+            SELECT MASTER PROGRAM / CLIENT HUB
+          </span>
+          <button
+            onClick={() => setIsCreateMasterModalOpen(true)}
+            className="text-xs text-indigo-600 hover:underline font-mono flex items-center gap-1 cursor-pointer"
+          >
+            <Plus size={13} />
+            <span>Create Master Project</span>
+          </button>
+        </div>
+
+        {/* Master Project Cards Selector */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {allMasterNames.map((mName) => {
+            const isSelected = activeMasterProjectName.toLowerCase() === mName.toLowerCase()
+            const mProjects = projects.filter(p => (p.master_project || 'Tadbeer TT').toLowerCase() === mName.toLowerCase())
+            const mTasks = mProjects.flatMap(p => p.tasks || [])
+            const mShipped = mTasks.filter((t: any) => t.status === 'shipped').length
+            const mProgress = mTasks.length > 0 ? Math.round((mShipped / mTasks.length) * 100) : 0
+            const info = masterProjects.find(m => m.name.toLowerCase() === mName.toLowerCase())
+
+            return (
+              <button
+                key={mName}
+                type="button"
+                onClick={() => {
+                  setActiveMasterProjectName(mName)
+                  setSelectedMasterFilter(mName)
+                }}
+                className={cn(
+                  'p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between space-y-3 relative group shadow-xs',
+                  isSelected
+                    ? 'bg-neutral-900 text-white border-neutral-900 ring-2 ring-neutral-900/20'
+                    : 'bg-white hover:bg-[#fafbff] border-black/[0.08] text-black'
+                )}
+              >
+                <div className="flex items-start justify-between gap-2 w-full">
+                  <div className="space-y-0.5 min-w-0 flex-1">
+                    <span className={cn(
+                      'text-[9px] font-mono uppercase tracking-wider block',
+                      isSelected ? 'text-emerald-400' : 'text-[#6b7280]'
+                    )}>
+                      MASTER PROGRAM
+                    </span>
+                    <h4 className={cn('text-sm font-medium truncate', isSelected ? 'text-white' : 'text-black')}>
+                      {mName}
+                    </h4>
+                    {info?.subtitle && (
+                      <p className={cn('text-[11px] truncate font-light', isSelected ? 'text-white/60' : 'text-[#9ca3af]')}>
+                        {info.subtitle}
+                      </p>
+                    )}
+                  </div>
+
+                  <span className={cn(
+                    'px-2 py-0.5 rounded-full text-[10px] font-mono font-medium flex-shrink-0',
+                    isSelected ? 'bg-white/10 text-white' : 'bg-black/[0.04] text-[#6b7280]'
+                  )}>
+                    {mProjects.length} {mProjects.length === 1 ? 'project' : 'projects'}
+                  </span>
+                </div>
+
+                {/* Progress bar inside card */}
+                <div className="w-full space-y-1">
+                  <div className={cn('flex justify-between text-[10px] font-mono', isSelected ? 'text-white/60' : 'text-[#9ca3af]')}>
+                    <span>{mShipped}/{mTasks.length} shipped</span>
+                    <span>{mProgress}%</span>
+                  </div>
+                  <div className={cn('w-full h-1 rounded-full overflow-hidden', isSelected ? 'bg-white/20' : 'bg-black/[0.06]')}>
+                    <div 
+                      className={cn('h-full rounded-full transition-all duration-300', isSelected ? 'bg-emerald-400' : 'bg-black')}
+                      style={{ width: `${mProgress}%` }}
+                    />
+                  </div>
+                </div>
+              </button>
+            )
+          })}
+
+          {/* Quick Create Card Button */}
+          <button
+            type="button"
+            onClick={() => setIsCreateMasterModalOpen(true)}
+            className="p-4 rounded-2xl border border-dashed border-black/[0.15] hover:border-black bg-white hover:bg-neutral-50 text-left transition-all cursor-pointer flex flex-col items-center justify-center space-y-1.5 min-h-[105px] text-[#6b7280] hover:text-black group shadow-xs"
+          >
+            <div className="w-7 h-7 rounded-xl bg-black/[0.05] group-hover:bg-black group-hover:text-white flex items-center justify-center transition-colors">
+              <Plus size={14} />
+            </div>
+            <span className="text-xs font-normal">Add Master Project</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* ACTIVE MASTER PROGRAM COMMAND BANNER (DYNAMICALLY SHOWS SELECTED MASTER) */}
+      {/* ========================================================================= */}
+      <div className="p-8 rounded-3xl bg-gradient-to-br from-neutral-900 via-neutral-900 to-black text-white shadow-xl relative overflow-hidden font-body border border-neutral-800 animate-fadeIn">
         {/* Subtle Ambient Background Elements */}
         <div className="absolute right-0 top-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute left-1/3 bottom-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -143,110 +366,118 @@ export default function ProjectsPage() {
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-md bg-white/10 text-white font-mono text-[10px] uppercase tracking-wider font-semibold border border-white/15 flex items-center gap-1.5">
                   <Building2 size={12} className="text-emerald-400" />
-                  MASTER PROGRAM
+                  ACTIVE MASTER PROGRAM
                 </span>
                 <span className="text-white/40 text-xs font-mono">•</span>
-                <span className="text-emerald-400 text-xs font-mono font-medium">Active Transformation Hub</span>
+                <span className="text-emerald-400 text-xs font-mono font-medium">Command Hub</span>
               </div>
               <h2 className="text-2xl font-light tracking-tight text-white flex items-center gap-3">
-                <span>Tadbeer TT</span>
-                <span className="text-xs font-mono text-white/50 font-normal">
-                  (Tadbeer Transformation Trading)
-                </span>
+                <span>{activeMasterObj.name}</span>
+                {activeMasterObj.subtitle && (
+                  <span className="text-xs font-mono text-white/50 font-normal">
+                    ({activeMasterObj.subtitle})
+                  </span>
+                )}
               </h2>
               <p className="text-xs text-white/60 font-light max-w-2xl leading-relaxed">
-                Centralized executive command hub grouping all client initiatives, commercial pricing packages, CRM rollouts, and e-commerce infrastructure.
+                {activeMasterObj.description}
               </p>
             </div>
 
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={() => {
-                  setSelectedMasterFilter('Tadbeer TT')
+                  setSelectedMasterFilter(activeMasterObj.name)
                 }}
                 className={cn(
                   'px-4 py-2 rounded-xl text-xs font-normal transition-all cursor-pointer border',
-                  selectedMasterFilter === 'Tadbeer TT'
+                  selectedMasterFilter === activeMasterObj.name
                     ? 'bg-white text-black border-white font-medium'
                     : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
                 )}
               >
-                {selectedMasterFilter === 'Tadbeer TT' ? 'Filtered: Tadbeer TT' : 'Filter Tadbeer TT'}
+                {selectedMasterFilter === activeMasterObj.name ? `Filtered: ${activeMasterObj.name}` : `Filter ${activeMasterObj.name}`}
               </button>
 
               <button
                 onClick={() => {
-                  setCreateInitialMasterProject('Tadbeer TT')
+                  setCreateInitialMasterProject(activeMasterObj.name)
                   setIsCreateModalOpen(true)
                 }}
                 className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black rounded-xl text-xs font-medium transition-all cursor-pointer shadow-sm"
               >
                 <Plus size={14} />
-                <span>Add Initiative to Tadbeer TT</span>
+                <span>Add Initiative to {activeMasterObj.name}</span>
               </button>
             </div>
           </div>
 
-          {/* Middle Row: Sub-Initiatives Grid inside Tadbeer TT */}
+          {/* Middle Row: Sub-Initiatives Grid inside this Master Project */}
           <div className="space-y-2.5">
             <span className="text-[10px] font-mono text-white/50 uppercase tracking-wider block font-light">
-              SUB-INITIATIVES UNDER TADBEER TT ({tadbeerProjects.length})
+              SUB-INITIATIVES UNDER {activeMasterObj.name.toUpperCase()} ({activeMasterProjects.length})
             </span>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {tadbeerProjects.map((p) => {
-                const pTasks = p.tasks || []
-                const pShipped = pTasks.filter((t: any) => t.status === 'shipped').length
-                const pProg = pTasks.length > 0 ? Math.round((pShipped / pTasks.length) * 100) : 0
+            {activeMasterProjects.length === 0 ? (
+              <div className="py-8 text-center rounded-2xl bg-white/[0.03] border border-dashed border-white/10 text-white/50 text-xs font-light">
+                No initiatives assigned to {activeMasterObj.name} yet. Click &quot;Add Initiative to {activeMasterObj.name}&quot; above.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {activeMasterProjects.map((p) => {
+                  const pTasks = p.tasks || []
+                  const pShipped = pTasks.filter((t: any) => t.status === 'shipped').length
+                  const pProg = pTasks.length > 0 ? Math.round((pShipped / pTasks.length) * 100) : 0
 
-                return (
-                  <Link
-                    key={p.id}
-                    href={`/projects/${p.id}`}
-                    className="p-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/20 transition-all block group space-y-2"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-medium text-white truncate group-hover:text-emerald-400 transition-colors">
-                        {p.name}
-                      </span>
-                      <ArrowUpRight size={13} className="text-white/40 group-hover:text-white transition-colors flex-shrink-0" />
-                    </div>
-
-                    <p className="text-[11px] text-white/60 line-clamp-1 font-light">
-                      {p.description || 'No description'}
-                    </p>
-
-                    <div className="space-y-1 pt-1">
-                      <div className="flex justify-between text-[10px] font-mono text-white/50">
-                        <span>{pShipped}/{pTasks.length} shipped</span>
-                        <span>{pProg}%</span>
+                  return (
+                    <Link
+                      key={p.id}
+                      href={`/projects/${p.id}`}
+                      className="p-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-white/20 transition-all block group space-y-2"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium text-white truncate group-hover:text-emerald-400 transition-colors">
+                          {p.name}
+                        </span>
+                        <ArrowUpRight size={13} className="text-white/40 group-hover:text-white transition-colors flex-shrink-0" />
                       </div>
-                      <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-emerald-400 rounded-full transition-all duration-300"
-                          style={{ width: `${pProg}%` }}
-                        />
+
+                      <p className="text-[11px] text-white/60 line-clamp-1 font-light">
+                        {p.description || 'No description'}
+                      </p>
+
+                      <div className="space-y-1 pt-1">
+                        <div className="flex justify-between text-[10px] font-mono text-white/50">
+                          <span>{pShipped}/{pTasks.length} shipped</span>
+                          <span>{pProg}%</span>
+                        </div>
+                        <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-emerald-400 rounded-full transition-all duration-300"
+                            style={{ width: `${pProg}%` }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           {/* Bottom Row: Program Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 border-t border-white/[0.08] text-xs font-mono text-white/80">
             <div>
               <span className="text-[10px] text-white/40 block uppercase">TOTAL INITIATIVES</span>
-              <span className="text-lg font-light text-white">{tadbeerProjects.length} Active</span>
+              <span className="text-lg font-light text-white">{activeMasterProjects.length} Active</span>
             </div>
             <div>
               <span className="text-[10px] text-white/40 block uppercase">OVERALL COMPLETION</span>
-              <span className="text-lg font-light text-emerald-400">{tadbeerProgress}% Shipped</span>
+              <span className="text-lg font-light text-emerald-400">{activeMasterProgress}% Shipped</span>
             </div>
             <div>
               <span className="text-[10px] text-white/40 block uppercase">DELIVERABLES</span>
-              <span className="text-lg font-light text-white">{tadbeerShipped} / {tadbeerTasks.length} Done</span>
+              <span className="text-lg font-light text-white">{activeMasterShipped} / {activeMasterTasks.length} Done</span>
             </div>
             <div>
               <span className="text-[10px] text-white/40 block uppercase">PROGRAM STATUS</span>
@@ -256,7 +487,7 @@ export default function ProjectsPage() {
         </div>
       </div>
 
-      {/* Portfolio Quick Overview Cards */}
+      {/* Portfolio Metrics Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-body">
         {/* Metric 1: Overall Delivery Rate */}
         <div className="p-5 rounded-3xl bg-white border border-black/[0.06] shadow-sm flex items-center justify-between">
@@ -286,8 +517,8 @@ export default function ProjectsPage() {
         <div className="p-5 rounded-3xl bg-white border border-black/[0.06] shadow-sm flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Master Programs</span>
-            <div className="text-2xl font-light text-purple-700 tracking-tight">{masterProjectsList.length}</div>
-            <div className="text-[11px] text-[#9ca3af] font-mono">Tadbeer TT + Extensions</div>
+            <div className="text-2xl font-light text-purple-700 tracking-tight">{allMasterNames.length}</div>
+            <div className="text-[11px] text-[#9ca3af] font-mono">Selectable Program Hubs</div>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-600 flex items-center justify-center">
             <Building2 size={22} />
@@ -323,20 +554,23 @@ export default function ProjectsPage() {
             All Programs ({projects.length})
           </button>
 
-          {masterProjectsList.map((mName) => {
-            const count = projects.filter(p => (p.master_project || 'Tadbeer TT') === mName).length
+          {allMasterNames.map((mName) => {
+            const count = projects.filter(p => (p.master_project || 'Tadbeer TT').toLowerCase() === mName.toLowerCase()).length
             return (
               <button
                 key={mName}
-                onClick={() => setSelectedMasterFilter(mName)}
+                onClick={() => {
+                  setSelectedMasterFilter(mName)
+                  setActiveMasterProjectName(mName)
+                }}
                 className={cn(
                   'px-3.5 py-1.5 rounded-xl transition-all cursor-pointer font-normal flex items-center gap-1.5 whitespace-nowrap',
-                  selectedMasterFilter === mName
+                  selectedMasterFilter.toLowerCase() === mName.toLowerCase()
                     ? 'bg-white text-black font-medium shadow-xs'
                     : 'text-[#6b7280] hover:text-black'
                 )}
               >
-                <Building2 size={12} className={selectedMasterFilter === mName ? 'text-emerald-600' : 'text-[#9ca3af]'} />
+                <Building2 size={12} className={selectedMasterFilter.toLowerCase() === mName.toLowerCase() ? 'text-emerald-600' : 'text-[#9ca3af]'} />
                 <span>{mName}</span>
                 <span className="px-1.5 py-0.2 bg-black/[0.05] rounded-full text-[10px] font-mono">
                   {count}
@@ -455,12 +689,25 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      {/* Creation Modal */}
+      {/* Creation Modal for Initiatives */}
       {isCreateModalOpen && (
         <CreateProjectWizard 
           initialMasterProject={createInitialMasterProject}
+          availableMasterProjects={allMasterNames}
+          onOpenCreateMaster={() => {
+            setIsCreateModalOpen(false)
+            setIsCreateMasterModalOpen(true)
+          }}
           onClose={() => setIsCreateModalOpen(false)} 
           onSuccess={fetchProjects} 
+        />
+      )}
+
+      {/* Dedicated Creation Modal for Master Projects */}
+      {isCreateMasterModalOpen && (
+        <CreateMasterProjectModal
+          onClose={() => setIsCreateMasterModalOpen(false)}
+          onCreate={handleCreateNewMasterProject}
         />
       )}
 
@@ -473,12 +720,123 @@ export default function ProjectsPage() {
   )
 }
 
+/**
+ * Modal to create a new Master Project / Organization Hub
+ */
+function CreateMasterProjectModal({
+  onClose,
+  onCreate
+}: {
+  onClose: () => void
+  onCreate: (info: { name: string; subtitle: string; description: string; colorTheme: any }) => void
+}) {
+  const [name, setName] = useState('')
+  const [subtitle, setSubtitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [colorTheme, setColorTheme] = useState<'emerald' | 'indigo' | 'purple' | 'blue' | 'amber' | 'rose'>('emerald')
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!name.trim()) return
+    onCreate({ name, subtitle, description, colorTheme })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn font-sans">
+      <div className="bg-white border border-black/[0.1] rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col font-body animate-scaleUp">
+        {/* Header */}
+        <div className="p-6 border-b border-black/[0.06] flex items-center justify-between bg-white">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center border border-emerald-200">
+              <Building2 size={16} />
+            </div>
+            <div>
+              <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block font-light">
+                ORGANIZATION HUB
+              </span>
+              <h2 className="text-base font-normal text-black tracking-tight">Create Master Project</h2>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 text-[#9ca3af] hover:text-black rounded-xl cursor-pointer">
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Form Body */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 bg-[#fbfbfd]">
+          <div>
+            <label className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block mb-1.5 font-light">
+              MASTER PROJECT / CLIENT NAME *
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Tadbeer TT, Apex Logistics, Global Retail"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-4 py-2.5 bg-white border border-black/[0.1] focus:border-black rounded-xl text-xs text-black outline-none font-light shadow-xs"
+              autoFocus
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block mb-1.5 font-light">
+              CLIENT / PROGRAM SUBTITLE
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Tadbeer Transformation Trading"
+              value={subtitle}
+              onChange={(e) => setSubtitle(e.target.value)}
+              className="w-full px-4 py-2.5 bg-white border border-black/[0.1] focus:border-black rounded-xl text-xs text-black outline-none font-light shadow-xs"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block mb-1.5 font-light">
+              STRATEGIC DESCRIPTION
+            </label>
+            <textarea
+              rows={3}
+              placeholder="Describe the overarching goals and scope of this master program..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-4 py-2.5 bg-white border border-black/[0.1] focus:border-black rounded-xl text-xs text-black outline-none font-light shadow-xs resize-none"
+            />
+          </div>
+
+          <div className="pt-2 flex items-center justify-end gap-2 border-t border-black/[0.04]">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-xs text-[#6b7280] hover:text-black font-light cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!name.trim()}
+              className="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs disabled:opacity-50"
+            >
+              Create Master Program
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 function CreateProjectWizard({ 
   initialMasterProject = 'Tadbeer TT',
+  availableMasterProjects = ['Tadbeer TT'],
+  onOpenCreateMaster,
   onClose, 
   onSuccess 
 }: { 
   initialMasterProject?: string
+  availableMasterProjects?: string[]
+  onOpenCreateMaster?: () => void
   onClose: () => void
   onSuccess: () => void 
 }) {
@@ -494,6 +852,8 @@ function CreateProjectWizard({
     deadline: '',
     priority: 'p1'
   })
+  const [customMasterInput, setCustomMasterInput] = useState('')
+  const [isTypingCustomMaster, setIsTypingCustomMaster] = useState(false)
   const [aiTestResult, setAiTestResult] = useState('')
   const [testing, setTesting] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -529,6 +889,8 @@ function CreateProjectWizard({
     }
 
     if (workspaceId) {
+      const chosenMaster = isTypingCustomMaster && customMasterInput.trim() ? customMasterInput.trim() : (formData.master_project || 'Tadbeer TT')
+
       const { data, error } = await supabase.from('projects').insert({
         workspace_id: workspaceId,
         owner_id: session.user.id,
@@ -543,7 +905,7 @@ function CreateProjectWizard({
       }).select().single()
       
       if (!error && data) {
-        toast.success(`Initiative created under ${formData.master_project}!`)
+        toast.success(`Initiative created under ${chosenMaster}!`)
         onSuccess()
         onClose()
         router.push(`/projects/${data.id}`)
@@ -576,7 +938,7 @@ function CreateProjectWizard({
                 STEP {step} OF 6
               </span>
               <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[10px] font-mono font-medium">
-                {formData.master_project || 'Tadbeer TT'}
+                {isTypingCustomMaster && customMasterInput ? customMasterInput : (formData.master_project || 'Tadbeer TT')}
               </span>
             </div>
             <h2 className="text-lg font-normal text-black tracking-tight">
@@ -598,32 +960,75 @@ function CreateProjectWizard({
           {step === 1 && (
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block mb-2 font-light">
-                  MASTER PROGRAM / CLIENT ORGANIZATION
-                </label>
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  {['Tadbeer TT', 'Internal Core'].map((mp) => (
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">
+                    SELECT MASTER PROGRAM
+                  </label>
+                  {onOpenCreateMaster && (
+                    <button
+                      type="button"
+                      onClick={onOpenCreateMaster}
+                      className="text-xs text-indigo-600 hover:underline font-mono"
+                    >
+                      + Create New Master
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+                  {availableMasterProjects.map((mp) => (
                     <button
                       key={mp}
                       type="button"
-                      onClick={() => setFormData({ ...formData, master_project: mp })}
+                      onClick={() => {
+                        setIsTypingCustomMaster(false)
+                        setFormData({ ...formData, master_project: mp })
+                      }}
                       className={cn(
-                        'p-3 rounded-xl border text-xs text-left cursor-pointer transition-all flex items-center gap-2',
-                        formData.master_project === mp
+                        'p-2.5 rounded-xl border text-xs text-left cursor-pointer transition-all flex items-center gap-2 truncate',
+                        !isTypingCustomMaster && formData.master_project === mp
                           ? 'bg-emerald-50 border-emerald-400 text-emerald-950 font-medium shadow-xs'
                           : 'bg-white border-black/[0.08] text-[#6b7280] hover:text-black'
                       )}
                     >
-                      <Building2 size={14} className={formData.master_project === mp ? 'text-emerald-600' : 'text-[#9ca3af]'} />
-                      <span>{mp}</span>
+                      <Building2 size={13} className={!isTypingCustomMaster && formData.master_project === mp ? 'text-emerald-600' : 'text-[#9ca3af]'} />
+                      <span className="truncate">{mp}</span>
                     </button>
                   ))}
+                  
+                  <button
+                    type="button"
+                    onClick={() => setIsTypingCustomMaster(true)}
+                    className={cn(
+                      'p-2.5 rounded-xl border text-xs text-left cursor-pointer transition-all flex items-center gap-2',
+                      isTypingCustomMaster
+                        ? 'bg-indigo-50 border-indigo-400 text-indigo-950 font-medium shadow-xs'
+                        : 'bg-white border-black/[0.08] text-[#6b7280] hover:text-black'
+                    )}
+                  >
+                    <Plus size={13} />
+                    <span>Custom Name</span>
+                  </button>
                 </div>
+
+                {isTypingCustomMaster && (
+                  <input
+                    type="text"
+                    placeholder="Enter custom Master Program name..."
+                    value={customMasterInput}
+                    onChange={(e) => {
+                      setCustomMasterInput(e.target.value)
+                      setFormData({ ...formData, master_project: e.target.value })
+                    }}
+                    className="w-full px-4 py-2.5 bg-white border border-indigo-300 focus:border-black rounded-xl text-xs text-black outline-none font-light shadow-xs mb-3"
+                    autoFocus
+                  />
+                )}
               </div>
 
               <div>
                 <label className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block mb-2 font-light">
-                  INITIATIVE TITLE
+                  INITIATIVE TITLE *
                 </label>
                 <input
                   type="text"
@@ -631,7 +1036,7 @@ function CreateProjectWizard({
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-4 py-3 bg-white border border-black/[0.1] focus:border-black rounded-2xl text-sm text-black outline-none font-light shadow-sm"
-                  autoFocus
+                  autoFocus={!isTypingCustomMaster}
                 />
               </div>
 
