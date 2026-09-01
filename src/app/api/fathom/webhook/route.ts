@@ -3,12 +3,14 @@ import { getApiClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
+export async function GET() {
+  return NextResponse.json({ status: 'Fathom Webhook Endpoint Active' })
+}
+
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text()
-    const signature = req.headers.get('fathom-signature') || req.headers.get('x-fathom-signature')
     
-    // Parse incoming webhook payload
     let payload: any = {}
     try {
       payload = JSON.parse(rawBody)
@@ -24,7 +26,6 @@ export async function POST(req: NextRequest) {
 
     const supabase = getApiClient()
 
-    // Auto-create action items as tasks if configured
     if (Array.isArray(payload.action_items) && payload.action_items.length > 0) {
       const { data: workspaces } = await supabase.from('workspaces').select('id, owner_id').limit(1).single()
       if (workspaces) {

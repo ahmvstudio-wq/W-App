@@ -3,6 +3,10 @@ import { getApiClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
+export async function GET() {
+  return NextResponse.json({ status: 'Fathom Convert-to-Task Endpoint Active' })
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { title, description, priority = 'p1', projectId } = await req.json()
