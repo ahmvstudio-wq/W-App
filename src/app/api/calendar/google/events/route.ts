@@ -1,3 +1,4 @@
+export const runtime = 'edge'
 import { NextRequest, NextResponse } from 'next/server'
 import { getValidGoogleAccessToken, fetchGoogleCalendarEvents } from '@/lib/google/calendar'
 

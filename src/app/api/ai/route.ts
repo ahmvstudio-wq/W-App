@@ -1,3 +1,4 @@
+export const runtime = 'edge'
 import { NextResponse } from 'next/server'
 import Groq from 'groq-sdk'
 import { Anthropic } from '@anthropic-ai/sdk'
