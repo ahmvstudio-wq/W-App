@@ -8,8 +8,7 @@ import type { User } from '@/types'
 import { getInitials, cn } from '@/lib/utils'
 import {
   LayoutDashboard, FolderKanban, CheckSquare, FileText,
-  Zap, Settings, LogOut, ChevronDown, Plus, Search,
-  Activity, ShieldCheck, Clock, Sparkles
+  Zap, Settings, LogOut, Plus, Search, Sparkles
 } from 'lucide-react'
 import CommandPalette from '@/components/CommandPalette'
 import FocusTimer from '@/components/FocusTimer'
@@ -26,6 +25,7 @@ const NAV = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -120,48 +120,30 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#fbfbfd] text-[#111827] font-sans selection:bg-black/10 relative">
+    <div className="min-h-screen bg-[#fbfbfd] text-[#111827] font-sans selection:bg-black/10 flex flex-col relative">
       <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
       {isCreateTaskOpen && (
         <CreateTaskModal onClose={() => setIsCreateTaskOpen(false)} onSuccess={() => {}} />
       )}
       <FocusTimer />
 
-      {/* Minimal Clean White Sidebar */}
-      <aside className="w-[250px] flex-shrink-0 bg-[#ffffff] border-r border-black/[0.06] flex flex-col fixed top-0 left-0 bottom-0 z-40">
-        {/* Brand Header */}
-        <div className="p-5 pb-3">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-black text-white font-medium text-xs flex items-center justify-center shadow-sm">
-                CM
-              </div>
-              <div>
-                <span className="font-normal text-sm tracking-tight text-black block">CallMy Mgmt</span>
-                <span className="text-[10px] text-[#8a8d95] font-mono block tracking-wider">callmy-mgmt</span>
-              </div>
+      {/* Minimalist Top Navigation Bar */}
+      <header className="sticky top-0 z-40 h-16 bg-white/80 backdrop-blur-xl border-b border-black/[0.06] px-6 sm:px-10 flex items-center justify-between">
+        {/* Left: Brand Identity */}
+        <div className="flex items-center gap-6">
+          <Link href="/dashboard" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-xl bg-black text-white font-medium text-xs flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+              CM
             </div>
-            <div className="px-2 py-0.5 rounded-full bg-black/[0.04] border border-black/[0.06] text-black text-[10px] font-mono">
-              v1.0
+            <div>
+              <span className="font-normal text-sm tracking-tight text-black block leading-none">CallMy Mgmt</span>
+              <span className="text-[9px] text-[#9ca3af] font-mono block tracking-wider mt-0.5 font-light">[CALLMY_MGMT]</span>
             </div>
-          </div>
-
-          {/* Workspace Pill Selector */}
-          <div className="w-full p-2.5 bg-[#f5f5f7] border border-black/[0.04] rounded-xl flex items-center gap-2.5 text-left">
-            <div className="w-5 h-5 rounded-md bg-black text-white flex items-center justify-center flex-shrink-0 font-medium text-[9px]">
-              {user?.name?.[0]?.toUpperCase() || 'C'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <span className="text-black text-xs font-normal block truncate">Main Workspace</span>
-            </div>
-          </div>
+          </Link>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto font-body font-light">
-          <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-[#9ca3af]">
-            Navigation
-          </div>
+        {/* Center: Minimalist Navigation Pills */}
+        <nav className="hidden md:flex items-center gap-1 bg-[#f5f5f7] border border-black/[0.04] p-1 rounded-2xl font-body">
           {NAV.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href))
             return (
@@ -169,25 +151,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 key={href}
                 href={href}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all duration-150 relative',
+                  'flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs transition-all duration-150 relative font-light',
                   active
-                    ? 'bg-black text-white font-normal shadow-sm'
-                    : 'text-[#6b7280] hover:text-black hover:bg-black/[0.03]'
+                    ? 'bg-white text-black font-normal shadow-sm'
+                    : 'text-[#6b7280] hover:text-black hover:bg-black/[0.02]'
                 )}
               >
                 <Icon
-                  size={15}
+                  size={14}
                   className={cn(
                     'transition-colors',
-                    active ? 'text-white' : 'text-[#9ca3af]'
+                    active ? 'text-black' : 'text-[#9ca3af]'
                   )}
                 />
-                <span className="flex-1">{label}</span>
+                <span>{label}</span>
                 {href === '/ai' && (
-                  <span className={cn(
-                    "px-1.5 py-0.2 rounded text-[9px] font-mono",
-                    active ? "bg-white/20 text-white" : "bg-black/[0.05] text-[#6b7280]"
-                  )}>
+                  <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-black/[0.04] text-[#6b7280]">
                     24/7
                   </span>
                 )}
@@ -196,77 +175,73 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* Bottom User Profile */}
-        <div className="p-3 border-t border-black/[0.06] bg-[#fdfdfe]">
-          <div className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-black/[0.03] transition-colors">
-            <div className="w-7 h-7 rounded-full bg-black text-white font-medium text-xs flex items-center justify-center shadow-sm flex-shrink-0">
-              {getInitials(user?.name)}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-black text-xs font-normal truncate">{user?.name}</div>
-              <div className="text-[#9ca3af] text-[10px] truncate font-mono">{user?.email}</div>
-            </div>
-            <div className="flex items-center gap-1">
-              <Link
-                href="/settings"
-                className="p-1.5 text-[#9ca3af] hover:text-black hover:bg-black/[0.05] rounded-lg transition-colors"
-                title="Settings"
-              >
-                <Settings size={13} />
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="p-1.5 text-[#9ca3af] hover:text-red-600 hover:bg-black/[0.05] rounded-lg transition-colors cursor-pointer"
-                title="Sign out"
-              >
-                <LogOut size={13} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <div className="flex-1 ml-[250px] flex flex-col min-h-screen">
-        {/* Floating Minimal Top Bar */}
-        <header className="sticky top-0 z-30 h-16 bg-[#fbfbfd]/80 backdrop-blur-xl border-b border-black/[0.06] px-8 flex items-center justify-between">
+        {/* Right Actions & User Profile */}
+        <div className="flex items-center gap-3 font-body">
           {/* Quick Search */}
           <button
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="flex items-center gap-2.5 px-3.5 py-1.5 bg-white hover:bg-[#f5f5f7] border border-black/[0.08] rounded-xl text-xs text-[#6b7280] hover:text-black transition-all cursor-pointer w-72 shadow-sm font-body font-light"
+            className="flex items-center gap-2 px-3 py-1.5 bg-[#f5f5f7] hover:bg-[#ebebee] border border-black/[0.04] rounded-xl text-xs text-[#6b7280] hover:text-black transition-all cursor-pointer font-light"
           >
-            <Search size={14} className="text-[#9ca3af]" />
-            <span className="flex-1 text-left">Search tasks, projects, docs...</span>
-            <kbd className="px-1.5 py-0.5 bg-black/[0.04] border border-black/[0.06] rounded text-[10px] font-mono text-[#6b7280]">
+            <Search size={13} className="text-[#9ca3af]" />
+            <span className="hidden sm:inline">Search...</span>
+            <kbd className="px-1.5 py-0.2 bg-white border border-black/[0.06] rounded text-[9px] font-mono text-[#6b7280]">
               ⌘K
             </kbd>
           </button>
 
-          {/* Quick Actions */}
-          <div className="flex items-center gap-3 font-body">
+          {/* New Task Trigger */}
+          <button
+            onClick={() => setIsCreateTaskOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer"
+          >
+            <Plus size={14} />
+            <span>Create Task</span>
+          </button>
+
+          {/* User Profile Avatar with Dropdown */}
+          <div className="relative">
             <button
-              onClick={() => setIsCreateTaskOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer"
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="w-8 h-8 rounded-full bg-black text-white font-medium text-xs flex items-center justify-center shadow-sm cursor-pointer hover:ring-2 hover:ring-black/10 transition-all"
             >
-              <Plus size={14} />
-              <span>Create Task</span>
+              {getInitials(user?.name)}
             </button>
 
-            <Link
-              href="/ai"
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#f5f5f7] border border-black/[0.08] rounded-xl text-xs text-black font-normal transition-all shadow-sm"
-            >
-              <Sparkles size={13} className="text-black" />
-              <span>ChatGPT Action</span>
-            </Link>
-          </div>
-        </header>
+            {userMenuOpen && (
+              <div 
+                className="absolute right-0 mt-2 w-52 bg-white border border-black/[0.08] rounded-2xl shadow-xl p-2 z-50 animate-fadeIn font-body"
+                onClick={() => setUserMenuOpen(false)}
+              >
+                <div className="p-2.5 border-b border-black/[0.04] mb-1">
+                  <div className="text-xs font-normal text-black truncate">{user?.name}</div>
+                  <div className="text-[10px] text-[#9ca3af] font-mono truncate">{user?.email}</div>
+                </div>
 
-        {/* Main Page Body */}
-        <main className="flex-1 p-8 max-w-[1500px] w-full mx-auto">
-          {children}
-        </main>
-      </div>
+                <Link
+                  href="/settings"
+                  className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-[#6b7280] hover:text-black hover:bg-black/[0.03] transition-colors"
+                >
+                  <Settings size={14} />
+                  <span>Settings</span>
+                </Link>
+
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-red-600 hover:bg-red-50 transition-colors cursor-pointer text-left"
+                >
+                  <LogOut size={14} />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Main Full-Width Page Body */}
+      <main className="flex-1 p-6 sm:p-10 max-w-[1500px] w-full mx-auto">
+        {children}
+      </main>
     </div>
   )
 }
