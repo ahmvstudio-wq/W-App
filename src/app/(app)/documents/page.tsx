@@ -1,5 +1,7 @@
 'use client'
 
+export const runtime = 'edge'
+
 import { useState, useEffect } from 'react'
 import { Plus, Search, Filter, Folder, FileText, Clock, AlertTriangle, MoreVertical, Trash2, BookOpen, Layers, CheckSquare, Sparkles } from 'lucide-react'
 import Link from 'next/link'

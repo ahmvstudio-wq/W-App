@@ -1,5 +1,7 @@
 'use client'
 
+export const runtime = 'edge'
+
 import { useState, useEffect } from 'react'
 import { 
   User, Settings as SettingsIcon, LogOut, Bell, Calendar, 

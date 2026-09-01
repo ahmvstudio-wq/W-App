@@ -1,5 +1,7 @@
 'use client'
 
+export const runtime = 'edge'
+
 import { useState } from 'react'
 import { Zap, ChevronRight, MessageSquare, Plus, Trash2, Sparkles, Send, Activity, ShieldCheck, TrendingUp, CheckSquare } from 'lucide-react'
 import { callGroq, buildWorkspaceContext } from '@/lib/groq/client'
