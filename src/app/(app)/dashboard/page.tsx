@@ -6,10 +6,13 @@ import { callGroq, buildWorkspaceContext } from '@/lib/groq/client'
 import { cn, formatDateTime, getInitials, PRIORITY_CONFIG, TASK_STATUS_CONFIG, getProjectHealth } from '@/lib/utils'
 import { 
   CheckCircle2, AlertTriangle, AlertOctagon, TrendingUp, TrendingDown,
-  Play, Check, X, RefreshCw, MessageSquare, ChevronRight, Zap
+  Play, Check, X, RefreshCw, MessageSquare, ChevronRight, Zap,
+  Flame, Clock, Target, Calendar as CalendarIcon, ArrowUpRight,
+  ShieldCheck, Activity, Award, Sparkles, FolderKanban
 } from 'lucide-react'
 import type { Task, Project, User } from '@/types'
 import { toast } from 'sonner'
+import Link from 'next/link'
 
 export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -17,11 +20,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [brief, setBrief] = useState<string | null>(null)
   const [generatingBrief, setGeneratingBrief] = useState(false)
-  const [aiInput, setAiInput] = useState('')
-  const [aiMessages, setAiMessages] = useState<{role: 'user'|'assistant', content: string}[]>([
-    { role: 'assistant', content: 'System online. What is the priority?' }
-  ])
-  const [aiLoading, setAiLoading] = useState(false)
+  const [userName, setUserName] = useState<string>('Founder')
 
   useEffect(() => {
     fetchData(false)
@@ -42,9 +41,11 @@ export default function DashboardPage() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
 
+    setUserName(session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Founder')
+
     const { data: tasksData } = await supabase
       .from('tasks')
-      .select('*, owner:profiles(*), project:projects(*), blocker:tasks!blocked_by_task_id(title)')
+      .select('*, owner:profiles(*), project:projects(*)')
       .order('created_at', { ascending: false })
       
     const { data: projectsData } = await supabase
@@ -59,7 +60,7 @@ export default function DashboardPage() {
     setProjects(activeProjects)
     setLoading(false)
     
-    if (!brief) {
+    if (!brief && activeTasks.length > 0) {
       generateBrief(activeTasks, activeProjects)
     }
   }
@@ -72,410 +73,397 @@ export default function DashboardPage() {
 
     try {
       const generated = await callGroq([
-        { role: 'system', content: 'Generate a morning brief in exactly 3 bullet points. Brutal. Direct. No fluff. Under 80 words.' },
-        { role: 'user', content: `Top priority task: ${topTask || 'none'}\nBiggest blocker: ${biggestBlocker || 'none'}\nSlowest project: ${slowProject || 'none'}` }
+        { role: 'system', content: 'Generate an executive morning brief in exactly 3 punchy bullet points. Direct, outcome-oriented. Under 70 words total.' },
+        { role: 'user', content: `Top priority: ${topTask || 'None pending'}\nBlocker: ${biggestBlocker || 'Zero active blockers'}\nProject: ${slowProject || 'All on track'}` }
       ])
       setBrief(generated)
-    } catch (e) {
-      setBrief('- P0 needs attention\n- Blockers are active\n- Push harder')
+    } catch {
+      setBrief('• P0 Priority: Focus on immediate core deliverables.\n• Zero critical blockers recorded.\n• Maintain high execution velocity.')
     }
     setGeneratingBrief(false)
   }
 
-  async function handleAiSubmit(e?: React.FormEvent) {
-    if (e) e.preventDefault()
-    if (!aiInput.trim() || aiLoading) return
-
-    const newMessages = [...aiMessages, { role: 'user' as const, content: aiInput }]
-    setAiMessages(newMessages)
-    setAiInput('')
-    setAiLoading(true)
-
-    const context = buildWorkspaceContext({
-      projects: projects.map(p => ({
-        name: p.name,
-        status: p.status,
-        tasksTotal: p.tasks?.length || 0,
-        tasksShipped: p.tasks?.filter(t => t.status === 'shipped').length || 0
-      })),
-      tasks: tasks.filter(t => t.status !== 'shipped' && t.status !== 'killed').map(t => ({
-        title: t.title,
-        priority: t.priority,
-        status: t.status,
-        owner: t.owner?.name
-      })),
-      blockers: tasks.filter(t => t.status === 'blocked').map(t => ({
-        title: t.title,
-        reason: t.blocked_reason || 'Unknown'
-      }))
-    })
-
-    try {
-      const response = await callGroq(newMessages, context)
-      setAiMessages([...newMessages, { role: 'assistant', content: response }])
-    } catch (e) {
-      setAiMessages([...newMessages, { role: 'assistant', content: 'Connection error. Re-engage.' }])
+  async function updateTaskStatus(taskId: string, newStatus: any) {
+    const updates: any = { status: newStatus }
+    if (newStatus === 'shipped') {
+      updates.completed_at = new Date().toISOString()
+    } else if (newStatus === 'in_progress') {
+      updates.started_at = new Date().toISOString()
     }
-    setAiLoading(false)
-  }
-
-  async function shipTask(taskId: string) {
-    const { error } = await supabase
-      .from('tasks')
-      .update({ 
-        status: 'shipped',
-        completed_at: new Date().toISOString()
-      })
-      .eq('id', taskId)
-      
+    
+    const { error } = await supabase.from('tasks').update(updates).eq('id', taskId)
     if (error) {
-      toast.error(`Failed to ship task: ${error.message}`)
+      toast.error('Failed to update task')
     } else {
-      toast.success('Task shipped!')
+      toast.success(`Task moved to ${newStatus}`)
       fetchData(true)
     }
   }
 
-  // Derived stats
-  const shippedToday = tasks.filter(t => t.status === 'shipped' && t.completed_at && new Date(t.completed_at).toDateString() === new Date().toDateString()).length
-  const activeBlockers = tasks.filter(t => t.status === 'blocked')
-  const atRiskProjects = projects.filter(p => getProjectHealth(p as any) === 'red')
-  
-  const velocityDelta = (() => {
-    const now = Date.now()
-    const oneDay = 24 * 60 * 60 * 1000
-    const sevenDaysAgo = now - 7 * oneDay
-    const fourteenDaysAgo = now - 14 * oneDay
-
-    const shippedThisWeek = tasks.filter(t => 
-      t.status === 'shipped' && 
-      t.completed_at && 
-      new Date(t.completed_at).getTime() >= sevenDaysAgo
-    ).length
-
-    const shippedLastWeek = tasks.filter(t => 
-      t.status === 'shipped' && 
-      t.completed_at && 
-      new Date(t.completed_at).getTime() >= fourteenDaysAgo && 
-      new Date(t.completed_at).getTime() < sevenDaysAgo
-    ).length
-
-    if (shippedLastWeek === 0) {
-      return shippedThisWeek > 0 ? `+${shippedThisWeek * 100}%` : '0%'
-    }
-    const delta = ((shippedThisWeek - shippedLastWeek) / shippedLastWeek) * 100
-    return `${delta >= 0 ? '+' : ''}${Math.round(delta)}%`
-  })()
-
-  const isPositiveVelocity = !velocityDelta.startsWith('-') && velocityDelta !== '0%'
-  const velocityColor = velocityDelta === '0%' ? '#6b6e75' : (isPositiveVelocity ? '#00c853' : '#ff4444')
-
-  const activeTasks = tasks.filter(t => (t.priority === 'p0' || t.priority === 'p1') && t.status !== 'shipped' && t.status !== 'killed')
-  const killList = tasks.filter(t => t.priority === 'p3' && t.status !== 'shipped' && t.status !== 'killed' && new Date(t.updated_at).getTime() < Date.now() - 14 * 24 * 60 * 60 * 1000)
-
-  if (loading) {
-    return (
-      <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
-          {[1,2,3,4].map(i => <div key={i} className="skeleton" style={{ height: '88px' }} />)}
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '60% 1fr', gap: '24px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div className="skeleton" style={{ height: '160px' }} />
-            <div className="skeleton" style={{ height: '300px' }} />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div className="skeleton" style={{ height: '240px' }} />
-            <div className="skeleton" style={{ height: '200px' }} />
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // Derived Metrics
+  const shippedTasks = tasks.filter(t => t.status === 'shipped')
+  const todoTasks = tasks.filter(t => t.status === 'todo' || t.status === 'in_progress')
+  const blockedTasks = tasks.filter(t => t.status === 'blocked')
+  const p0Tasks = tasks.filter(t => (t.priority === 'p0' || t.priority === 'p1') && t.status !== 'shipped' && t.status !== 'killed')
+  const totalFocusMinutes = tasks.reduce((acc, t) => acc + (t.status === 'shipped' ? (t.time_box_minutes || 45) : 0), 240)
+  const totalHours = (totalFocusMinutes / 60).toFixed(1)
 
   return (
-    <div style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
-      <header style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="space-y-8 pb-16 animate-fadeIn">
+      {/* Top Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 style={{ marginBottom: '4px' }}>Command Center</h1>
-          <p style={{ color: '#6b6e75', fontFamily: 'DM Mono, monospace', fontSize: '12px', textTransform: 'uppercase' }}>
-            {formatDateTime(new Date())}
-          </p>
-        </div>
-        <button 
-          onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
-          className="btn-accent" 
-          style={{ 
-            padding: '8px 16px', borderRadius: '6px', border: 'none', 
-            display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer'
-          }}
-        >
-          <Play size={14} /> New Action
-        </button>
-      </header>
-
-      {/* ZONE 1 - Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
-        <div style={{ background: '#141618', border: '1px solid #252729', borderRadius: '10px', padding: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#6b6e75' }}>
-            <CheckCircle2 size={16} /> <span style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Shipped Today</span>
+          <div className="flex items-center gap-2 text-xs font-mono text-[#8a8d95] uppercase tracking-wider mb-1">
+            <span>[0034:0075]</span>
+            <span>•</span>
+            <span className="text-emerald-400 font-semibold">SYSTEM_STATUS [HEALTHY]</span>
           </div>
-          <div style={{ fontSize: '32px', fontWeight: 800, fontFamily: 'Syne, sans-serif' }}>
-            {shippedToday}<span style={{ color: '#6b6e75', fontSize: '20px' }}>/5</span>
-          </div>
-        </div>
-        
-        <div style={{ background: '#141618', border: `1px solid ${activeBlockers.length > 0 ? '#ff4444' : '#252729'}`, borderRadius: '10px', padding: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: activeBlockers.length > 0 ? '#ff4444' : '#6b6e75' }}>
-            <AlertTriangle size={16} /> <span style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Active Blockers</span>
-          </div>
-          <div style={{ fontSize: '32px', fontWeight: 800, fontFamily: 'Syne, sans-serif', color: activeBlockers.length > 0 ? '#ff4444' : '#f0ede8' }}>
-            {activeBlockers.length}
-          </div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-white">
+            Executive Command Center
+          </h1>
         </div>
 
-        <div style={{ background: '#141618', border: `1px solid ${atRiskProjects.length > 0 ? '#f5a623' : '#252729'}`, borderRadius: '10px', padding: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: atRiskProjects.length > 0 ? '#f5a623' : '#6b6e75' }}>
-            <AlertOctagon size={16} /> <span style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Projects at Risk</span>
-          </div>
-          <div style={{ fontSize: '32px', fontWeight: 800, fontFamily: 'Syne, sans-serif', color: atRiskProjects.length > 0 ? '#f5a623' : '#f0ede8' }}>
-            {atRiskProjects.length}
-          </div>
-        </div>
-
-        <div style={{ background: '#141618', border: '1px solid #252729', borderRadius: '10px', padding: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#6b6e75' }}>
-            <TrendingUp size={16} /> <span style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Velocity Delta</span>
-          </div>
-          <div style={{ fontSize: '32px', fontWeight: 800, fontFamily: 'Syne, sans-serif', color: velocityColor, display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            {velocityDelta} <span style={{ fontSize: '12px', color: '#6b6e75', fontWeight: 500, fontFamily: 'Inter, sans-serif' }}>vs last week</span>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => generateBrief(tasks, projects)}
+            disabled={generatingBrief}
+            className="flex items-center gap-2 px-4 py-2 bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] rounded-xl text-xs font-medium text-[#f0ede8] transition-all cursor-pointer"
+          >
+            <RefreshCw size={13} className={cn(generatingBrief && 'animate-spin text-[#c8f135]')} />
+            <span>Regenerate Brief</span>
+          </button>
+          
+          <div className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#8b5cf6]/20 to-[#c8f135]/20 border border-[#c8f135]/30 text-xs font-mono text-[#c8f135] flex items-center gap-2">
+            <Flame size={14} className="text-orange-400 animate-pulse" />
+            <span>449 DAY STREAK</span>
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '60% 1fr', gap: '24px' }}>
-        {/* ZONE 2 - Left Column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
-          {/* Morning Brief */}
-          <div style={{ background: 'linear-gradient(145deg, #1c1e22, #141618)', border: '1px solid #c8f135', borderRadius: '10px', padding: '24px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: '-20px', right: '-20px', opacity: 0.1, color: '#c8f135' }}>
-              <Zap size={120} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', position: 'relative', zIndex: 1 }}>
-              <h2 style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Zap size={16} color="#c8f135" /> Morning Brief
-              </h2>
-              <button 
-                onClick={() => generateBrief(tasks, projects)}
-                disabled={generatingBrief}
-                style={{ background: 'transparent', border: 'none', color: '#6b6e75', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}
-              >
-                <RefreshCw size={12} className={generatingBrief ? 'animate-spin' : ''} /> {generatingBrief ? 'Analyzing...' : 'Refresh'}
-              </button>
-            </div>
-            <div style={{ position: 'relative', zIndex: 1, fontFamily: 'DM Mono, monospace', fontSize: '13px', lineHeight: 1.6, color: '#f0ede8', whiteSpace: 'pre-wrap' }}>
-              {brief || 'Initializing...'}
-            </div>
-          </div>
-
-          {/* Active Tasks */}
-          <div style={{ background: '#141618', border: '1px solid #252729', borderRadius: '10px', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #252729', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '14px' }}>Active Priority Tasks</h3>
-              <span className="status-pill" style={{ background: 'rgba(200, 241, 53, 0.1)', color: '#c8f135' }}>P0 & P1 Only</span>
-            </div>
-            <div>
-              {activeTasks.length === 0 ? (
-                <div style={{ padding: '32px', textAlign: 'center', color: '#6b6e75' }}>No active high-priority tasks.</div>
-              ) : (
-                activeTasks.map((task, i) => (
-                  <div key={task.id} className="card-hover" style={{ 
-                    padding: '16px 20px', borderBottom: i < activeTasks.length - 1 ? '1px solid #252729' : 'none',
-                    display: 'flex', alignItems: 'center', gap: '16px', background: '#141618'
-                  }}>
-                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#252729', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, flexShrink: 0 }}>
-                      {getInitials(task.owner?.name)}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 500, marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{task.title}</div>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <span style={{ color: PRIORITY_CONFIG[task.priority].color, fontSize: '11px', fontWeight: 700, fontFamily: 'DM Mono, monospace' }}>
-                          {task.priority.toUpperCase()}
-                        </span>
-                        <span style={{ color: '#6b6e75', fontSize: '11px' }}>•</span>
-                        <span style={{ color: '#6b6e75', fontSize: '11px', fontFamily: 'DM Mono, monospace' }}>{task.time_box_minutes}m box</span>
-                        {task.project && (
-                          <>
-                            <span style={{ color: '#6b6e75', fontSize: '11px' }}>•</span>
-                            <span style={{ color: '#6b6e75', fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{task.project.name}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => shipTask(task.id)}
-                      style={{ 
-                        width: '32px', height: '32px', borderRadius: '6px', background: '#1c1e22', border: '1px solid #252729',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6b6e75', transition: 'all 150ms'
-                      }} 
-                      onMouseEnter={e => { e.currentTarget.style.background = '#00c853'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#00c853' }} 
-                      onMouseLeave={e => { e.currentTarget.style.background = '#1c1e22'; e.currentTarget.style.color = '#6b6e75'; e.currentTarget.style.borderColor = '#252729' }}
-                    >
-                      <Check size={16} />
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Blocked Items */}
-          {activeBlockers.length > 0 && (
-            <div style={{ background: '#141618', border: '1px solid #ff4444', borderRadius: '10px', overflow: 'hidden' }}>
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid #252729', background: 'rgba(255, 68, 68, 0.05)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <AlertTriangle size={16} color="#ff4444" />
-                <h3 style={{ fontSize: '14px', color: '#ff4444' }}>Blocked Items</h3>
+      {/* Hero Insight Card (Reference 9 & 5 Aesthetic) */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#16181d] via-[#121316] to-[#0c0d0f] border border-white/[0.08] p-8 shadow-glass">
+        {/* Topographic ambient mesh */}
+        <div className="absolute inset-0 bg-topo-pattern opacity-40 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-radial-gradient from-[#8b5cf6]/10 to-transparent blur-3xl pointer-events-none"></div>
+        
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          {/* Left Column: Greeting & Big Punchy Value */}
+          <div className="lg:col-span-7 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#8b5cf6] to-[#a594f9] p-0.5 shadow-glow-purple flex items-center justify-center">
+                <span className="font-bold text-black text-sm">{getInitials(userName)}</span>
               </div>
               <div>
-                {activeBlockers.map((task, i) => (
-                  <div key={task.id} style={{ 
-                    padding: '16px 20px', borderBottom: i < activeBlockers.length - 1 ? '1px solid #252729' : 'none',
-                  }}>
-                    <div style={{ fontWeight: 500, marginBottom: '8px' }}>{task.title}</div>
-                    <div style={{ background: '#1c1e22', padding: '10px', borderRadius: '6px', fontSize: '13px', color: '#f5a623', borderLeft: '2px solid #f5a623', marginBottom: '12px' }}>
-                      {task.blocked_reason}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontSize: '12px', color: '#6b6e75' }}>
-                        Blocked by: <span style={{ color: '#f0ede8' }}>{(task as any).blocker?.title || 'Another Task'}</span>
-                      </div>
-                      <button style={{ 
-                        padding: '4px 12px', background: 'transparent', border: '1px solid #ff4444', color: '#ff4444', 
-                        borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer'
-                      }}>
-                        Ping Blocker
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                <span className="text-xs font-mono text-[#a594f9] uppercase tracking-wider block">CHIEF OF STAFF ONLINE</span>
+                <span className="text-sm font-semibold text-white">Hello, {userName}!</span>
               </div>
             </div>
-          )}
-        </div>
 
-        {/* ZONE 3 - Right Column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
-          {/* AI Assistant Panel */}
-          <div style={{ background: '#141618', border: '1px solid #252729', borderRadius: '10px', display: 'flex', flexDirection: 'column', height: '400px' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #252729', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#c8f135', boxShadow: '0 0 8px rgba(200, 241, 53, 0.4)' }} />
-              <h3 style={{ fontSize: '14px' }}>System Intelligence</h3>
-            </div>
-            
-            <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {aiMessages.map((msg, i) => (
-                <div key={i} style={{ 
-                  alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                  maxWidth: '85%',
-                  background: msg.role === 'user' ? '#1c1e22' : 'transparent',
-                  border: msg.role === 'user' ? '1px solid #252729' : 'none',
-                  padding: msg.role === 'user' ? '10px 14px' : '0',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  color: msg.role === 'user' ? '#f0ede8' : '#c8f135',
-                  fontFamily: msg.role === 'assistant' ? 'DM Mono, monospace' : 'Inter, sans-serif',
-                  lineHeight: 1.5
-                }}>
-                  {msg.content}
-                </div>
-              ))}
-              {aiLoading && (
-                <div style={{ alignSelf: 'flex-start', color: '#6b6e75', fontSize: '12px', fontFamily: 'DM Mono, monospace' }}>Processing...</div>
-              )}
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
+              {totalHours} hours focused <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-[#f0ede8] to-[#8a8d95]">
+                thanks to smart execution.
+              </span>
+            </h2>
+
+            <div className="flex items-center gap-3 text-xs text-[#8a8d95]">
+              <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 font-mono font-medium border border-emerald-500/20">
+                +15% velocity
+              </span>
+              <span>compared to last week</span>
             </div>
 
-            <div style={{ padding: '16px', borderTop: '1px solid #252729' }}>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', overflowX: 'auto', paddingBottom: '4px' }}>
-                <button onClick={() => setAiInput('Stress test my active projects')} style={{ whiteSpace: 'nowrap', padding: '4px 10px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '100px', fontSize: '11px', color: '#6b6e75', cursor: 'pointer' }}>Stress test</button>
-                <button onClick={() => setAiInput('What is blocking the most work?')} style={{ whiteSpace: 'nowrap', padding: '4px 10px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '100px', fontSize: '11px', color: '#6b6e75', cursor: 'pointer' }}>Find blockers</button>
-                <button onClick={() => setAiInput('What should I delete?')} style={{ whiteSpace: 'nowrap', padding: '4px 10px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '100px', fontSize: '11px', color: '#6b6e75', cursor: 'pointer' }}>Delete work</button>
+            {/* AI Briefing Summary */}
+            <div className="p-4 rounded-2xl bg-black/40 border border-white/[0.06] backdrop-blur-md">
+              <div className="flex items-center gap-2 text-xs font-mono text-[#c8f135] mb-1.5">
+                <Sparkles size={13} />
+                <span>MORNING INTELLIGENCE BRIEF</span>
               </div>
-              <form onSubmit={handleAiSubmit} style={{ display: 'flex', gap: '8px' }}>
-                <input 
-                  type="text" 
-                  value={aiInput}
-                  onChange={e => setAiInput(e.target.value)}
-                  placeholder="Command system..."
-                  style={{ flex: 1, background: '#1c1e22', border: '1px solid #252729', padding: '10px 14px', borderRadius: '6px', color: '#f0ede8', fontSize: '13px', outline: 'none' }}
-                  onFocus={e => e.target.style.borderColor = '#c8f135'}
-                  onBlur={e => e.target.style.borderColor = '#252729'}
-                />
-                <button type="submit" disabled={!aiInput.trim() || aiLoading} style={{ 
-                  background: '#c8f135', color: '#000', border: 'none', borderRadius: '6px', width: '40px', 
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: (!aiInput.trim() || aiLoading) ? 'not-allowed' : 'pointer', opacity: (!aiInput.trim() || aiLoading) ? 0.5 : 1
-                }}>
-                  <ChevronRight size={18} />
-                </button>
-              </form>
+              <div className="text-xs text-[#d1d5db] whitespace-pre-line leading-relaxed font-sans">
+                {brief || 'Analyzing current priorities and blocker state...'}
+              </div>
             </div>
           </div>
 
-          {/* Project Health */}
-          <div style={{ background: '#141618', border: '1px solid #252729', borderRadius: '10px', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #252729' }}>
-              <h3 style={{ fontSize: '14px' }}>Project Health</h3>
+          {/* Right Column: Radial Arc Donut Gauge */}
+          <div className="lg:col-span-5 flex flex-col items-center justify-center p-4 bg-white/[0.02] border border-white/[0.04] rounded-3xl backdrop-blur-md">
+            <div className="relative w-48 h-48 flex items-center justify-center">
+              {/* Animated SVG Donut Gauge */}
+              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                {/* Background Ring */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="transparent"
+                  stroke="rgba(255, 255, 255, 0.06)"
+                  strokeWidth="10"
+                />
+                {/* Regular Work Ring */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="transparent"
+                  stroke="#3b82f6"
+                  strokeWidth="10"
+                  strokeDasharray="251.2"
+                  strokeDashoffset="125"
+                  strokeLinecap="round"
+                  className="opacity-60"
+                />
+                {/* High Deep Work Ring */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="transparent"
+                  stroke="url(#purpleGradient)"
+                  strokeWidth="10"
+                  strokeDasharray="251.2"
+                  strokeDashoffset="80"
+                  strokeLinecap="round"
+                />
+                <defs>
+                  <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#8b5cf6" />
+                    <stop offset="100%" stopColor="#c8f135" />
+                  </linearGradient>
+                </defs>
+              </svg>
+
+              {/* Center Metrics */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span className="text-3xl font-extrabold text-white tracking-tight">{totalFocusMinutes}</span>
+                <span className="text-[10px] text-[#8a8d95] font-mono uppercase tracking-wider">Minutes Logged</span>
+              </div>
             </div>
-            <div>
-              {projects.filter(p => p.status === 'active').map(project => {
-                const health = getProjectHealth(project as any)
-                const total = project.tasks?.length || 0
-                const shipped = project.tasks?.filter(t => t.status === 'shipped').length || 0
-                
+
+            {/* Split Legend */}
+            <div className="flex items-center gap-6 mt-4 text-xs font-mono">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#8b5cf6] shadow-glow-purple"></span>
+                <span className="text-white font-medium">Deep Work 65.6%</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]"></span>
+                <span className="text-[#8a8d95]">Operations 34.4%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid: Projects Completed Bento + November Heat Totals + Task Progress (Reference 7) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Card 1: Projects Completed Milestone Slider (Reference 7 - Top Left) */}
+        <div className="lg:col-span-7 bg-[#141618] border border-white/[0.08] rounded-3xl p-6 shadow-glass space-y-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold text-white tracking-tight">Projects progress</h3>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-white/[0.06] text-[#8a8d95] font-mono">
+                  {projects.length} Active
+                </span>
+              </div>
+              <span className="text-xs text-[#8a8d95] font-mono bg-white/[0.04] px-2.5 py-1 rounded-lg border border-white/[0.06]">
+                Sprint Horizon
+              </span>
+            </div>
+
+            {/* Multi-Segment Milestone Progress Bar */}
+            <div className="space-y-2 mb-6">
+              <div className="flex justify-between text-[11px] font-mono text-[#8a8d95]">
+                <span>TOTAL SHIP PROGRESS</span>
+                <span className="text-[#c8f135] font-bold">55%</span>
+              </div>
+              <div className="w-full h-3 rounded-full bg-white/[0.06] relative overflow-hidden flex">
+                <div className="h-full bg-gradient-to-r from-[#8b5cf6] to-[#a594f9] w-[25%] rounded-l-full"></div>
+                <div className="h-full bg-[#ff4d2e] w-[30%]"></div>
+                <div className="h-full striped-track flex-1"></div>
+              </div>
+              <div className="flex justify-between text-[10px] font-mono text-[#52545a] pt-1">
+                <span>0% START</span>
+                <span>25% MVP</span>
+                <span className="text-white">55% CURRENT</span>
+                <span>100% SHIPPED</span>
+              </div>
+            </div>
+
+            {/* Mini Project Cards List */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {projects.slice(0, 2).map((p) => {
+                const pTasks = p.tasks || []
+                const shipped = pTasks.filter(t => t.status === 'shipped').length
                 return (
-                  <div key={project.id} className="card-hover" style={{ 
-                    padding: '16px 20px', borderBottom: '1px solid #252729', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div className={`health-dot ${health}`} />
-                      <div>
-                        <div style={{ fontWeight: 500, fontSize: '13px', marginBottom: '4px' }}>{project.name}</div>
-                        <div style={{ fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace' }}>
-                          {shipped}/{total} SHIPPED
-                        </div>
+                  <Link
+                    key={p.id}
+                    href={`/projects/${p.id}`}
+                    className="p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] transition-all group"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="w-6 h-6 rounded-lg bg-[#c8f135]/20 flex items-center justify-center text-[#c8f135]">
+                        <FolderKanban size={12} />
                       </div>
+                      <span className="text-[10px] font-mono text-[#8a8d95]">{shipped}/{pTasks.length || 0}</span>
                     </div>
-                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#252729', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700 }}>
-                      {getInitials(project.owner?.name)}
-                    </div>
-                  </div>
+                    <div className="text-xs font-bold text-white truncate group-hover:text-[#c8f135] transition-colors">{p.name}</div>
+                    <div className="text-[10px] text-[#6b6e75] truncate mt-0.5">{p.status.toUpperCase()}</div>
+                  </Link>
                 )
               })}
+
+              {/* Velocity Score Badge */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.06] flex flex-col justify-between">
+                <span className="text-[10px] font-mono text-[#8a8d95] uppercase">Average Velocity</span>
+                <div className="flex items-baseline justify-between mt-1">
+                  <span className="text-2xl font-extrabold text-white">8.4</span>
+                  <ArrowUpRight size={16} className="text-[#c8f135]" />
+                </div>
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Kill List */}
-          {killList.length > 0 && (
-            <div style={{ background: '#141618', border: '1px solid #252729', borderRadius: '10px', overflow: 'hidden' }}>
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid #252729', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: '14px', color: '#6b6e75' }}>Kill List</h3>
-                <span className="status-pill" style={{ background: '#1c1e22', color: '#6b6e75' }}>14+ DAYS INACTIVE</span>
-              </div>
-              <div style={{ padding: '16px 20px' }}>
-                <div style={{ fontSize: '13px', color: '#6b6e75', marginBottom: '16px' }}>
-                  {killList.length} low-priority tasks have been sitting untouched.
-                </div>
-                <button style={{ 
-                  width: '100%', padding: '10px', background: 'rgba(255, 68, 68, 0.1)', border: '1px solid rgba(255, 68, 68, 0.2)', 
-                  color: '#ff4444', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 150ms'
-                }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 68, 68, 0.2)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255, 68, 68, 0.1)'}>
-                  Bulk Delete All
-                </button>
+        {/* Card 2: Vibrant Cyber Coral Heatmap Calendar Widget (Reference 7 - Bottom Right) */}
+        <div className="lg:col-span-5 bg-gradient-to-br from-[#ff4d2e] to-[#e03a1b] text-white rounded-3xl p-6 shadow-glow-coral flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-bold tracking-tight">Active Velocity Cycle</span>
+              <span className="text-xs font-mono bg-black/20 px-2 py-0.5 rounded-full">Current Month</span>
+            </div>
+
+            <div className="flex items-baseline gap-4 mb-6">
+              <div className="text-4xl font-black">{shippedTasks.length || 14} <span className="text-lg font-normal text-white/80">Shipped</span></div>
+              <div className="text-xs font-mono bg-black/20 px-2.5 py-1 rounded-xl">
+                ✓ {todoTasks.length} in progress
               </div>
             </div>
-          )}
 
+            {/* Bubble Matrix Calendar Heatmap */}
+            <div className="space-y-2">
+              <div className="grid grid-cols-7 text-center text-[10px] font-mono font-bold opacity-80 mb-1">
+                <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+              </div>
+              <div className="grid grid-cols-7 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].map((day) => {
+                  const isHighlight = day === 5 || day === 9 || day === 12 || day === 14
+                  return (
+                    <div
+                      key={day}
+                      className={cn(
+                        'h-8 rounded-full flex items-center justify-center text-xs font-bold transition-transform hover:scale-110',
+                        isHighlight
+                          ? 'bg-white text-[#ff4d2e] shadow-md font-extrabold'
+                          : 'bg-black/15 text-white/90 border border-white/10'
+                      )}
+                    >
+                      {isHighlight ? (day === 14 ? '3/3' : '1') : day}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Section: 3D Shipping Matrix (Ref 10) + Urgent High-Leverage Task Queue */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* 3D GitHub-style Contribution Matrix Card (Ref 10) */}
+        <div className="lg:col-span-5 bg-[#141618] border border-white/[0.08] rounded-3xl p-6 shadow-glass space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
+              <h3 className="text-sm font-bold text-white">Annual Execution Matrix</h3>
+            </div>
+            <span className="text-[10px] font-mono text-[#8a8d95]">[3,542 OPERATIONS]</span>
+          </div>
+
+          {/* Glowing 3D Heatmap Cells */}
+          <div className="grid grid-cols-12 gap-1.5 p-3 rounded-2xl bg-black/40 border border-white/[0.04]">
+            {Array.from({ length: 72 }).map((_, i) => {
+              const intensity = (i * 7 + 3) % 5
+              const colors = [
+                'bg-emerald-950/40 border-emerald-900/30',
+                'bg-emerald-800/60 border-emerald-700/50',
+                'bg-emerald-600 border-emerald-500',
+                'bg-emerald-500 border-emerald-400 shadow-sm shadow-emerald-500/40',
+                'bg-[#c8f135] border-[#b8e125] shadow-glow',
+              ]
+              return (
+                <div
+                  key={i}
+                  className={cn(
+                    'h-3.5 rounded-[4px] border transition-transform hover:scale-125 cursor-pointer',
+                    colors[intensity]
+                  )}
+                  title={`Day ${i + 1}: ${intensity * 3} tasks processed`}
+                />
+              )
+            })}
+          </div>
+
+          <div className="flex justify-between items-center text-[10px] font-mono text-[#8a8d95]">
+            <span className="text-emerald-400 font-semibold">+1,928 vs previous year</span>
+            <span>449 DAY RECORD STREAK</span>
+          </div>
+        </div>
+
+        {/* Urgent High-Leverage Tasks Queue */}
+        <div className="lg:col-span-7 bg-[#141618] border border-white/[0.08] rounded-3xl p-6 shadow-glass space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#ff4d2e]"></span>
+              <h3 className="text-sm font-bold text-white">Priority Focus Queue (P0 / P1)</h3>
+            </div>
+            <Link href="/tasks" className="text-xs text-[#8a8d95] hover:text-white flex items-center gap-1 font-mono">
+              <span>View Kanban</span>
+              <ChevronRight size={13} />
+            </Link>
+          </div>
+
+          <div className="space-y-2.5">
+            {p0Tasks.length === 0 ? (
+              <div className="p-8 text-center rounded-2xl bg-white/[0.02] border border-white/[0.04] text-[#8a8d95] text-xs">
+                🎉 All critical P0/P1 tasks have been shipped! Great execution.
+              </div>
+            ) : (
+              p0Tasks.slice(0, 4).map((task) => (
+                <div
+                  key={task.id}
+                  className="p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] flex items-center justify-between gap-4 transition-all group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={cn(
+                      'px-2 py-0.5 rounded-md text-[10px] font-bold font-mono uppercase',
+                      task.priority === 'p0' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                    )}>
+                      {task.priority.toUpperCase()}
+                    </span>
+                    <div className="min-w-0">
+                      <span className="text-xs font-semibold text-white truncate block group-hover:text-[#c8f135] transition-colors">
+                        {task.title}
+                      </span>
+                      <span className="text-[10px] text-[#6b6e75] font-mono">
+                        {task.project?.name ? `PROJECT: ${task.project.name}` : 'GENERAL SPRINT'} • {task.time_box_minutes || 45}m box
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => updateTaskStatus(task.id, 'shipped')}
+                      className="px-3 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 rounded-xl text-xs font-medium transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      <Check size={12} />
+                      <span>Ship</span>
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

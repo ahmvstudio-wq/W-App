@@ -2,25 +2,34 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { Plus, Search, Filter, LayoutGrid, List as ListIcon, Calendar, X, Zap, Trash2 } from 'lucide-react'
+import { 
+  Plus, Search, Filter, LayoutGrid, List as ListIcon, Calendar, 
+  X, Zap, Trash2, CheckCircle2, Clock, MoreHorizontal, MessageSquare, 
+  Paperclip, Tag, AlertCircle, ChevronRight, User, Check, Send, Sparkles
+} from 'lucide-react'
 import { PRIORITY_CONFIG, TASK_STATUS_CONFIG, cn, getInitials } from '@/lib/utils'
 import type { Task, Priority, TaskStatus } from '@/types'
 import { challengeTask } from '@/lib/groq/client'
-import { format } from 'date-fns'
+import { format, differenceInDays } from 'date-fns'
 import Link from 'next/link'
 import { toast } from 'sonner'
-
 import CreateTaskModal from '@/components/CreateTaskModal'
 
 export default function TasksPage() {
-  const [view, setView] = useState<'board' | 'list' | 'timeline'>('board')
+  const [view, setView] = useState<'board' | 'list'>('board')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [tasks, setTasks] = useState<Task[]>([]) 
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [activeDrawerTab, setActiveDrawerTab] = useState<'description' | 'discussion' | 'attachments'>('description')
+  const [comments, setComments] = useState<{ id: string; user: string; time: string; text: string }[]>([
+    { id: '1', user: 'AI Chief of Staff', time: 'Just now', text: 'Task scope verified. Ready for high-velocity execution.' }
+  ])
+  const [newComment, setNewComment] = useState('')
 
   async function fetchTasks(silent = false) {
     if (!silent) setLoading(true)
-    console.log('FETCHING ALL TASKS...')
     try {
       const { data, error } = await supabase
         .from('tasks')
@@ -28,14 +37,16 @@ export default function TasksPage() {
         .order('created_at', { ascending: false })
       
       if (error) {
-        console.error('SUPABASE FETCH ERROR:', error.message)
         toast.error(`Fetch failed: ${error.message}`)
       } else {
-        console.log('TASKS FETCHED SUCCESS:', data?.length || 0, 'tasks found')
         setTasks(data || [])
+        // If drawer open, update selectedTask reference
+        if (selectedTask) {
+          const updated = data?.find(t => t.id === selectedTask.id)
+          if (updated) setSelectedTask(updated)
+        }
       }
     } catch (err: any) {
-      console.error('UNEXPECTED FETCH ERROR:', err)
       toast.error('Sync failed. Retrying...')
     } finally {
       setLoading(false)
@@ -56,7 +67,12 @@ export default function TasksPage() {
     }
   }, [])
 
-  const columns: TaskStatus[] = ['todo', 'in_progress', 'blocked', 'shipped', 'killed']
+  const columns: { id: TaskStatus; label: string; color: string }[] = [
+    { id: 'todo', label: 'To-Do', color: '#8a8d95' },
+    { id: 'in_progress', label: 'On Progress', color: '#3b82f6' },
+    { id: 'blocked', label: 'Blocked', color: '#f5a623' },
+    { id: 'shipped', label: 'Shipped', color: '#c8f135' },
+  ]
 
   async function updateTaskStatus(taskId: string, newStatus: TaskStatus) {
     const updates: any = { status: newStatus }
@@ -69,304 +85,454 @@ export default function TasksPage() {
     }
     const { error } = await supabase.from('tasks').update(updates).eq('id', taskId)
     if (error) {
-      console.error('FAILED TO UPDATE TASK STATUS:', error.message)
       toast.error(`Update failed: ${error.message}`)
       return
     }
-    toast.success(`Task status updated to ${newStatus}`)
+    toast.success(`Task moved to ${newStatus}`)
     fetchTasks(true)
   }
 
   async function deleteTask(taskId: string) {
-    if (!confirm('Are you sure? This action is irreversible.')) return
+    if (!confirm('Are you sure you want to delete this task?')) return
     const { error } = await supabase.from('tasks').delete().eq('id', taskId)
     if (error) {
-      console.error('FAILED TO DELETE TASK:', error.message)
       toast.error(`Delete failed: ${error.message}`)
       return
     }
     toast.success('Task deleted')
+    if (selectedTask?.id === taskId) setSelectedTask(null)
     fetchTasks()
   }
 
+  function handleAddComment(textToAdd?: string) {
+    const commentText = textToAdd || newComment
+    if (!commentText.trim()) return
+    setComments(prev => [
+      ...prev,
+      { id: Date.now().toString(), user: 'You', time: 'Just now', text: commentText.trim() }
+    ])
+    if (!textToAdd) setNewComment('')
+  }
+
+  const filteredTasks = tasks.filter(t => 
+    t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.project?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
   return (
-    <div style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <header style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+    <div className="flex flex-col h-[calc(100vh-6rem)] relative">
+      {isCreateModalOpen && (
+        <CreateTaskModal onClose={() => setIsCreateModalOpen(false)} onSuccess={() => fetchTasks(true)} />
+      )}
+
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 flex-shrink-0">
         <div>
-          <h1 style={{ marginBottom: '4px' }}>Tasks</h1>
-          <p style={{ color: '#6b6e75', fontFamily: 'DM Mono, monospace', fontSize: '12px', textTransform: 'uppercase' }}>
-            {tasks.length} total • {tasks.filter(t => t.status === 'todo' || t.status === 'in_progress').length} active
-          </p>
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ display: 'flex', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', padding: '2px' }}>
-            <button onClick={() => setView('board')} style={{ padding: '6px', background: view === 'board' ? '#252729' : 'transparent', color: view === 'board' ? '#f0ede8' : '#6b6e75', border: 'none', borderRadius: '4px', cursor: 'pointer' }}><LayoutGrid size={16} /></button>
-            <button onClick={() => setView('list')} style={{ padding: '6px', background: view === 'list' ? '#252729' : 'transparent', color: view === 'list' ? '#f0ede8' : '#6b6e75', border: 'none', borderRadius: '4px', cursor: 'pointer' }}><ListIcon size={16} /></button>
-            <button onClick={() => setView('timeline')} style={{ padding: '6px', background: view === 'timeline' ? '#252729' : 'transparent', color: view === 'timeline' ? '#f0ede8' : '#6b6e75', border: 'none', borderRadius: '4px', cursor: 'pointer' }}><Calendar size={16} /></button>
+          <div className="flex items-center gap-2 text-xs font-mono text-[#8a8d95] uppercase tracking-wider mb-1">
+            <span>[PROJECTS & OPERATIONS]</span>
+            <span>•</span>
+            <span className="text-emerald-400 font-semibold">{tasks.filter(t => t.status === 'in_progress').length} ACTIVE SPRINT</span>
           </div>
-          
-          <button onClick={() => setIsCreateModalOpen(true)} className="btn-accent" style={{ 
-            padding: '8px 16px', borderRadius: '6px', border: 'none', 
-            display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer'
-          }}>
-            <Plus size={16} /> New Task
+          <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+            <span>Tasks</span>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.08] text-[#8a8d95] font-mono font-normal">
+              {tasks.length} total
+            </span>
+          </h1>
+        </div>
+
+        {/* View Switcher & Actions */}
+        <div className="flex items-center gap-3">
+          <div className="flex bg-[#141618] border border-white/[0.08] rounded-xl p-1">
+            <button
+              onClick={() => setView('board')}
+              className={cn(
+                'p-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer',
+                view === 'board' ? 'bg-white/[0.1] text-white shadow-sm' : 'text-[#8a8d95] hover:text-white'
+              )}
+            >
+              <LayoutGrid size={14} />
+              <span>Kanban</span>
+            </button>
+            <button
+              onClick={() => setView('list')}
+              className={cn(
+                'p-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer',
+                view === 'list' ? 'bg-white/[0.1] text-white shadow-sm' : 'text-[#8a8d95] hover:text-white'
+              )}
+            >
+              <ListIcon size={14} />
+              <span>List</span>
+            </button>
+          </div>
+
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-[#c8f135] hover:bg-[#b8e125] text-black font-semibold text-xs rounded-xl shadow-glow transition-all cursor-pointer hover:scale-[1.02]"
+          >
+            <Plus size={15} />
+            <span>New Task</span>
           </button>
         </div>
-      </header>
-
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexShrink: 0 }}>
-        <div style={{ position: 'relative', width: '300px' }}>
-          <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6b6e75' }} />
-          <input type="text" placeholder="Search tasks..." style={{ width: '100%', padding: '8px 12px 8px 32px', background: '#141618', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '13px', outline: 'none' }} />
-        </div>
-        <button style={{ padding: '8px 12px', background: '#141618', border: '1px solid #252729', borderRadius: '6px', color: '#6b6e75', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-          <Filter size={14} /> Filter
-        </button>
       </div>
 
-      {loading ? (
-        <div style={{ color: '#6b6e75', padding: '40px', textAlign: 'center' }}>Loading tasks...</div>
-      ) : view === 'board' ? (
-        <div style={{ display: 'flex', gap: '16px', flex: 1, overflowX: 'auto', paddingBottom: '16px' }}>
-          {columns.map(status => (
-            <div key={status} style={{ width: '320px', flexShrink: 0, background: '#141618', borderRadius: '10px', display: 'flex', flexDirection: 'column', border: '1px solid #252729' }}>
-              <div style={{ padding: '16px', borderBottom: '1px solid #252729', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: TASK_STATUS_CONFIG[status].color }} />
-                  <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'DM Mono, monospace' }}>{TASK_STATUS_CONFIG[status].label}</span>
-                </div>
-                <span style={{ fontSize: '12px', color: '#6b6e75', background: '#1c1e22', padding: '2px 8px', borderRadius: '10px' }}>
-                  {tasks.filter(t => t.status === status).length}
-                </span>
-              </div>
-              <div style={{ padding: '12px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {tasks.filter(t => t.status === status).map(task => (
-                  <div key={task.id} className="card-hover" style={{ background: '#1c1e22', border: '1px solid #252729', borderRadius: '8px', padding: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                      <span className="status-pill" style={{ color: PRIORITY_CONFIG[task.priority].color, border: `1px solid ${PRIORITY_CONFIG[task.priority].color}33`, background: `${PRIORITY_CONFIG[task.priority].color}11` }}>
-                        {PRIORITY_CONFIG[task.priority].label}
-                      </span>
-                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#252729', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700 }}>
-                        {getInitials((task.owner as any)?.name || 'U')}
-                      </div>
-                    </div>
-                    <div style={{ fontWeight: 500, fontSize: '14px', marginBottom: '12px', lineHeight: 1.4 }}>{task.title}</div>
-                    
-                    <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                      <select 
-                        value={task.status} 
-                        onChange={(e) => updateTaskStatus(task.id, e.target.value as TaskStatus)}
-                        style={{ flex: 1, padding: '4px 8px', background: '#141618', border: '1px solid #252729', borderRadius: '4px', color: '#6b6e75', fontSize: '11px', outline: 'none' }}
-                      >
-                        {columns.map(col => (
-                           <option key={col} value={col}>{TASK_STATUS_CONFIG[col].label}</option>
-                        ))}
-                      </select>
-                      <button 
-                        onClick={() => window.dispatchEvent(new CustomEvent('toggle-focus-timer', { detail: { taskId: task.id, taskTitle: task.title, timeBox: task.time_box_minutes } }))}
-                        style={{ padding: '4px 8px', background: 'rgba(200, 241, 53, 0.1)', border: '1px solid rgba(200, 241, 53, 0.3)', borderRadius: '4px', color: '#c8f135', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        <Zap size={10} /> <span style={{ fontSize: '10px', fontWeight: 700 }}>FOCUS</span>
-                      </button>
-                    </div>
+      {/* Filter & Search Bar */}
+      <div className="flex items-center gap-3 mb-6 flex-shrink-0">
+        <div className="relative flex-1 max-w-sm">
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6b6e75]" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by title or project..."
+            className="w-full pl-9 pr-4 py-2 bg-[#141618] border border-white/[0.08] focus:border-[#c8f135]/50 rounded-xl text-xs text-white placeholder:text-[#6b6e75] outline-none transition-all"
+          />
+        </div>
+      </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#6b6e75', fontSize: '11px', fontFamily: 'DM Mono, monospace' }}>
-                      {task.project ? (
-                        <Link href={`/projects/${(task.project as any).id}`} style={{ color: '#c8f135', textDecoration: 'none' }}>
-                          {(task.project as any).name}
-                        </Link>
-                      ) : <span>--</span>}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>{task.time_box_minutes}m</span>
-                        <button
-                          onClick={() => deleteTask(task.id)}
-                          style={{ background: 'transparent', border: 'none', color: '#6b6e75', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }}
-                          onMouseEnter={e => e.currentTarget.style.color = '#ff4444'}
-                          onMouseLeave={e => e.currentTarget.style.color = '#6b6e75'}
-                          title="Delete Task"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    </div>
+      {/* Kanban Board Layout (Reference 8) */}
+      {view === 'board' ? (
+        <div className="flex gap-5 flex-1 overflow-x-auto pb-4 items-start select-none">
+          {columns.map((column) => {
+            const colTasks = filteredTasks.filter((t) => t.status === column.id)
+            return (
+              <div
+                key={column.id}
+                className="w-[330px] flex-shrink-0 rounded-3xl bg-[#121316]/90 border border-white/[0.06] flex flex-col max-h-full backdrop-blur-xl shadow-glass"
+              >
+                {/* Column Header */}
+                <div className="p-4 border-b border-white/[0.06] flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: column.color }}
+                    ></span>
+                    <span className="text-xs font-bold text-white tracking-wide">{column.label}</span>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/[0.06] text-[#8a8d95] font-mono">
+                      {colTasks.length}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : view === 'list' ? (
-        <div style={{ background: '#141618', border: '1px solid #252729', borderRadius: '10px', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead style={{ background: '#1c1e22', borderBottom: '1px solid #252729' }}>
-              <tr>
-                <th style={{ padding: '12px 16px', color: '#6b6e75', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Title</th>
-                <th style={{ padding: '12px 16px', color: '#6b6e75', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Priority</th>
-                <th style={{ padding: '12px 16px', color: '#6b6e75', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Status</th>
-                <th style={{ padding: '12px 16px', color: '#6b6e75', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Project</th>
-                <th style={{ padding: '12px 16px', color: '#6b6e75', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Owner</th>
-                <th style={{ padding: '12px 16px', color: '#6b6e75', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Time Box</th>
-                <th style={{ padding: '12px 16px', color: '#6b6e75', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', fontFamily: 'DM Mono, monospace' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tasks.length === 0 ? (
-                <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#6b6e75' }}>No tasks found. Create one to get started.</td></tr>
-              ) : (
-                tasks.map(task => (
-                  <tr key={task.id} style={{ borderBottom: '1px solid #252729' }}>
-                    <td style={{ padding: '16px', fontWeight: 500, fontSize: '13px' }}>{task.title}</td>
-                    <td style={{ padding: '16px' }}><span style={{ color: PRIORITY_CONFIG[task.priority].color, fontSize: '12px', fontWeight: 600, fontFamily: 'DM Mono, monospace' }}>{PRIORITY_CONFIG[task.priority].label}</span></td>
-                    <td style={{ padding: '16px' }}>
-                      <select 
-                        value={task.status} 
-                        onChange={(e) => updateTaskStatus(task.id, e.target.value as TaskStatus)}
-                        style={{ padding: '4px 8px', background: 'transparent', border: '1px solid #252729', borderRadius: '4px', color: TASK_STATUS_CONFIG[task.status].color, fontSize: '11px', outline: 'none', fontWeight: 600, fontFamily: 'DM Mono, monospace' }}
-                      >
-                        {columns.map(col => (
-                            <option key={col} value={col}>{TASK_STATUS_CONFIG[col].label}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td style={{ padding: '16px', fontSize: '13px', color: '#6b6e75' }}>
-                      {task.project ? (
-                        <Link href={`/projects/${(task.project as any).id}`} style={{ color: '#c8f135', textDecoration: 'none' }}>
-                          {(task.project as any).name}
-                        </Link>
-                      ) : '--'}
-                    </td>
-                    <td style={{ padding: '16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#252729', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700 }}>
-                          {getInitials((task.owner as any)?.name)}
-                        </div>
-                        <span style={{ fontSize: '13px' }}>{(task.owner as any)?.name || 'Unknown'}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: '16px', fontSize: '13px', fontFamily: 'DM Mono, monospace', color: '#6b6e75' }}>{task.time_box_minutes}m</td>
-                    <td style={{ padding: '16px' }}>
-                      <button 
-                        onClick={() => deleteTask(task.id)}
-                        style={{ background: 'transparent', border: 'none', color: '#6b6e75', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                        onMouseEnter={e => e.currentTarget.style.color = '#ff4444'}
-                        onMouseLeave={e => e.currentTarget.style.color = '#6b6e75'}
-                        title="Delete Task"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div style={{ flex: 1, background: '#141618', border: '1px solid #252729', borderRadius: '12px', padding: '32px', overflowY: 'auto' }}>
-          <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ color: '#f0ede8', marginBottom: '8px', fontSize: '16px', fontWeight: 600 }}>Critical Path Timeline</h3>
-            <p style={{ color: '#6b6e75', fontSize: '13px' }}>Sequential visualization of all scheduled tasks and deadlines on the critical path.</p>
-          </div>
-          
-          {tasks.filter(t => t.due_date || t.start_time).length === 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', gap: '16px', color: '#6b6e75' }}>
-              <Calendar size={48} style={{ opacity: 0.2 }} />
-              <div style={{ textAlign: 'center', fontSize: '14px' }}>No scheduled tasks or deadlines discovered.</div>
-            </div>
-          ) : (
-            <div style={{ position: 'relative', paddingLeft: '32px', marginTop: '16px' }}>
-              {/* Vertical timeline line */}
-              <div style={{ position: 'absolute', left: '15px', top: '8px', bottom: '8px', width: '2px', background: '#252729' }} />
-              
-              {tasks
-                .filter(t => t.due_date || t.start_time)
-                .sort((a, b) => {
-                  const dateA = new Date(a.start_time || a.due_date!).getTime()
-                  const dateB = new Date(b.start_time || b.due_date!).getTime()
-                  return dateA - dateB
-                })
-                .map((task, idx) => {
-                  const taskDate = new Date(task.start_time || task.due_date!)
-                  const isScheduled = !!task.start_time
-                  const priorityColor = PRIORITY_CONFIG[task.priority].color
-                  
-                  return (
-                    <div key={task.id} style={{ position: 'relative', marginBottom: '24px', display: 'flex', gap: '20px' }}>
-                      {/* Timeline dot */}
-                      <div style={{ 
-                        position: 'absolute', left: '-23px', top: '6px', 
-                        width: '10px', height: '10px', borderRadius: '50%', 
-                        background: priorityColor, border: '2px solid #141618',
-                        boxShadow: `0 0 8px ${priorityColor}`
-                      }} />
-                      
-                      {/* Time indicator */}
-                      <div style={{ width: '120px', flexShrink: 0, paddingTop: '2px' }}>
-                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#f0ede8', fontFamily: 'DM Mono, monospace' }}>
-                          {format(taskDate, 'MMM d, yyyy')}
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', marginTop: '2px' }}>
-                          {format(taskDate, 'HH:mm')} {isScheduled ? 'START' : 'DUE'}
-                        </div>
-                      </div>
-                      
-                      {/* Task Card */}
-                      <div className="card-hover" style={{ 
-                        flex: 1, padding: '16px', background: '#1c1e22', 
-                        border: '1px solid #252729', borderRadius: '8px',
-                        borderLeft: `4px solid ${priorityColor}`
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '12px' }}>
-                          <span style={{ fontSize: '14px', fontWeight: 600, color: '#f0ede8' }}>{task.title}</span>
-                          <span style={{ 
-                            fontSize: '10px', fontFamily: 'DM Mono, monospace', 
-                            color: TASK_STATUS_CONFIG[task.status].color, 
-                            border: `1px solid ${TASK_STATUS_CONFIG[task.status].color}33`,
-                            background: `${TASK_STATUS_CONFIG[task.status].color}11`,
-                            padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 700
-                          }}>
-                            {TASK_STATUS_CONFIG[task.status].label}
-                          </span>
-                        </div>
-                        
-                        {task.output_description && (
-                          <div style={{ fontSize: '12px', color: '#6b6e75', marginBottom: '12px', fontStyle: 'italic' }}>
-                            Output: {task.output_description}
-                          </div>
+                  <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="p-1 text-[#6b6e75] hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+
+                {/* Task Cards List */}
+                <div className="p-3 overflow-y-auto space-y-3 flex-1">
+                  {colTasks.map((task) => {
+                    const daysLeft = task.due_date ? differenceInDays(new Date(task.due_date), new Date()) : null
+                    const progressPercent = task.status === 'shipped' ? 100 : task.status === 'in_progress' ? 50 : 0
+
+                    return (
+                      <div
+                        key={task.id}
+                        onClick={() => setSelectedTask(task)}
+                        className={cn(
+                          'p-4 rounded-2xl bg-[#17191d] hover:bg-[#1c1f24] border transition-all duration-200 cursor-pointer shadow-sm group',
+                          selectedTask?.id === task.id ? 'border-[#c8f135] shadow-glow' : 'border-white/[0.06] hover:border-white/[0.12]'
                         )}
-                        
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace' }}>
-                          <div>
-                            {task.project ? (
-                              <Link href={`/projects/${(task.project as any).id}`} style={{ color: '#c8f135', textDecoration: 'none', fontWeight: 600 }}>
-                                {(task.project as any).name}
-                              </Link>
-                            ) : 'GENERAL TASK'}
+                      >
+                        {/* Top Badges: Priority + Category Tag + Deadline */}
+                        <div className="flex items-center justify-between gap-2 mb-2.5">
+                          <div className="flex items-center gap-1.5">
+                            {/* Priority Badge */}
+                            <span className={cn(
+                              'px-2 py-0.5 rounded-md text-[10px] font-bold font-mono uppercase tracking-wide',
+                              task.priority === 'p0' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                              task.priority === 'p1' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
+                              'bg-white/[0.06] text-[#8a8d95] border border-white/[0.08]'
+                            )}>
+                              {task.priority === 'p0' ? 'High' : task.priority === 'p1' ? 'Medium' : 'Low'}
+                            </span>
+
+                            {/* Department / Category Tag */}
+                            <span className="px-2 py-0.5 rounded-md text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
+                              {task.project?.name ? task.project.name.slice(0, 10) : 'Systems'}
+                            </span>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <span>{task.time_box_minutes} MINS</span>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#252729', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 700 }}>
-                                {getInitials((task.owner as any)?.name)}
-                              </div>
-                              <span>{(task.owner as any)?.name}</span>
+
+                          {/* Deadline D-Day Tag */}
+                          {daysLeft !== null && (
+                            <span className="text-[10px] font-mono text-[#8a8d95] bg-black/30 px-1.5 py-0.5 rounded border border-white/[0.04]">
+                              {daysLeft >= 0 ? `D-${daysLeft}` : `+${Math.abs(daysLeft)}d`}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Title & Description */}
+                        <h4 className="text-xs font-semibold text-white tracking-tight leading-snug mb-1 group-hover:text-[#c8f135] transition-colors">
+                          {task.title}
+                        </h4>
+                        {task.description && (
+                          <p className="text-[11px] text-[#8a8d95] line-clamp-2 mb-3">
+                            {task.description}
+                          </p>
+                        )}
+
+                        {/* Progress Bar (Reference 8) */}
+                        <div className="space-y-1 my-2.5">
+                          <div className="flex justify-between text-[9px] font-mono text-[#6b6e75]">
+                            <span>Progress</span>
+                            <span className="text-white">{progressPercent}%</span>
+                          </div>
+                          <div className="w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-[#8b5cf6] to-[#c8f135] rounded-full"
+                              style={{ width: `${progressPercent}%` }}
+                            ></div>
+                          </div>
+                        </div>
+
+                        {/* Bottom Footer: Assignee Stack + Icons */}
+                        <div className="flex items-center justify-between pt-2 border-t border-white/[0.04] text-[#6b6e75] text-[11px]">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-[#8b5cf6] to-[#c8f135] text-black font-extrabold text-[9px] flex items-center justify-center">
+                              {getInitials(task.owner?.name || 'W')}
+                            </div>
+                            <span className="text-[10px] text-[#8a8d95] font-mono">{task.time_box_minutes || 45}m</span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1 text-[10px]">
+                              <MessageSquare size={11} />
+                              <span>2</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px]">
+                              <Paperclip size={11} />
+                              <span>1</span>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )
-                })}
-            </div>
-          )}
+                    )
+                  })}
+
+                  {/* Add New Pill Button */}
+                  <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="w-full py-2.5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-dashed border-white/[0.08] text-xs text-[#8a8d95] hover:text-white flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    <Plus size={13} />
+                    <span>Add task</span>
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        /* List View */
+        <div className="bg-[#121316] border border-white/[0.06] rounded-3xl p-6 shadow-glass overflow-y-auto">
+          <div className="space-y-2">
+            {filteredTasks.map((task) => (
+              <div
+                key={task.id}
+                onClick={() => setSelectedTask(task)}
+                className="p-4 rounded-2xl bg-[#17191d] hover:bg-[#1c1f24] border border-white/[0.06] flex items-center justify-between gap-4 transition-all cursor-pointer"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className={cn(
+                    'px-2 py-0.5 rounded-md text-[10px] font-bold font-mono uppercase',
+                    task.priority === 'p0' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                  )}>
+                    {task.priority.toUpperCase()}
+                  </span>
+                  <div className="min-w-0">
+                    <span className="text-xs font-semibold text-white block truncate">{task.title}</span>
+                    <span className="text-[10px] text-[#6b6e75] font-mono">{task.project?.name || 'General'}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-[#8a8d95]">{task.status.toUpperCase()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {isCreateModalOpen && (
-        <CreateTaskModal onClose={() => setIsCreateModalOpen(false)} onSuccess={fetchTasks} />
+      {/* Sliding Task Detail Drawer (Reference 8 Right Drawer) */}
+      {selectedTask && (
+        <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-[#141618]/95 backdrop-blur-2xl border-l border-white/[0.1] shadow-2xl z-50 flex flex-col animate-slideInRight">
+          {/* Drawer Header */}
+          <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#8b5cf6] to-[#a594f9] flex items-center justify-center text-black font-extrabold text-xs">
+                W
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white leading-tight">
+                  {selectedTask.project?.name || 'Focus OS Task'}
+                </h3>
+                <span className="text-[10px] text-[#6b6e75] font-mono">TASK ID: {selectedTask.id.slice(0, 8)}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => deleteTask(selectedTask.id)}
+                className="p-1.5 text-[#6b6e75] hover:text-red-400 hover:bg-white/[0.06] rounded-xl transition-colors cursor-pointer"
+                title="Delete task"
+              >
+                <Trash2 size={15} />
+              </button>
+              <button
+                onClick={() => setSelectedTask(null)}
+                className="p-1.5 text-[#6b6e75] hover:text-white hover:bg-white/[0.06] rounded-xl transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Drawer Body Attributes */}
+          <div className="p-6 flex-1 overflow-y-auto space-y-6">
+            {/* Task Name Input */}
+            <div>
+              <label className="text-[10px] font-mono text-[#6b6e75] uppercase block mb-1">Task Title</label>
+              <h2 className="text-lg font-bold text-white">{selectedTask.title}</h2>
+            </div>
+
+            {/* Key-Value Attributes Grid (Reference 8) */}
+            <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-black/30 border border-white/[0.06] text-xs">
+              <div>
+                <span className="text-[10px] text-[#6b6e75] font-mono block">PEOPLE</span>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-5 h-5 rounded-full bg-[#c8f135] text-black font-bold text-[9px] flex items-center justify-center">
+                    {getInitials(selectedTask.owner?.name || 'W')}
+                  </div>
+                  <span className="text-white font-medium">{selectedTask.owner?.name || 'Assigned to you'}</span>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[10px] text-[#6b6e75] font-mono block">DUE DATE</span>
+                <span className="text-white font-medium mt-1 block">
+                  {selectedTask.due_date ? format(new Date(selectedTask.due_date), 'dd MMMM yyyy') : 'No deadline'}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[10px] text-[#6b6e75] font-mono block">STATUS</span>
+                <select
+                  value={selectedTask.status}
+                  onChange={(e) => updateTaskStatus(selectedTask.id, e.target.value as TaskStatus)}
+                  className="mt-1 bg-white/[0.06] text-white border border-white/[0.1] rounded-lg px-2 py-1 text-xs outline-none cursor-pointer"
+                >
+                  <option value="todo" className="bg-[#141618]">To-Do</option>
+                  <option value="in_progress" className="bg-[#141618]">On Progress</option>
+                  <option value="blocked" className="bg-[#141618]">Blocked</option>
+                  <option value="shipped" className="bg-[#141618]">Shipped</option>
+                </select>
+              </div>
+
+              <div>
+                <span className="text-[10px] text-[#6b6e75] font-mono block">PRIORITY</span>
+                <span className={cn(
+                  'inline-block mt-1 px-2 py-0.5 rounded-md font-mono text-[10px] font-bold uppercase',
+                  selectedTask.priority === 'p0' ? 'bg-red-500/20 text-red-400' : 'bg-orange-500/20 text-orange-400'
+                )}>
+                  {selectedTask.priority.toUpperCase()} Priority
+                </span>
+              </div>
+            </div>
+
+            {/* Tab Switcher: Description / Discussion / Attachments */}
+            <div className="border-b border-white/[0.08] flex gap-6 text-xs font-medium">
+              {(['description', 'discussion', 'attachments'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveDrawerTab(tab)}
+                  className={cn(
+                    'pb-3 capitalize transition-all relative cursor-pointer',
+                    activeDrawerTab === tab ? 'text-white font-bold' : 'text-[#6b6e75] hover:text-white'
+                  )}
+                >
+                  {tab} {tab === 'attachments' && '3'}
+                  {activeDrawerTab === tab && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#c8f135] rounded-full"></span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab Contents */}
+            {activeDrawerTab === 'description' ? (
+              <div className="text-xs text-[#d1d5db] leading-relaxed whitespace-pre-wrap">
+                {selectedTask.description || 'No detailed description provided for this task.'}
+              </div>
+            ) : activeDrawerTab === 'discussion' ? (
+              <div className="space-y-4">
+                {/* Suggestion Chips (Reference 8) */}
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    "I'll do it 🔥",
+                    "Okay 👌",
+                    "Well, I'll get it done right away 👀",
+                  ].map((chip) => (
+                    <button
+                      key={chip}
+                      onClick={() => handleAddComment(chip)}
+                      className="px-2.5 py-1 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-[10px] text-[#8a8d95] hover:text-white transition-all cursor-pointer"
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Comment Input */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+                    placeholder="Add a note or update..."
+                    className="flex-1 px-3 py-2 bg-black/40 border border-white/[0.08] rounded-xl text-xs text-white placeholder:text-[#6b6e75] outline-none"
+                  />
+                  <button
+                    onClick={() => handleAddComment()}
+                    className="px-3 py-2 bg-[#c8f135] text-black font-bold rounded-xl text-xs cursor-pointer hover:bg-[#b8e125]"
+                  >
+                    <Send size={13} />
+                  </button>
+                </div>
+
+                {/* Comment Thread */}
+                <div className="space-y-3 pt-2">
+                  {comments.map((c) => (
+                    <div key={c.id} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] space-y-1">
+                      <div className="flex justify-between text-[10px] font-mono text-[#6b6e75]">
+                        <span className="text-white font-medium">{c.user}</span>
+                        <span>{c.time}</span>
+                      </div>
+                      <p className="text-xs text-[#d1d5db]">{c.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="p-8 text-center text-xs text-[#6b6e75]">
+                3 Project assets linked.
+              </div>
+            )}
+          </div>
+
+          {/* Drawer Footer Actions */}
+          <div className="p-4 border-t border-white/[0.08] flex items-center justify-between gap-3 bg-[#101114]">
+            <button
+              onClick={() => updateTaskStatus(selectedTask.id, 'shipped')}
+              className="flex-1 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-semibold rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Check size={14} />
+              <span>Mark Shipped</span>
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )
 }
-
