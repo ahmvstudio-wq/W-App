@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { User, Settings as SettingsIcon, LogOut, Moon, Sun, Monitor, Bell } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'workspace' | 'preferences'>('profile')
@@ -15,125 +17,113 @@ export default function SettingsPage() {
   }
 
   return (
-    <div style={{ padding: '32px', maxWidth: '1000px', margin: '0 auto' }}>
-      <header style={{ marginBottom: '32px' }}>
-        <h1 style={{ marginBottom: '4px' }}>Settings</h1>
-        <p style={{ color: '#6b6e75', fontFamily: 'DM Mono, monospace', fontSize: '12px', textTransform: 'uppercase' }}>
-          Configure your operating environment
-        </p>
+    <div className="max-w-4xl mx-auto space-y-8 pb-16 font-sans">
+      <header>
+        <div className="text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
+          CALLMY_MGMT • SYSTEM
+        </div>
+        <h1 className="text-3xl font-light tracking-tight text-black">Settings & Preferences</h1>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '32px' }}>
-        {/* Settings Nav */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 font-body">
+        {/* Settings Navigation */}
+        <div className="md:col-span-4 space-y-1">
           {[
             { id: 'profile', label: 'Profile', icon: User },
             { id: 'workspace', label: 'Workspace', icon: SettingsIcon },
             { id: 'preferences', label: 'Preferences', icon: Bell },
-          ].map(tab => (
+          ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '10px',
-                padding: '10px 12px', background: activeTab === tab.id ? '#1c1e22' : 'transparent',
-                border: 'none', borderRadius: '6px', color: activeTab === tab.id ? '#f0ede8' : '#6b6e75',
-                cursor: 'pointer', textAlign: 'left', fontSize: '14px', fontWeight: activeTab === tab.id ? 500 : 400,
-                transition: 'all 150ms'
-              }}
+              className={cn(
+                'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs transition-all cursor-pointer font-light text-left',
+                activeTab === tab.id
+                  ? 'bg-black text-white font-normal shadow-sm'
+                  : 'text-[#6b7280] hover:text-black hover:bg-black/[0.03]'
+              )}
             >
-              <tab.icon size={16} /> {tab.label}
+              <tab.icon size={15} />
+              <span>{tab.label}</span>
             </button>
           ))}
 
-          <div style={{ height: '1px', background: '#252729', margin: '16px 0' }} />
-          
-          <button
-            onClick={handleLogout}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '10px',
-              padding: '10px 12px', background: 'transparent',
-              border: 'none', borderRadius: '6px', color: '#ff4444',
-              cursor: 'pointer', textAlign: 'left', fontSize: '14px'
-            }}
-          >
-            <LogOut size={16} /> Log Out
-          </button>
+          <div className="pt-4 mt-4 border-t border-black/[0.06]">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs text-red-600 hover:bg-red-50 transition-colors cursor-pointer text-left font-light"
+            >
+              <LogOut size={15} />
+              <span>Sign Out</span>
+            </button>
+          </div>
         </div>
 
         {/* Settings Content */}
-        <div style={{ background: '#141618', border: '1px solid #252729', borderRadius: '12px', padding: '32px', minHeight: '500px' }}>
-          
+        <div className="md:col-span-8 bg-white border border-black/[0.08] rounded-3xl p-8 shadow-sm min-h-[400px]">
           {activeTab === 'profile' && (
-            <div className="page-enter-active">
-              <h2 style={{ fontSize: '18px', marginBottom: '24px' }}>Personal Profile</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '400px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Full Name</label>
-                  <input type="text" defaultValue="W" style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Email Address</label>
-                  <input type="email" defaultValue="w@focus.os" disabled style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#6b6e75', fontSize: '14px', outline: 'none', cursor: 'not-allowed' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Daily Shipped Target</label>
-                  <input type="number" defaultValue="5" style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} />
-                </div>
-                <button className="btn-accent" style={{ padding: '12px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 600, marginTop: '8px' }}>
-                  Save Changes
+            <div className="space-y-6 max-w-md">
+              <h2 className="text-lg font-light text-black">Personal Profile</h2>
+              <div>
+                <label className="text-[11px] font-mono text-[#6b7280] block mb-1">ACCOUNT NAME</label>
+                <input
+                  type="text"
+                  defaultValue="Mohammed Rehan"
+                  className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-mono text-[#6b7280] block mb-1">EMAIL ADDRESS</label>
+                <input
+                  type="email"
+                  defaultValue="founder@company.com"
+                  disabled
+                  className="w-full px-4 py-2.5 bg-[#f5f5f7] border border-black/[0.06] rounded-xl text-xs text-[#9ca3af] outline-none font-light cursor-not-allowed"
+                />
+              </div>
+              <button
+                onClick={() => toast.success('Profile preferences updated')}
+                className="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-sm"
+              >
+                Save Changes
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'workspace' && (
+            <div className="space-y-6 max-w-md">
+              <h2 className="text-lg font-light text-black">Workspace Configuration</h2>
+              <div>
+                <label className="text-[11px] font-mono text-[#6b7280] block mb-1">WORKSPACE NAME</label>
+                <input
+                  type="text"
+                  defaultValue="CallMy Mgmt Main"
+                  className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
+                />
+              </div>
+              <div className="pt-4 border-t border-black/[0.06]">
+                <button
+                  onClick={() => toast.success('Workspace updated')}
+                  className="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-sm"
+                >
+                  Save Workspace
                 </button>
               </div>
             </div>
           )}
 
-          {activeTab === 'workspace' && (
-            <div className="page-enter-active">
-              <h2 style={{ fontSize: '18px', marginBottom: '24px' }}>Workspace Settings</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '400px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Workspace Name</label>
-                  <input type="text" defaultValue="W's Workspace" style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Delete Workspace</label>
-                  <button style={{ padding: '12px', background: 'rgba(255, 68, 68, 0.1)', border: '1px solid rgba(255, 68, 68, 0.3)', color: '#ff4444', borderRadius: '6px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', width: '100%' }}>
-                    Danger: Delete Everything
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {activeTab === 'preferences' && (
-            <div className="page-enter-active">
-              <h2 style={{ fontSize: '18px', marginBottom: '24px' }}>System Preferences</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                
-                <div>
-                  <label style={{ display: 'block', marginBottom: '12px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Theme</label>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <button style={{ flex: 1, padding: '16px', background: '#1c1e22', border: '1px solid #c8f135', borderRadius: '8px', color: '#f0ede8', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                      <Moon size={24} color="#c8f135" /> Dark (Default)
-                    </button>
-                    <button disabled style={{ flex: 1, padding: '16px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '8px', color: '#6b6e75', cursor: 'not-allowed', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', opacity: 0.5 }}>
-                      <Sun size={24} /> Light (Disabled)
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', marginBottom: '12px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>AI Harshness</label>
-                  <select style={{ width: '100%', maxWidth: '400px', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }}>
-                    <option value="brutal">Brutal (Default) - Cuts all fluff</option>
-                    <option value="standard">Standard - Still direct</option>
-                  </select>
-                </div>
-
+            <div className="space-y-6 max-w-md">
+              <h2 className="text-lg font-light text-black">System Preferences</h2>
+              <div>
+                <label className="text-[11px] font-mono text-[#6b7280] block mb-1">AI HARSHNESS LEVEL</label>
+                <select className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] rounded-xl text-xs text-black outline-none font-light">
+                  <option value="direct">Direct & High Output (Recommended)</option>
+                  <option value="detailed">Detailed & Exploratory</option>
+                </select>
               </div>
             </div>
           )}
-
         </div>
       </div>
     </div>

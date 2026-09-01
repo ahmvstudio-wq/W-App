@@ -8,6 +8,7 @@ import {
   Target, Volume2, VolumeX 
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 export default function FocusTimer() {
   const [isOpen, setIsOpen] = useState(false)
@@ -20,30 +21,30 @@ export default function FocusTimer() {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  const playSound = useCallback((type: 'start' | 'complete' | 'tick') => {
+  const playSound = useCallback((type: 'start' | 'complete') => {
     if (isMuted) return
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    
-    if (type === 'start') {
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(440, ctx.currentTime)
-      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1)
-    } else if (type === 'complete') {
-      osc.type = 'triangle'
-      osc.frequency.setValueAtTime(880, ctx.currentTime)
-      osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.2)
-    }
-    
-    gain.gain.setValueAtTime(0.1, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2)
-    
-    osc.start()
-    osc.stop(ctx.currentTime + 0.2)
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      
+      if (type === 'start') {
+        osc.frequency.setValueAtTime(440, ctx.currentTime)
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1)
+      } else if (type === 'complete') {
+        osc.frequency.setValueAtTime(880, ctx.currentTime)
+        osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.2)
+      }
+      
+      gain.gain.setValueAtTime(0.08, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2)
+      
+      osc.start()
+      osc.stop(ctx.currentTime + 0.2)
+    } catch {}
   }, [isMuted])
 
   const handleComplete = useCallback(async () => {
@@ -58,11 +59,7 @@ export default function FocusTimer() {
         duration_minutes: Math.ceil((25 * 60 - timeLeft) / 60) || 25,
         completed: true
       })
-      if (!error) toast.success('Focus session recorded')
-    }
-
-    if (linkedTaskId) {
-      // Potentially mark task as done or status updated
+      if (!error) toast.success('Focus sprint logged!')
     }
   }, [linkedTaskId, timeLeft, playSound])
 
@@ -100,87 +97,84 @@ export default function FocusTimer() {
 
   return (
     <>
-      {/* Floating Pill */}
+      {/* Floating Bottom Pill */}
       {!isExpanded && (
         <div 
           onClick={() => setIsExpanded(true)}
-          style={{ 
-            position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', 
-            background: '#141618', border: '1px solid #c8f135', borderRadius: '100px', 
-            padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '12px', 
-            zIndex: 999, cursor: 'pointer', boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
-          }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white border border-black/[0.1] rounded-full px-4 py-2 flex items-center gap-3 z-50 cursor-pointer shadow-lg font-sans animate-fadeIn"
         >
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: isActive ? '#c8f135' : '#6b6e75', boxShadow: isActive ? '0 0 8px #c8f135' : 'none' }} />
-          <span style={{ fontFamily: 'DM Mono, monospace', fontWeight: 700, fontSize: '14px', color: '#f0ede8' }}>
+          <span className={cn(
+            'w-2 h-2 rounded-full',
+            isActive ? 'bg-black animate-ping' : 'bg-[#9ca3af]'
+          )} />
+          <span className="font-mono text-xs font-semibold text-black">
             {minutes}:{seconds.toString().padStart(2, '0')}
           </span>
-          <span style={{ color: '#6b6e75', fontSize: '11px', textTransform: 'uppercase' }}>
-            {linkedTaskTitle ? `Focus: ${linkedTaskTitle}` : 'Focus Mode'}
+          <span className="text-xs text-[#6b7280] font-body font-light truncate max-w-[140px]">
+            {linkedTaskTitle || 'Focus Sprint'}
           </span>
         </div>
       )}
 
-      {/* Expanded Modal */}
+      {/* Expanded Focus Modal */}
       {isExpanded && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(10px)' }}>
-          <div style={{ width: '100%', maxWidth: '500px', textAlign: 'center', padding: '40px' }}>
+        <div className="fixed inset-0 z-50 bg-white/95 backdrop-blur-md flex items-center justify-center font-sans animate-fadeIn">
+          <div className="w-full max-w-md text-center p-8 relative">
             <button 
               onClick={() => setIsExpanded(false)}
-              style={{ position: 'absolute', top: '32px', right: '32px', background: 'transparent', border: 'none', color: '#6b6e75', cursor: 'pointer' }}
+              className="absolute top-0 right-0 p-2 text-[#9ca3af] hover:text-black rounded-xl transition-colors cursor-pointer"
             >
-              <Minimize2 size={24} />
+              <Minimize2 size={20} />
             </button>
 
-            <div style={{ marginBottom: '40px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px', color: '#c8f135' }}>
-                <Clock size={20} /> <span style={{ fontFamily: 'DM Mono, monospace', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Current Sprint</span>
+            <div className="mb-8 space-y-2">
+              <div className="flex items-center justify-center gap-2 text-xs font-mono text-[#6b7280] uppercase tracking-wider font-light">
+                <Clock size={14} />
+                <span>ACTIVE FOCUS SPRINT</span>
               </div>
-              <h2 style={{ fontSize: '32px', marginBottom: '8px' }}>{linkedTaskTitle || 'General Focus Session'}</h2>
-              <p style={{ color: '#6b6e75', fontSize: '14px' }}>One goal. No distractions. Ship it.</p>
+              <h2 className="text-2xl font-light text-black tracking-tight">
+                {linkedTaskTitle || 'Deep Work Session'}
+              </h2>
+              <p className="text-xs text-[#6b7280] font-body font-light">
+                One clear deliverable. Zero distractions.
+              </p>
             </div>
 
-            <div style={{ fontSize: '120px', fontWeight: 800, fontFamily: 'DM Mono, monospace', color: isActive ? '#c8f135' : '#f0ede8', marginBottom: '48px', letterSpacing: '-0.05em' }}>
+            {/* Giant Timer Clock */}
+            <div className="text-7xl sm:text-8xl font-extralight font-mono text-black mb-10 tracking-tighter">
               {minutes}:{seconds.toString().padStart(2, '0')}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', alignItems: 'center' }}>
+            {/* Controls */}
+            <div className="flex justify-center items-center gap-4">
               <button 
                 onClick={() => setIsActive(!isActive)}
-                style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#c8f135', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                className="w-16 h-16 rounded-full bg-black hover:bg-neutral-800 text-white flex items-center justify-center cursor-pointer shadow-md transition-transform hover:scale-105"
               >
-                {isActive ? <Pause size={32} color="#000" fill="#000" /> : <Play size={32} color="#000" fill="#000" />}
+                {isActive ? <Pause size={24} fill="#fff" /> : <Play size={24} fill="#fff" className="ml-1" />}
               </button>
               
               <button 
                 onClick={() => { setIsOpen(false); setIsActive(false); }}
-                style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#1c1e22', border: '1px solid #252729', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b6e75', cursor: 'pointer' }}
+                className="w-12 h-12 rounded-full bg-[#fafafa] border border-black/[0.08] flex items-center justify-center text-[#6b7280] hover:text-black cursor-pointer transition-colors"
               >
-                <X size={24} />
+                <X size={18} />
               </button>
 
               <button 
                 onClick={() => setIsMuted(!isMuted)}
-                style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#1c1e22', border: '1px solid #252729', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b6e75', cursor: 'pointer' }}
+                className="w-12 h-12 rounded-full bg-[#fafafa] border border-black/[0.08] flex items-center justify-center text-[#6b7280] hover:text-black cursor-pointer transition-colors"
               >
-                {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
+                {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
               </button>
             </div>
 
             {isActive && (
-              <div style={{ marginTop: '48px', color: '#6b6e75', fontSize: '12px', fontFamily: 'DM Mono, monospace', animation: 'pulse 2s infinite' }}>
-                FOCUS ACTIVE • ALL SYSTEM NOTIFICATIONS SUPPRESSED
+              <div className="mt-8 text-[11px] font-mono text-[#9ca3af] uppercase tracking-wider">
+                DEEP FOCUS ACTIVE
               </div>
             )}
           </div>
-
-          <style jsx>{`
-            @keyframes pulse {
-              0% { opacity: 0.3; }
-              50% { opacity: 0.7; }
-              100% { opacity: 0.3; }
-            }
-          `}</style>
         </div>
       )}
     </>

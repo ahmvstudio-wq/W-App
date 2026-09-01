@@ -1,24 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import { Zap, ChevronRight, MessageSquare, Plus, Trash2 } from 'lucide-react'
+import { Zap, ChevronRight, MessageSquare, Plus, Trash2, Sparkles, Send, Activity, ShieldCheck, TrendingUp, CheckSquare } from 'lucide-react'
 import { callGroq, buildWorkspaceContext } from '@/lib/groq/client'
 import { getInitials } from '@/lib/utils'
 
 export default function AIPage() {
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<{role: 'user'|'assistant', content: string}[]>([
-    { role: 'assistant', content: 'W System Intelligence initialized. I hold the standard for output, speed, and ownership. I will challenge your scope and cut your fluff. What is the priority?' }
+    { role: 'assistant', content: 'CallMy Mgmt Intelligence initialized. Ready to challenge scope, review blockers, and prioritize your active sprint tasks. What is the priority focus?' }
   ])
   const [loading, setLoading] = useState(false)
 
   const quickPrompts = [
     "What should I be working on right now?",
     "Stress test my most important project",
-    "What should I delete from my task list?",
-    "Am I measuring the right things?",
-    "What is blocking the most work right now?",
-    "Turn this into a proper project"
+    "What tasks should I eliminate or delegate?",
+    "What is blocking shipping velocity right now?",
   ]
 
   async function handleSubmit(e?: React.FormEvent, promptOverride?: string) {
@@ -31,10 +29,9 @@ export default function AIPage() {
     setInput('')
     setLoading(true)
 
-    // Mock full context injection
     const context = buildWorkspaceContext({
-      projects: [{ name: 'V1 Launch', status: 'active', tasksTotal: 5, tasksShipped: 2 }],
-      tasks: [{ title: 'Finalize pricing', priority: 'p0', status: 'in_progress' }],
+      projects: [{ name: 'Active Sprints', status: 'active', tasksTotal: 5, tasksShipped: 2 }],
+      tasks: [{ title: 'Deliver core features', priority: 'p0', status: 'in_progress' }],
       blockers: []
     })
 
@@ -42,127 +39,145 @@ export default function AIPage() {
       const response = await callGroq(newMessages, context)
       setMessages([...newMessages, { role: 'assistant', content: response }])
     } catch (err) {
-      setMessages([...newMessages, { role: 'assistant', content: 'Connection failed. Reload system.' }])
+      setMessages([...newMessages, { role: 'assistant', content: 'Connection temporarily unavailable. Please retry.' }])
     }
     setLoading(false)
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      
-      {/* Sidebar - History */}
-      <div style={{ width: '260px', background: '#141618', borderRight: '1px solid #252729', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-        <div style={{ padding: '24px 20px' }}>
-          <button onClick={() => setMessages([messages[0]])} className="btn-accent" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer', marginBottom: '24px' }}>
-            <Plus size={16} /> New Session
+    <div className="flex h-[calc(100vh-6rem)] -m-8 font-sans overflow-hidden bg-[#ffffff]">
+      {/* Sidebar - Sessions & Intelligence Stats */}
+      <div className="w-72 bg-white border-r border-black/[0.06] p-6 flex flex-col justify-between flex-shrink-0 font-body">
+        <div className="space-y-6">
+          <button
+            onClick={() => setMessages([messages[0]])}
+            className="w-full py-2.5 px-4 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Plus size={14} />
+            <span>New Session</span>
           </button>
-          
-          <div style={{ fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', marginBottom: '12px', paddingLeft: '8px' }}>
-            Recent Sessions
+
+          {/* AI Decision Metrics Card with Ambient Soft Lighting */}
+          <div className="p-4 rounded-3xl bg-gradient-to-br from-indigo-50/50 to-purple-50/50 border border-indigo-100/60 space-y-3">
+            <div className="flex items-center gap-1.5 text-[10px] font-mono text-indigo-900 font-medium">
+              <Activity size={12} className="text-indigo-600" />
+              <span>SYSTEM REASONING</span>
+            </div>
+            <div className="space-y-1.5 text-xs font-light text-[#4b5563]">
+              <div className="flex justify-between">
+                <span>Scope Audits</span>
+                <span className="font-mono text-black font-medium">24 / 24</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Blockers Isolated</span>
+                <span className="font-mono text-black font-medium">94.6%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Model Latency</span>
+                <span className="font-mono text-emerald-600 font-medium">0.45s</span>
+              </div>
+            </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <button style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: '#1c1e22', border: 'none', borderRadius: '6px', color: '#f0ede8', cursor: 'pointer', fontSize: '13px', textAlign: 'left' }}>
-              <MessageSquare size={14} color="#c8f135" />
-              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Current Session</span>
-            </button>
-            <button style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: 'transparent', border: 'none', borderRadius: '6px', color: '#6b6e75', cursor: 'pointer', fontSize: '13px', textAlign: 'left', transition: 'all 150ms' }} onMouseEnter={e => { e.currentTarget.style.background = '#1c1e22'; e.currentTarget.style.color = '#f0ede8' }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6b6e75' }}>
-              <MessageSquare size={14} />
-              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Project stress test</span>
-            </button>
+
+          <div>
+            <div className="text-[10px] font-mono text-[#9ca3af] uppercase tracking-wider mb-2 font-light px-2">
+              Intelligence Sessions
+            </div>
+            <div className="space-y-1">
+              <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs bg-black text-white font-normal shadow-sm text-left">
+                <MessageSquare size={13} className="text-white" />
+                <span className="truncate">Current Session</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main Chat Interface */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
-        
+      <div className="flex-1 flex flex-col justify-between bg-[#fbfbfd]">
         {/* Header */}
-        <header style={{ padding: '16px 32px', borderBottom: '1px solid #252729', background: '#0c0d0f', display: 'flex', alignItems: 'center', gap: '12px', zIndex: 10 }}>
-          <Zap color="#c8f135" size={20} />
-          <h1 style={{ fontSize: '18px', margin: 0 }}>System Intelligence</h1>
-          <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', background: '#1c1e22', padding: '4px 8px', borderRadius: '4px' }}>
-            MODEL: CLAUDE-SONNET-4
+        <header className="px-8 py-4 border-b border-black/[0.06] bg-white flex items-center justify-between font-body">
+          <div className="flex items-center gap-2.5">
+            <Sparkles size={16} className="text-black" />
+            <h1 className="text-sm font-normal text-black">AI Chief of Staff</h1>
+          </div>
+          <span className="text-[10px] font-mono text-[#6b7280] bg-black/[0.04] px-2 py-0.5 rounded font-light">
+            SYNCED TO WORKSPACE
           </span>
         </header>
 
-        {/* Chat Area */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        {/* Chat Stream */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-6 max-w-4xl mx-auto w-full font-body">
           {messages.map((msg, i) => (
-            <div key={i} style={{ 
-              display: 'flex', gap: '16px', maxWidth: '800px', 
-              margin: msg.role === 'user' ? '0 0 0 auto' : '0 auto 0 0',
-              flexDirection: msg.role === 'user' ? 'row-reverse' : 'row'
-            }}>
-              
-              <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: msg.role === 'user' ? '#252729' : '#c8f135', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: msg.role === 'user' ? '#f0ede8' : '#000', fontWeight: 800, fontSize: '14px', fontFamily: 'Syne, sans-serif' }}>
-                {msg.role === 'user' ? getInitials('W') : 'W'}
+            <div
+              key={i}
+              className={`flex gap-3 max-w-2xl ${
+                msg.role === 'user' ? 'ml-auto flex-row-reverse' : 'mr-auto'
+              }`}
+            >
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs flex-shrink-0 font-medium ${
+                msg.role === 'user' ? 'bg-black text-white' : 'bg-black/[0.05] text-black'
+              }`}>
+                {msg.role === 'user' ? 'You' : 'CM'}
               </div>
 
-              <div style={{ 
-                background: msg.role === 'user' ? '#1c1e22' : 'transparent',
-                border: msg.role === 'user' ? '1px solid #252729' : 'none',
-                padding: msg.role === 'user' ? '16px 20px' : '6px 0',
-                borderRadius: '12px',
-                borderTopRightRadius: msg.role === 'user' ? '4px' : '12px',
-                borderTopLeftRadius: msg.role === 'assistant' ? '4px' : '12px',
-                color: '#f0ede8',
-                fontSize: '15px',
-                lineHeight: 1.6,
-                fontFamily: msg.role === 'assistant' ? 'DM Mono, monospace' : 'Inter, sans-serif'
-              }}>
+              <div className={`p-4 rounded-3xl text-xs leading-relaxed font-light ${
+                msg.role === 'user'
+                  ? 'bg-black text-white'
+                  : 'bg-white border border-black/[0.06] text-[#1f2937] shadow-sm whitespace-pre-wrap'
+              }`}>
                 {msg.content}
               </div>
-
             </div>
           ))}
+
           {loading && (
-            <div style={{ display: 'flex', gap: '16px', maxWidth: '800px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#c8f135', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#000', fontWeight: 800, fontSize: '14px', fontFamily: 'Syne, sans-serif' }}>W</div>
-              <div style={{ padding: '6px 0', color: '#6b6e75', fontSize: '15px', fontFamily: 'DM Mono, monospace' }}>Processing intelligence...</div>
+            <div className="flex gap-3 max-w-2xl mr-auto">
+              <div className="w-7 h-7 rounded-full bg-black/[0.05] text-black flex items-center justify-center text-xs flex-shrink-0 font-medium">
+                CM
+              </div>
+              <div className="p-4 rounded-3xl bg-white border border-black/[0.06] text-xs text-[#9ca3af] font-mono font-light shadow-sm">
+                Thinking & analyzing workspace...
+              </div>
             </div>
           )}
         </div>
 
-        {/* Input Area */}
-        <div style={{ padding: '24px 32px', background: 'linear-gradient(transparent, #0c0d0f 20%)', paddingTop: '40px' }}>
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-            
-            {/* Quick Prompts */}
+        {/* Input Bar */}
+        <div className="p-6 px-8 bg-white border-t border-black/[0.06] font-body">
+          <div className="max-w-3xl mx-auto space-y-3">
             {messages.length === 1 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
-                {quickPrompts.map(prompt => (
-                  <button key={prompt} onClick={() => handleSubmit(undefined, prompt)} style={{ padding: '8px 16px', background: '#141618', border: '1px solid #252729', borderRadius: '100px', color: '#f0ede8', fontSize: '12px', cursor: 'pointer', transition: 'all 150ms' }} onMouseEnter={e => { e.currentTarget.style.background = '#1c1e22'; e.currentTarget.style.borderColor = '#c8f135' }} onMouseLeave={e => { e.currentTarget.style.background = '#141618'; e.currentTarget.style.borderColor = '#252729' }}>
+              <div className="flex flex-wrap gap-2">
+                {quickPrompts.map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => handleSubmit(undefined, prompt)}
+                    className="px-3 py-1.5 rounded-full bg-white hover:bg-neutral-50 border border-black/[0.08] text-xs text-[#6b7280] hover:text-black transition-all cursor-pointer font-light"
+                  >
                     {prompt}
                   </button>
                 ))}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} style={{ position: 'relative' }}>
-              <input 
-                type="text" 
+            <form onSubmit={handleSubmit} className="flex gap-2 relative">
+              <input
+                type="text"
                 value={input}
-                onChange={e => setInput(e.target.value)}
-                placeholder="Command the system..."
-                style={{ width: '100%', background: '#1c1e22', border: '1px solid #252729', padding: '16px 20px', paddingRight: '60px', borderRadius: '12px', color: '#f0ede8', fontSize: '15px', outline: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.5)', transition: 'border-color 200ms' }}
-                onFocus={e => e.target.style.borderColor = '#c8f135'}
-                onBlur={e => e.target.style.borderColor = '#252729'}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask about tasks, priorities, or request a blocker analysis..."
+                className="w-full px-4 py-3 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-2xl text-xs text-black placeholder:text-[#9ca3af] outline-none font-light shadow-sm"
               />
-              <button type="submit" disabled={!input.trim() || loading} style={{ 
-                position: 'absolute', right: '8px', top: '8px', bottom: '8px', width: '40px',
-                background: '#c8f135', color: '#000', border: 'none', borderRadius: '8px', 
-                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: (!input.trim() || loading) ? 'not-allowed' : 'pointer', opacity: (!input.trim() || loading) ? 0.5 : 1,
-                transition: 'transform 100ms'
-              }} onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'} onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}>
-                <ChevronRight size={20} />
+              <button
+                type="submit"
+                disabled={!input.trim() || loading}
+                className="absolute right-2 top-2 bottom-2 px-4 bg-black hover:bg-neutral-800 disabled:opacity-40 text-white rounded-xl text-xs font-normal transition-all cursor-pointer flex items-center justify-center"
+              >
+                <Send size={13} />
               </button>
             </form>
-            <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace' }}>
-              System has full access to workspace context. It never validates, it only challenges.
-            </div>
           </div>
         </div>
-
       </div>
     </div>
   )

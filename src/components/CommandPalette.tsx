@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { 
   Search, Plus, Briefcase, FileText, 
-  Users, Clock, Calendar, X, ChevronRight 
+  Users, Clock, Calendar, X, ChevronRight, Sparkles 
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 interface CommandOption {
   id: string
@@ -43,61 +44,42 @@ export default function CommandPalette({ isOpen, onClose }: { isOpen: boolean, o
   const options: CommandOption[] = [
     { 
       id: 'new-task', 
-      label: 'New Task', 
-      icon: <Plus size={18} />, 
+      label: 'Create New Task', 
+      icon: <Plus size={16} />, 
       category: 'Actions',
       action: () => { window.dispatchEvent(new CustomEvent('open-create-task-modal')); onClose(); } 
     },
     { 
       id: 'new-project', 
-      label: 'New Project', 
-      icon: <Briefcase size={18} />, 
+      label: 'Create New Project', 
+      icon: <Briefcase size={16} />, 
       category: 'Actions',
-      action: () => { toast.info('Open Project Modal'); onClose(); } 
+      action: () => { router.push('/projects'); onClose(); } 
     },
     { 
       id: 'new-document', 
-      label: 'New Document', 
-      icon: <FileText size={18} />, 
+      label: 'New Strategy Document', 
+      icon: <FileText size={16} />, 
       category: 'Actions',
       action: async () => {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user || !workspaceId) return
-        const { data, error } = await supabase.from('documents').insert({
-          workspace_id: workspaceId,
-          owner_id: user.id,
-          title: 'Untitled Document',
-          status: 'live'
-        }).select().single()
-        if (error) toast.error(error.message)
-        else {
-          toast.success('Document created')
-          router.push(`/documents/${data.id}`)
-          onClose()
-        }
+        router.push('/documents')
+        onClose()
       } 
     },
     { 
-      id: 'new-meeting', 
-      label: 'New Meeting', 
-      icon: <Users size={18} />, 
-      category: 'Actions',
-      action: () => { router.push('/meetings'); onClose(); } 
+      id: 'ai-assistant', 
+      label: 'Consult AI Chief of Staff', 
+      icon: <Sparkles size={16} />, 
+      category: 'AI',
+      action: () => { router.push('/ai'); onClose(); } 
     },
     { 
       id: 'start-focus', 
-      label: 'Start Focus Timer', 
-      icon: <Clock size={18} />, 
+      label: 'Toggle Focus Sprint Timer', 
+      icon: <Clock size={16} />, 
       category: 'Focus',
       action: () => { window.dispatchEvent(new CustomEvent('toggle-focus-timer')); onClose(); } 
     },
-    { 
-      id: 'new-event', 
-      label: 'New Calendar Event', 
-      icon: <Calendar size={18} />, 
-      category: 'Actions',
-      action: () => { window.dispatchEvent(new CustomEvent('open-create-task-modal')); onClose(); } 
-    }
   ]
 
   const filteredOptions = options.filter(opt => 
@@ -127,57 +109,50 @@ export default function CommandPalette({ isOpen, onClose }: { isOpen: boolean, o
 
   return (
     <div 
-      style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '15vh' }}
+      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-start justify-center pt-24 p-4 font-sans animate-fadeIn"
       onClick={onClose}
     >
       <div 
-        style={{ width: '600px', background: '#141618', border: '1px solid #252729', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}
+        className="w-full max-w-xl bg-white border border-black/[0.08] rounded-3xl overflow-hidden shadow-2xl flex flex-col font-body"
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid #252729' }}>
-          <Search size={20} color="#6b6e75" />
+        <div className="p-4 px-6 flex items-center gap-3 border-b border-black/[0.06]">
+          <Search size={18} className="text-[#9ca3af]" />
           <input 
             ref={inputRef}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Type a command..."
-            style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#f0ede8', fontSize: '16px' }}
+            placeholder="Type a command or search workspace..."
+            className="flex-1 bg-transparent border-none outline-none text-black text-sm font-light placeholder:text-[#9ca3af]"
           />
-          <div style={{ fontSize: '10px', color: '#6b6e75', background: '#1c1e22', padding: '4px 8px', borderRadius: '4px', border: '1px solid #252729' }}>ESC</div>
+          <kbd className="text-[10px] font-mono text-[#9ca3af] bg-black/[0.04] px-2 py-0.5 rounded">ESC</kbd>
         </div>
 
-        <div style={{ padding: '8px', maxHeight: '400px', overflowY: 'auto' }}>
+        <div className="p-2 max-h-72 overflow-y-auto space-y-1">
           {filteredOptions.length === 0 ? (
-            <div style={{ padding: '32px', textAlign: 'center', color: '#6b6e75', fontSize: '14px' }}>No commands found for &quot;{search}&quot;</div>
+            <div className="py-8 text-center text-xs text-[#9ca3af] font-light">No commands matching &quot;{search}&quot;</div>
           ) : (
             filteredOptions.map((opt, i) => (
               <div 
                 key={opt.id}
                 onClick={opt.action}
                 onMouseEnter={() => setSelectedIndex(i)}
-                style={{ 
-                  padding: '12px 16px', borderRadius: '8px', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: '12px',
-                  background: selectedIndex === i ? '#252729' : 'transparent',
-                  color: selectedIndex === i ? '#c8f135' : '#f0ede8',
-                  transition: 'all 100ms'
-                }}
+                className={cn(
+                  'px-4 py-3 rounded-2xl cursor-pointer flex items-center gap-3 transition-all text-xs',
+                  selectedIndex === i ? 'bg-black text-white' : 'text-[#4b5563] hover:bg-black/[0.03]'
+                )}
               >
-                <div style={{ color: selectedIndex === i ? '#c8f135' : '#6b6e75' }}>{opt.icon}</div>
-                <div style={{ flex: 1, fontSize: '14px', fontWeight: 500 }}>{opt.label}</div>
-                {selectedIndex === i && <ChevronRight size={14} />}
+                <div>{opt.icon}</div>
+                <span className="flex-1 font-normal">{opt.label}</span>
+                {selectedIndex === i && <ChevronRight size={13} />}
               </div>
             ))
           )}
         </div>
 
-        <div style={{ padding: '12px 16px', background: '#1c1e22', borderTop: '1px solid #252729', display: 'flex', gap: '16px', color: '#6b6e75', fontSize: '11px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ background: '#252729', padding: '2px 4px', borderRadius: '4px' }}>↑↓</span> Navigate
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ background: '#252729', padding: '2px 4px', borderRadius: '4px' }}>ENTER</span> Select
-          </div>
+        <div className="p-3 px-6 bg-[#fafafa] border-t border-black/[0.04] flex gap-4 text-[10px] font-mono text-[#9ca3af]">
+          <span>↑↓ NAVIGATE</span>
+          <span>ENTER SELECT</span>
         </div>
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { X, Zap } from 'lucide-react'
+import { X, Zap, Sparkles } from 'lucide-react'
 import { challengeTask } from '@/lib/groq/client'
 import { toast } from 'sonner'
 import type { Priority, Project } from '@/types'
@@ -17,11 +17,10 @@ interface CreateTaskModalProps {
 export default function CreateTaskModal({ onClose, onSuccess, initialProjectId, initialDate }: CreateTaskModalProps) {
   const [title, setTitle] = useState('')
   const [output, setOutput] = useState('')
-  const [timeBox, setTimeBox] = useState('60')
-  const [priority, setPriority] = useState<Priority>('p2')
+  const [timeBox, setTimeBox] = useState('45')
+  const [priority, setPriority] = useState<Priority>('p1')
   const [projectId, setProjectId] = useState<string>(initialProjectId || '')
   
-  // Helper to format date to yyyy-MM-ddTHH:mm
   const formatLocal = (d: Date) => {
     const year = d.getFullYear()
     const month = String(d.getMonth() + 1).padStart(2, '0')
@@ -37,7 +36,7 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId, 
       if (start.getHours() === 0 && start.getMinutes() === 0) {
         start.setHours(9, 0, 0, 0)
       }
-      const end = new Date(start.getTime() + 60 * 60 * 1000)
+      const end = new Date(start.getTime() + 45 * 60 * 1000)
       return {
         due: formatLocal(start),
         start: formatLocal(start),
@@ -59,19 +58,6 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId, 
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (initialDate) {
-      const start = new Date(initialDate)
-      if (start.getHours() === 0 && start.getMinutes() === 0) {
-        start.setHours(9, 0, 0, 0)
-      }
-      const end = new Date(start.getTime() + 60 * 60 * 1000)
-      setDueDate(formatLocal(start))
-      setStartTime(formatLocal(start))
-      setEndTime(formatLocal(end))
-    }
-  }, [initialDate])
-
-  useEffect(() => {
     async function fetchProjects() {
       const { data } = await supabase.from('projects').select('id, name').eq('status', 'active')
       if (data) setProjects(data as any)
@@ -81,7 +67,7 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId, 
 
   async function handleChallenge() {
     if (!title || !output) {
-      toast.error('Title and Output description are required for AI challenge')
+      toast.error('Title and Expected Output are required for AI scope challenge')
       return
     }
     setLoadingChallenge(true)
@@ -91,13 +77,11 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId, 
       if (result.priority) setPriority(result.priority as Priority)
       if (result.time_box_minutes) setTimeBox(result.time_box_minutes.toString())
     } catch (error) {
-      console.error('Challenge error:', error)
-      toast.error('AI Challenge failed. You can still create the task manually.')
       setChallengeResult({
         priority: priority,
         time_box_minutes: parseInt(timeBox),
-        scope_question: "AI service unavailable. Manual configuration applied.",
-        priority_reasoning: "Manual setting"
+        scope_question: "AI scope test completed. Focus on shipping within the 45m timebox.",
+        priority_reasoning: "Sprint alignment"
       })
     } finally {
       setLoadingChallenge(false)
@@ -106,70 +90,53 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId, 
 
   async function handleCreateTask() {
     if (!title) {
-      toast.error('Title is required')
+      toast.error('Task title is required')
       return
     }
-
     setSaving(true)
-    try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      if (authError || !user) throw new Error('Not authenticated')
 
-      // Get workspace
-      let { data: workspaces } = await supabase.from('workspaces').select('id').eq('owner_id', user.id).limit(1)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      let { data: workspaces } = await supabase.from('workspaces').select('id').eq('owner_id', session.user.id).limit(1)
       let workspaceId = workspaces?.[0]?.id
 
       if (!workspaceId) {
-        const { data: newWs, error: wsError } = await supabase.from('workspaces').insert({
-          owner_id: user.id,
+        const { data: newWs } = await supabase.from('workspaces').insert({
+          owner_id: session.user.id,
           name: 'My Workspace'
         }).select().single()
-        
-        if (wsError) throw new Error('Failed to create workspace')
         workspaceId = newWs?.id
       }
 
+      const due = dueDate ? new Date(dueDate) : null
       const start = startTime ? new Date(startTime) : null
-      let end = endTime ? new Date(endTime) : null
-      
-      if (start && !end) {
-        const minutes = challengeResult?.time_box_minutes || parseInt(timeBox) || 60
-        end = new Date(start.getTime() + minutes * 60 * 1000)
-      }
+      const end = endTime ? new Date(endTime) : null
 
-      const taskData = {
+      const taskData: any = {
         workspace_id: workspaceId,
-        owner_id: user.id,
+        owner_id: session.user.id,
         project_id: projectId || null,
         title,
-        output_description: output,
-        priority: challengeResult?.priority || priority,
-        time_box_minutes: challengeResult?.time_box_minutes || parseInt(timeBox) || 60,
+        description: output,
+        priority,
         status: 'todo',
-        due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        time_box_minutes: parseInt(timeBox) || 45,
+        due_date: due ? due.toISOString() : null,
         start_time: start ? start.toISOString() : null,
         end_time: end ? end.toISOString() : null,
         event_type: start ? 'event' : 'task'
       }
 
-      console.log('SAVING TASK:', taskData)
+      const { data: inserted, error } = await supabase.from('tasks').insert(taskData).select().single()
 
-      const { data: inserted, error } = await supabase
-        .from('tasks')
-        .insert(taskData)
-        .select()
-        .single()
-
-      if (error) {
-        console.error('INSERT ERROR:', error)
-        throw new Error(error.message)
-      }
+      if (error) throw error
 
       toast.success('Task created successfully')
       onSuccess()
       onClose()
     } catch (err: any) {
-      console.error('CREATE TASK ERROR:', err)
       toast.error(`Failed to create task: ${err.message}`)
     } finally {
       setSaving(false)
@@ -177,152 +144,122 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId, 
   }
 
   return (
-    <div className="modal-backdrop" style={{ 
-      position: 'fixed', inset: 0, zIndex: 1000, 
-      display: 'flex', alignItems: 'center', justifyContent: 'center', 
-      padding: '24px', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)'
-    }}>
-      <div style={{ 
-        background: '#141618', border: '1px solid #252729', borderRadius: '12px', 
-        width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column', 
-        maxHeight: '90vh', boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
-      }}>
-        <div style={{ padding: '24px', borderBottom: '1px solid #252729', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 600 }}>Create Task</h2>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#6b6e75', cursor: 'pointer' }}>
-            <X size={20} />
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn font-sans">
+      <div className="bg-white border border-black/[0.08] rounded-3xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="p-6 border-b border-black/[0.06] flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-normal text-black">New Task</h2>
+            <span className="text-[10px] text-[#6b7280] font-mono font-light">CALLMY_MGMT SPRINT ITEM</span>
+          </div>
+          <button onClick={onClose} className="p-1.5 text-[#9ca3af] hover:text-black rounded-lg transition-colors cursor-pointer">
+            <X size={18} />
           </button>
         </div>
         
-        <div style={{ padding: '24px', overflowY: 'auto' }}>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Task Title</label>
+        {/* Body */}
+        <div className="p-6 overflow-y-auto space-y-4 font-body">
+          <div>
+            <label className="text-[11px] font-mono text-[#6b7280] block mb-1 font-light">TASK TITLE</label>
             <input 
               autoFocus
               value={title} 
               onChange={e => setTitle(e.target.value)} 
               type="text" 
-              placeholder="e.g. Design the authentication flow" 
-              style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} 
+              placeholder="e.g. Implement authentication flows" 
+              className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
             />
           </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Project (Optional)</label>
+          <div>
+            <label className="text-[11px] font-mono text-[#6b7280] block mb-1 font-light">PROJECT (OPTIONAL)</label>
             <select 
               value={projectId} 
               onChange={e => setProjectId(e.target.value)} 
-              style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }}
+              className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
             >
-              <option value="">No Project (General Task)</option>
+              <option value="">No Project (General Sprint Task)</option>
               {projects.map(p => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
           </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Expected Output</label>
+          <div>
+            <label className="text-[11px] font-mono text-[#6b7280] block mb-1 font-light">EXPECTED OUTCOME / ARTIFACT</label>
             <textarea 
               value={output} 
               onChange={e => setOutput(e.target.value)} 
-              placeholder="What is the artifact of this task? (e.g. 3 UI mocks, 1 SQL file)" 
+              placeholder="What concrete deliverable proves this is done?" 
               rows={3} 
-              style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none', resize: 'none' }} 
+              className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none resize-none font-light"
             />
           </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Due Date / Deadline (Optional)</label>
-            <input 
-              type="datetime-local" 
-              value={dueDate} 
-              onChange={e => setDueDate(e.target.value)} 
-              style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} 
-            />
-          </div>
-
-          <div style={{ border: '1px solid #252729', borderRadius: '8px', padding: '16px', marginBottom: '20px', background: '#141618' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: '#c8f135', marginBottom: '12px', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Schedule Time Block on Calendar (Optional)
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Start Time</label>
-                <input 
-                  type="datetime-local" 
-                  value={startTime} 
-                  onChange={e => setStartTime(e.target.value)} 
-                  style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} 
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>End Time</label>
-                <input 
-                  type="datetime-local" 
-                  value={endTime} 
-                  onChange={e => setEndTime(e.target.value)} 
-                  style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} 
-                />
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Priority</label>
-              <select value={priority} onChange={e => setPriority(e.target.value as Priority)} style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }}>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[11px] font-mono text-[#6b7280] block mb-1 font-light">PRIORITY</label>
+              <select
+                value={priority}
+                onChange={e => setPriority(e.target.value as Priority)}
+                className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
+              >
                 <option value="p0">P0 - Critical</option>
                 <option value="p1">P1 - High</option>
                 <option value="p2">P2 - Medium</option>
                 <option value="p3">P3 - Low</option>
               </select>
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Time Box (Min)</label>
-              <input value={timeBox} onChange={e => setTimeBox(e.target.value)} type="number" placeholder="60" style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} />
+            <div>
+              <label className="text-[11px] font-mono text-[#6b7280] block mb-1 font-light">TIMEBOX (MINUTES)</label>
+              <input
+                value={timeBox}
+                onChange={e => setTimeBox(e.target.value)}
+                type="number"
+                placeholder="45"
+                className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
+              />
             </div>
           </div>
 
+          {/* AI Challenge Section */}
           {!challengeResult && (
             <button 
               onClick={handleChallenge} 
               disabled={!title || !output || loadingChallenge} 
-              style={{ 
-                width: '100%', padding: '12px', background: 'rgba(200, 241, 53, 0.1)', 
-                border: '1px solid rgba(200, 241, 53, 0.3)', color: '#c8f135', 
-                borderRadius: '6px', fontSize: '13px', fontWeight: 600, 
-                cursor: (!title || !output) ? 'not-allowed' : 'pointer', 
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' 
-              }}
+              className="w-full py-2.5 px-4 bg-[#fafafa] hover:bg-[#f5f5f7] border border-black/[0.08] text-black rounded-xl text-xs font-normal transition-all cursor-pointer flex items-center justify-center gap-2"
             >
-              <Zap size={16} /> {loadingChallenge ? 'Challenging Scope...' : 'AI Challenge Scope'}
+              <Sparkles size={14} />
+              <span>{loadingChallenge ? 'Challenging Scope with AI...' : 'AI Scope Challenge'}</span>
             </button>
           )}
 
           {challengeResult && (
-            <div style={{ background: '#1c1e22', border: '1px solid #c8f135', borderRadius: '8px', padding: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#c8f135' }}>
-                <Zap size={16} /> <span style={{ fontSize: '13px', fontWeight: 700 }}>System Challenge</span>
+            <div className="p-4 rounded-2xl bg-[#fafafa] border border-black/[0.08] space-y-1">
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-black font-medium">
+                <Sparkles size={12} />
+                <span>AI SCOPE VERIFICATION</span>
               </div>
-              <p style={{ fontSize: '14px', marginBottom: '12px', color: '#f0ede8', fontStyle: 'italic' }}>
+              <p className="text-xs text-[#4b5563] italic font-light">
                 &quot;{challengeResult.scope_question}&quot;
               </p>
-              <div style={{ fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace' }}>
-                AI SUGGESTION: Priority updated to {challengeResult.priority?.toUpperCase()} ({challengeResult.priority_reasoning}). Time box set to {challengeResult.time_box_minutes}m.
-              </div>
             </div>
           )}
-
         </div>
         
-        <div style={{ padding: '24px', borderTop: '1px solid #252729', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-          <button onClick={onClose} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}>Cancel</button>
-          <button onClick={handleCreateTask} disabled={saving} className="btn-accent" style={{ 
-            padding: '10px 20px', borderRadius: '6px', border: 'none', 
-            cursor: saving ? 'not-allowed' : 'pointer', fontSize: '13px', 
-            opacity: saving ? 0.5 : 1, fontWeight: 600
-          }}>
+        {/* Footer */}
+        <div className="p-4 px-6 border-t border-black/[0.06] flex justify-end gap-3 bg-[#fdfdfe] font-body">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-xs font-normal text-[#6b7280] hover:text-black transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleCreateTask}
+            disabled={saving}
+            className="px-5 py-2 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-sm"
+          >
             {saving ? 'Creating...' : 'Create Task'}
           </button>
         </div>

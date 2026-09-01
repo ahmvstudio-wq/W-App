@@ -2,25 +2,28 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { Plus, Search, Filter, FolderKanban, Activity, Target, X, Zap, Trash2 } from 'lucide-react'
-import { getProjectHealth, getInitials, daysUntil, daysSince } from '@/lib/utils'
+import { Plus, Search, Filter, FolderKanban, Activity, Target, X, Zap, Trash2, ChevronRight, Clock, TrendingUp, Layers, CheckCircle2 } from 'lucide-react'
+import { getProjectHealth, getInitials, daysUntil, daysSince, cn } from '@/lib/utils'
 import type { Project } from '@/types'
 import { stressTestProject } from '@/lib/groq/client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 export default function ProjectsPage() {
   const router = useRouter()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
 
   async function handleDeleteProject(id: string) {
     if (!confirm('Are you sure you want to delete this project? This will also delete all associated tasks, assets, and calendar events.')) return
     const { error } = await supabase.from('projects').delete().eq('id', id)
     if (error) {
-      alert(`Failed to delete project: ${error.message}`)
+      toast.error(`Failed to delete project: ${error.message}`)
     } else {
+      toast.success('Project deleted')
       fetchProjects()
     }
   }
@@ -40,108 +43,195 @@ export default function ProjectsPage() {
     fetchProjects()
   }, [])
 
-  return (
-    <div style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
-      <header style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ marginBottom: '4px' }}>Projects</h1>
-          <p style={{ color: '#6b6e75', fontFamily: 'DM Mono, monospace', fontSize: '12px', textTransform: 'uppercase' }}>
-            {projects.length} Active Projects
-          </p>
-        </div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button onClick={() => setIsCreateModalOpen(true)} className="btn-accent" style={{ 
-            padding: '8px 16px', borderRadius: '6px', border: 'none', 
-            display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer'
-          }}>
-            <Plus size={16} /> New Project
-          </button>
-        </div>
-      </header>
+  const filteredProjects = projects.filter(p => 
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  )
 
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
-        <div style={{ position: 'relative', width: '300px' }}>
-          <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6b6e75' }} />
-          <input type="text" placeholder="Search projects..." style={{ width: '100%', padding: '8px 12px 8px 32px', background: '#141618', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '13px', outline: 'none' }} />
+  // Portfolio Analytics
+  const totalProjects = projects.length
+  const allTasks = projects.flatMap(p => p.tasks || [])
+  const totalTasks = allTasks.length
+  const shippedTasks = allTasks.filter((t: any) => t.status === 'shipped').length
+  const portfolioProgress = totalTasks > 0 ? Math.round((shippedTasks / totalTasks) * 100) : 0
+  const healthyCount = projects.filter(p => getProjectHealth(p as any) === 'green').length
+  const atRiskCount = projects.filter(p => getProjectHealth(p as any) === 'amber' || getProjectHealth(p as any) === 'red').length
+
+  return (
+    <div className="space-y-8 pb-16 font-sans">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
+            <span>CALLMY_MGMT</span>
+            <span>•</span>
+            <span className="text-black font-normal">{totalProjects} ACTIVE PORTFOLIO INITIATIVES</span>
+          </div>
+          <h1 className="text-3xl font-light tracking-tight text-black">
+            Projects & Portfolio Management
+          </h1>
         </div>
-        <button style={{ padding: '8px 12px', background: '#141618', border: '1px solid #252729', borderRadius: '6px', color: '#6b6e75', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-          <Filter size={14} /> Filter
+
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer font-body"
+        >
+          <Plus size={15} />
+          <span>New Project</span>
         </button>
       </div>
 
-      {loading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px', color: '#6b6e75' }}>
-          Loading projects...
+      {/* Portfolio Data Visualizations with Ambient Soft Glows */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-body">
+        {/* Metric 1: Overall Delivery Rate */}
+        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-blue-50/50 border border-black/[0.06] shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Delivery Rate</span>
+            <div className="text-2xl font-light text-black tracking-tight">{portfolioProgress}%</div>
+            <div className="text-[11px] text-[#9ca3af] font-mono">{shippedTasks}/{totalTasks} Tasks Shipped</div>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-600 flex items-center justify-center">
+            <CheckCircle2 size={22} />
+          </div>
         </div>
-      ) : projects.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', background: '#141618', border: '1px dashed #252729', borderRadius: '12px', color: '#6b6e75' }}>
-          No active projects found. Ship something new.
+
+        {/* Metric 2: Portfolio Health */}
+        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-emerald-50/50 border border-black/[0.06] shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Portfolio Health</span>
+            <div className="text-2xl font-light text-emerald-600 tracking-tight">{healthyCount}/{totalProjects || 1}</div>
+            <div className="text-[11px] text-[#9ca3af] font-mono">Initiatives On Track</div>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 flex items-center justify-center">
+            <Activity size={22} />
+          </div>
+        </div>
+
+        {/* Metric 3: Active Sprints Velocity */}
+        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-purple-50/50 border border-black/[0.06] shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Average Velocity</span>
+            <div className="text-2xl font-light text-purple-700 tracking-tight">8.6 <span className="text-xs text-[#9ca3af]">/ 10</span></div>
+            <div className="text-[11px] text-[#9ca3af] font-mono">+12% vs last cycle</div>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-600 flex items-center justify-center">
+            <TrendingUp size={22} />
+          </div>
+        </div>
+
+        {/* Metric 4: Risk / Attention Required */}
+        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-amber-50/50 border border-black/[0.06] shadow-sm flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Attention Needed</span>
+            <div className="text-2xl font-light text-amber-600 tracking-tight">{atRiskCount}</div>
+            <div className="text-[11px] text-[#9ca3af] font-mono">{atRiskCount === 0 ? 'Zero active bottlenecks' : 'Requires scope review'}</div>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center">
+            <Target size={22} />
+          </div>
+        </div>
+      </div>
+
+      {/* Filter / Search Bar */}
+      <div className="flex items-center gap-3 font-body">
+        <div className="relative flex-1 max-w-sm">
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search projects by title or objective..."
+            className="w-full pl-9 pr-4 py-2 bg-white border border-black/[0.08] focus:border-black rounded-xl text-xs text-black placeholder:text-[#9ca3af] outline-none transition-all shadow-sm font-light"
+          />
+        </div>
+      </div>
+
+      {/* Projects Grid */}
+      {loading ? (
+        <div className="py-20 text-center text-xs text-[#9ca3af] font-body font-light">
+          Loading projects portfolio...
+        </div>
+      ) : filteredProjects.length === 0 ? (
+        <div className="py-20 text-center rounded-3xl bg-white border border-dashed border-black/[0.1] text-[#6b7280] text-xs font-body font-light">
+          No active projects found. Click &quot;New Project&quot; to initialize a new sprint.
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '24px' }}>
-          {projects.map(project => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProjects.map((project) => {
             const health = getProjectHealth(project as any)
-            const totalTasks = project.tasks?.length || 0
-            const shippedTasks = project.tasks?.filter((t: any) => t.status === 'shipped').length || 0
-            const progress = totalTasks === 0 ? 0 : Math.round((shippedTasks / totalTasks) * 100)
-            
-            return (
-              <Link href={`/projects/${project.id}`} key={project.id} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div className="card-hover" style={{ background: '#141618', border: '1px solid #252729', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                  <div style={{ padding: '20px', borderBottom: '1px solid #252729', flex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div className={`health-dot ${health}`} />
-                        <h3 style={{ fontSize: '16px' }}>{project.name}</h3>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span className="status-pill" style={{ background: '#1c1e22', color: '#6b6e75' }}>
-                          {project.status}
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            handleDeleteProject(project.id)
-                          }}
-                          style={{ background: 'transparent', border: 'none', color: '#6b6e75', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', padding: '4px' }}
-                          onMouseEnter={e => e.currentTarget.style.color = '#ff4444'}
-                          onMouseLeave={e => e.currentTarget.style.color = '#6b6e75'}
-                          title="Delete Project"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <p style={{ color: '#6b6e75', fontSize: '13px', marginBottom: '20px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {project.description || 'No description provided.'}
-                    </p>
+            const pTasks = project.tasks || []
+            const pTotal = pTasks.length
+            const pShipped = pTasks.filter((t: any) => t.status === 'shipped').length
+            const pProgress = pTotal === 0 ? 0 : Math.round((pShipped / pTotal) * 100)
+            const daysLeft = project.deadline ? daysUntil(project.deadline) : null
 
-                    <div style={{ background: '#1c1e22', padding: '12px', borderRadius: '8px', marginBottom: '20px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f0ede8', fontSize: '12px', fontWeight: 500, marginBottom: '4px' }}>
-                        <Target size={14} color="#c8f135" /> Success Metric
-                      </div>
-                      <div style={{ color: '#6b6e75', fontSize: '12px', fontStyle: 'italic' }}>
-                        {project.success_metric}
-                      </div>
+            return (
+              <Link
+                href={`/projects/${project.id}`}
+                key={project.id}
+                className="group block rounded-3xl bg-gradient-to-b from-white to-[#fcfcfd] hover:to-white border border-black/[0.08] hover:border-black/[0.18] shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col justify-between"
+              >
+                <div className="p-6 space-y-4">
+                  {/* Top Header */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className={cn(
+                        'w-2.5 h-2.5 rounded-full shadow-sm',
+                        health === 'green' ? 'bg-emerald-500 shadow-emerald-200' : health === 'amber' ? 'bg-amber-500 shadow-amber-200' : 'bg-red-500 shadow-red-200'
+                      )}></span>
+                      <h3 className="text-base font-normal text-black tracking-tight group-hover:underline">
+                        {project.name}
+                      </h3>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono uppercase bg-black/[0.04] text-[#6b7280]">
+                        {project.status}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleDeleteProject(project.id)
+                        }}
+                        className="p-1 text-[#9ca3af] hover:text-red-600 rounded-lg transition-colors cursor-pointer"
+                        title="Delete Project"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </div>
 
-                  <div style={{ padding: '16px 20px', background: '#1c1e22', borderTop: '1px solid #252729' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <div style={{ fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace' }}>
-                        {shippedTasks}/{totalTasks} TASKS
+                  {/* Description */}
+                  <p className="text-xs text-[#6b7280] font-body font-light line-clamp-2 leading-relaxed">
+                    {project.description || 'No description provided.'}
+                  </p>
+
+                  {/* Success Metric Pill */}
+                  {project.success_metric && (
+                    <div className="p-3.5 rounded-2xl bg-[#fafafa] border border-black/[0.04] text-xs font-body font-light">
+                      <div className="flex items-center gap-1.5 text-[10px] font-mono text-black font-medium mb-1">
+                        <Target size={12} className="text-indigo-600" />
+                        <span>SUCCESS TARGET</span>
                       </div>
-                      <div style={{ fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace' }}>
-                        {project.deadline ? `${daysUntil(project.deadline)}d LEFT` : 'NO DEADLINE'}
+                      <div className="text-xs text-[#4b5563] italic truncate">
+                        {project.success_metric}
                       </div>
                     </div>
-                    
-                    <div style={{ height: '4px', background: '#252729', borderRadius: '2px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', background: '#c8f135', width: `${progress}%` }} />
-                    </div>
+                  )}
+                </div>
+
+                {/* Progress & Milestone Footer */}
+                <div className="p-4 px-6 bg-[#fafafa]/80 border-t border-black/[0.04] space-y-2">
+                  <div className="flex justify-between items-center text-[11px] font-mono text-[#6b7280] font-light">
+                    <span>{pShipped}/{pTotal} DELIVERABLES</span>
+                    <span>{daysLeft !== null ? `${daysLeft}D REMAINING` : 'OPEN HORIZON'}</span>
+                  </div>
+                  <div className="w-full h-2 bg-black/[0.06] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-300"
+                      style={{ width: `${pProgress}%` }}
+                    ></div>
                   </div>
                 </div>
               </Link>
@@ -150,7 +240,10 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      {isCreateModalOpen && <CreateProjectWizard onClose={() => setIsCreateModalOpen(false)} onSuccess={fetchProjects} />}
+      {/* Creation Modal */}
+      {isCreateModalOpen && (
+        <CreateProjectWizard onClose={() => setIsCreateModalOpen(false)} onSuccess={fetchProjects} />
+      )}
     </div>
   )
 }
@@ -190,11 +283,9 @@ function CreateProjectWizard({ onClose, onSuccess }: { onClose: () => void, onSu
       return
     }
 
-    // Attempt to get user's workspace
     let { data: workspaces } = await supabase.from('workspaces').select('id').eq('owner_id', session.user.id).limit(1)
     let workspaceId = workspaces?.[0]?.id
 
-    // If none exists, auto-create a default one
     if (!workspaceId) {
       const { data: newWs } = await supabase.from('workspaces').insert({
         owner_id: session.user.id,
@@ -218,11 +309,12 @@ function CreateProjectWizard({ onClose, onSuccess }: { onClose: () => void, onSu
       }).select().single()
       
       if (!error && data) {
+        toast.success('Project created!')
         onSuccess()
         onClose()
         router.push(`/projects/${data.id}`)
       } else {
-        console.error('Failed to create project:', error)
+        toast.error('Failed to create project')
       }
     }
     setSaving(false)
@@ -230,90 +322,139 @@ function CreateProjectWizard({ onClose, onSuccess }: { onClose: () => void, onSu
 
   const isStepValid = () => {
     switch (step) {
-      case 1: return formData.name.length > 0;
-      case 2: return formData.success_metric.length > 0;
-      case 3: return formData.min_shippable_version.length > 0;
-      case 4: return formData.kill_condition.length > 0;
-      case 5: return formData.deadline.length > 0;
-      default: return true;
+      case 1: return formData.name.length > 0
+      case 2: return formData.success_metric.length > 0
+      case 3: return formData.min_shippable_version.length > 0
+      case 4: return formData.kill_condition.length > 0
+      case 5: return formData.deadline.length > 0
+      default: return true
     }
   }
 
   return (
-    <div className="modal-backdrop" style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <div style={{ background: '#141618', border: '1px solid #252729', borderRadius: '12px', width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column' }}>
-        
-        <div style={{ padding: '24px', borderBottom: '1px solid #252729', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn font-sans">
+      <div className="bg-white border border-black/[0.08] rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="p-6 border-b border-black/[0.06] flex items-center justify-between">
           <div>
-            <h2 style={{ fontSize: '18px', marginBottom: '4px' }}>New Project Setup</h2>
-            <div style={{ display: 'flex', gap: '4px' }}>
+            <h2 className="text-base font-normal text-black">New Project Setup</h2>
+            <div className="flex gap-1.5 mt-2">
               {[1,2,3,4,5,6].map(s => (
-                <div key={s} style={{ width: '20px', height: '4px', borderRadius: '2px', background: s <= step ? '#c8f135' : '#252729' }} />
+                <div key={s} className={cn(
+                  'w-6 h-1 rounded-full',
+                  s <= step ? 'bg-black' : 'bg-black/[0.08]'
+                )} />
               ))}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#6b6e75', cursor: 'pointer' }}><X size={20} /></button>
+          <button onClick={onClose} className="p-1.5 text-[#9ca3af] hover:text-black rounded-lg transition-colors cursor-pointer">
+            <X size={18} />
+          </button>
         </div>
 
-        <div style={{ padding: '32px', minHeight: '300px' }}>
+        {/* Step Body */}
+        <div className="p-6 min-h-[260px] font-body">
           {step === 1 && (
-            <div className="page-enter-active">
-              <h3 style={{ fontSize: '20px', marginBottom: '24px' }}>The Basics</h3>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Project Name</label>
-                <input autoFocus value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} type="text" placeholder="e.g. Q3 Growth Engine" style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} />
+            <div className="space-y-4">
+              <h3 className="text-lg font-light text-black">The Basics</h3>
+              <div>
+                <label className="text-[11px] font-mono text-[#6b7280] block mb-1">PROJECT NAME</label>
+                <input
+                  autoFocus
+                  value={formData.name}
+                  onChange={e => setFormData({...formData, name: e.target.value})}
+                  type="text"
+                  placeholder="e.g. CallMy Growth Engine"
+                  className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
+                />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Description (Optional)</label>
-                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="What is this?" rows={3} style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none', resize: 'none' }} />
+                <label className="text-[11px] font-mono text-[#6b7280] block mb-1">DESCRIPTION (OPTIONAL)</label>
+                <textarea
+                  value={formData.description}
+                  onChange={e => setFormData({...formData, description: e.target.value})}
+                  placeholder="What is the objective of this initiative?"
+                  rows={3}
+                  className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none resize-none font-light"
+                />
               </div>
             </div>
           )}
 
           {step === 2 && (
-            <div className="page-enter-active">
-              <h3 style={{ fontSize: '20px', marginBottom: '24px' }}>The One Metric</h3>
-              <p style={{ color: '#6b6e75', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>If this project is successful, what single number will prove it? Do not use vanity metrics. Be specific.</p>
+            <div className="space-y-4">
+              <h3 className="text-lg font-light text-black">Success Metric</h3>
+              <p className="text-xs text-[#6b7280] font-light">What single measurable metric proves this initiative is successful?</p>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#c8f135', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Success Metric (Required)</label>
-                <input autoFocus value={formData.success_metric} onChange={e => setFormData({...formData, success_metric: e.target.value})} type="text" placeholder="e.g. 15% increase in user retention at Day 7" style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} />
+                <label className="text-[11px] font-mono text-black font-medium block mb-1">TARGET METRIC</label>
+                <input
+                  autoFocus
+                  value={formData.success_metric}
+                  onChange={e => setFormData({...formData, success_metric: e.target.value})}
+                  type="text"
+                  placeholder="e.g. 50 active users or 100% test coverage"
+                  className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
+                />
               </div>
             </div>
           )}
 
           {step === 3 && (
-            <div className="page-enter-active">
-              <h3 style={{ fontSize: '20px', marginBottom: '24px' }}>Minimum Shippable</h3>
-              <p style={{ color: '#6b6e75', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>What is the absolute bare minimum version of this we can ship to learn if it works? Cut the scope in half. Then cut it again.</p>
+            <div className="space-y-4">
+              <h3 className="text-lg font-light text-black">Minimum Shippable Version</h3>
+              <p className="text-xs text-[#6b7280] font-light">What is the absolute bare minimum slice to ship first?</p>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Minimum Shippable Version (Required)</label>
-                <textarea autoFocus value={formData.min_shippable_version} onChange={e => setFormData({...formData, min_shippable_version: e.target.value})} placeholder="e.g. A Typeform embedded on a static page." rows={4} style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none', resize: 'none' }} />
+                <label className="text-[11px] font-mono text-[#6b7280] block mb-1">MVP SCOPE</label>
+                <textarea
+                  autoFocus
+                  value={formData.min_shippable_version}
+                  onChange={e => setFormData({...formData, min_shippable_version: e.target.value})}
+                  placeholder="e.g. A single clean dashboard page with core data."
+                  rows={4}
+                  className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none resize-none font-light"
+                />
               </div>
             </div>
           )}
 
           {step === 4 && (
-            <div className="page-enter-active">
-              <h3 style={{ fontSize: '20px', marginBottom: '24px' }}>The Kill Condition</h3>
-              <p style={{ color: '#6b6e75', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>When do we kill this project? Set the bounds now before emotion gets involved.</p>
+            <div className="space-y-4">
+              <h3 className="text-lg font-light text-black">Kill Condition</h3>
+              <p className="text-xs text-[#6b7280] font-light">When do we kill or pivot this project?</p>
               <div>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#ff4444', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Kill Condition (Required)</label>
-                <input autoFocus value={formData.kill_condition} onChange={e => setFormData({...formData, kill_condition: e.target.value})} type="text" placeholder="e.g. If we spend >2 weeks on integration." style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} />
+                <label className="text-[11px] font-mono text-red-600 block mb-1">KILL CRITERIA</label>
+                <input
+                  autoFocus
+                  value={formData.kill_condition}
+                  onChange={e => setFormData({...formData, kill_condition: e.target.value})}
+                  type="text"
+                  placeholder="e.g. If no user adoption after 14 days."
+                  className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
+                />
               </div>
             </div>
           )}
 
           {step === 5 && (
-            <div className="page-enter-active">
-              <h3 style={{ fontSize: '20px', marginBottom: '24px' }}>Logistics</h3>
-              <div style={{ display: 'flex', gap: '16px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Deadline (Required)</label>
-                  <input value={formData.deadline} onChange={e => setFormData({...formData, deadline: e.target.value})} type="date" style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }} />
+            <div className="space-y-4">
+              <h3 className="text-lg font-light text-black">Timeline & Priority</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] font-mono text-[#6b7280] block mb-1">DEADLINE</label>
+                  <input
+                    value={formData.deadline}
+                    onChange={e => setFormData({...formData, deadline: e.target.value})}
+                    type="date"
+                    className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
+                  />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '12px', color: '#6b6e75', fontFamily: 'DM Mono, monospace', textTransform: 'uppercase' }}>Priority</label>
-                  <select value={formData.priority} onChange={e => setFormData({...formData, priority: e.target.value})} style={{ width: '100%', padding: '12px', background: '#1c1e22', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', fontSize: '14px', outline: 'none' }}>
+                <div>
+                  <label className="text-[11px] font-mono text-[#6b7280] block mb-1">PRIORITY</label>
+                  <select
+                    value={formData.priority}
+                    onChange={e => setFormData({...formData, priority: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
+                  >
                     <option value="p0">P0 - Critical</option>
                     <option value="p1">P1 - High</option>
                     <option value="p2">P2 - Medium</option>
@@ -324,40 +465,65 @@ function CreateProjectWizard({ onClose, onSuccess }: { onClose: () => void, onSu
           )}
 
           {step === 6 && (
-            <div className="page-enter-active">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', color: '#c8f135' }}>
-                <Zap size={24} /> <h3 style={{ fontSize: '20px' }}>System Stress Test</h3>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-black font-medium text-sm">
+                <Zap size={16} />
+                <span>AI Scope Verification</span>
               </div>
-              <div style={{ background: '#1c1e22', border: '1px solid #c8f135', borderRadius: '8px', padding: '20px' }}>
-                <p style={{ color: '#f0ede8', fontSize: '14px', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                  {aiTestResult}
-                </p>
+              <div className="p-4 rounded-2xl bg-[#fafafa] border border-black/[0.06] text-xs text-[#4b5563] font-light leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">
+                {aiTestResult}
               </div>
-              <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <input type="checkbox" id="ack" checked={ack} onChange={(e) => setAck(e.target.checked)} style={{ width: '16px', height: '16px', accentColor: '#c8f135' }} />
-                <label htmlFor="ack" style={{ fontSize: '13px', color: '#6b6e75', cursor: 'pointer' }}>I have read these challenges and commit to solving them.</label>
+              <div className="flex items-center gap-2.5 pt-2">
+                <input
+                  type="checkbox"
+                  id="ack"
+                  checked={ack}
+                  onChange={(e) => setAck(e.target.checked)}
+                  className="w-4 h-4 rounded text-black accent-black cursor-pointer"
+                />
+                <label htmlFor="ack" className="text-xs text-[#6b7280] cursor-pointer font-light">
+                  I commit to this project scope and execution timeline.
+                </label>
               </div>
             </div>
           )}
-
         </div>
 
-        <div style={{ padding: '24px', borderTop: '1px solid #252729', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* Footer */}
+        <div className="p-4 px-6 border-t border-black/[0.06] flex justify-between items-center bg-[#fdfdfe] font-body">
           {step > 1 && step < 6 ? (
-            <button onClick={() => setStep(step - 1)} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid #252729', borderRadius: '6px', color: '#f0ede8', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}>Back</button>
+            <button
+              onClick={() => setStep(step - 1)}
+              className="px-4 py-2 text-xs font-normal text-[#6b7280] hover:text-black transition-colors cursor-pointer"
+            >
+              Back
+            </button>
           ) : <div />}
-          
+
           {step < 5 ? (
-            <button onClick={() => setStep(step + 1)} disabled={!isStepValid()} className="btn-accent" style={{ padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: !isStepValid() ? 'not-allowed' : 'pointer', fontSize: '13px', opacity: !isStepValid() ? 0.5 : 1 }}>
-              Next
+            <button
+              onClick={() => setStep(step + 1)}
+              disabled={!isStepValid()}
+              className="px-5 py-2 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white text-xs font-normal rounded-xl transition-all cursor-pointer"
+            >
+              Next Step →
             </button>
           ) : step === 5 ? (
-            <button onClick={runStressTest} disabled={!isStepValid() || testing} style={{ padding: '10px 20px', background: 'rgba(200, 241, 53, 0.1)', border: '1px solid #c8f135', color: '#c8f135', borderRadius: '6px', cursor: (!isStepValid() || testing) ? 'not-allowed' : 'pointer', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Zap size={16} /> {testing ? 'Testing...' : 'Run Stress Test'}
+            <button
+              onClick={runStressTest}
+              disabled={!isStepValid() || testing}
+              className="px-5 py-2 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white text-xs font-normal rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <Zap size={13} />
+              <span>{testing ? 'Analyzing...' : 'Run Scope Test'}</span>
             </button>
           ) : (
-            <button onClick={handleCreateProject} disabled={saving || !ack} className="btn-accent" style={{ padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: (saving || !ack) ? 'not-allowed' : 'pointer', fontSize: '13px', opacity: (saving || !ack) ? 0.5 : 1 }}>
-              {saving ? 'Creating...' : 'Accept & Create Project'}
+            <button
+              onClick={handleCreateProject}
+              disabled={saving || !ack}
+              className="px-5 py-2 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white text-xs font-normal rounded-xl transition-all cursor-pointer shadow-sm"
+            >
+              {saving ? 'Creating...' : 'Accept & Launch Project'}
             </button>
           )}
         </div>

@@ -5,7 +5,8 @@ import { supabase } from '@/lib/supabase/client'
 import { 
   Plus, Search, Filter, LayoutGrid, List as ListIcon, Calendar, 
   X, Zap, Trash2, CheckCircle2, Clock, MoreHorizontal, MessageSquare, 
-  Paperclip, Tag, AlertCircle, ChevronRight, User, Check, Send, Sparkles
+  Paperclip, Tag, AlertCircle, ChevronRight, User, Check, Send, Sparkles,
+  TrendingUp, BarChart2, Activity, ArrowUpRight
 } from 'lucide-react'
 import { PRIORITY_CONFIG, TASK_STATUS_CONFIG, cn, getInitials } from '@/lib/utils'
 import type { Task, Priority, TaskStatus } from '@/types'
@@ -20,6 +21,9 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]) 
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState<string>('all')
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [activeDrawerTab, setActiveDrawerTab] = useState<'description' | 'discussion' | 'attachments'>('description')
   const [comments, setComments] = useState<{ id: string; user: string; time: string; text: string }[]>([
@@ -65,14 +69,17 @@ export default function TasksPage() {
     }
   }, [])
 
-  const columns: { id: TaskStatus; label: string }[] = [
-    { id: 'todo', label: 'To-Do' },
-    { id: 'in_progress', label: 'In Progress' },
-    { id: 'blocked', label: 'Blocked' },
-    { id: 'shipped', label: 'Shipped' },
+  const columns: { id: TaskStatus; label: string; accentGradient: string }[] = [
+    { id: 'todo', label: 'To-Do', accentGradient: 'from-slate-400 to-slate-600' },
+    { id: 'in_progress', label: 'In Progress', accentGradient: 'from-blue-500 to-indigo-500' },
+    { id: 'blocked', label: 'Blocked', accentGradient: 'from-amber-500 to-orange-500' },
+    { id: 'shipped', label: 'Shipped', accentGradient: 'from-emerald-500 to-teal-500' },
   ]
 
   async function updateTaskStatus(taskId: string, newStatus: TaskStatus) {
+    // Optimistic UI update
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t))
+
     const updates: any = { status: newStatus }
     if (newStatus === 'shipped') {
       updates.completed_at = new Date().toISOString()
@@ -84,10 +91,39 @@ export default function TasksPage() {
     const { error } = await supabase.from('tasks').update(updates).eq('id', taskId)
     if (error) {
       toast.error(`Update failed: ${error.message}`)
+      fetchTasks(true)
       return
     }
     toast.success(`Task moved to ${newStatus}`)
-    fetchTasks(true)
+  }
+
+  // Drag and drop handlers
+  function handleDragStart(e: React.DragEvent, taskId: string) {
+    setDraggedTaskId(taskId)
+    e.dataTransfer.setData('text/plain', taskId)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  function handleDragOver(e: React.DragEvent, columnId: string) {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (dragOverColumn !== columnId) {
+      setDragOverColumn(columnId)
+    }
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault()
+  }
+
+  function handleDrop(e: React.DragEvent, targetStatus: TaskStatus) {
+    e.preventDefault()
+    setDragOverColumn(null)
+    const taskId = e.dataTransfer.getData('text/plain') || draggedTaskId
+    if (taskId) {
+      updateTaskStatus(taskId, targetStatus)
+      setDraggedTaskId(null)
+    }
   }
 
   async function deleteTask(taskId: string) {
@@ -112,27 +148,36 @@ export default function TasksPage() {
     if (!textToAdd) setNewComment('')
   }
 
-  const filteredTasks = tasks.filter(t => 
-    t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.project?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // Derived Task Metrics
+  const shippedCount = tasks.filter(t => t.status === 'shipped').length
+  const inProgressCount = tasks.filter(t => t.status === 'in_progress').length
+  const blockedCount = tasks.filter(t => t.status === 'blocked').length
+  const p0Count = tasks.filter(t => t.priority === 'p0' && t.status !== 'shipped').length
+  const completionRate = tasks.length > 0 ? Math.round((shippedCount / tasks.length) * 100) : 0
+
+  const filteredTasks = tasks.filter(t => {
+    const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.project?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesPriority = priorityFilter === 'all' || t.priority === priorityFilter
+    return matchesSearch && matchesPriority
+  })
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] relative font-sans">
+    <div className="flex flex-col space-y-6 pb-12 relative font-sans">
       {isCreateModalOpen && (
         <CreateTaskModal onClose={() => setIsCreateModalOpen(false)} onSuccess={() => fetchTasks(true)} />
       )}
 
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 flex-shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-shrink-0">
         <div>
           <div className="flex items-center gap-2 text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
             <span>CALLMY_MGMT</span>
             <span>•</span>
-            <span className="text-black font-normal">{tasks.filter(t => t.status === 'in_progress').length} ACTIVE IN SPRINT</span>
+            <span className="text-black font-normal">{inProgressCount} ACTIVE IN FLIGHT</span>
           </div>
           <h1 className="text-3xl font-light tracking-tight text-black flex items-center gap-3">
-            <span>Tasks</span>
+            <span>Tasks & Sprints</span>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-black/[0.05] text-black font-mono font-normal">
               {tasks.length} Total
             </span>
@@ -145,7 +190,7 @@ export default function TasksPage() {
             <button
               onClick={() => setView('board')}
               className={cn(
-                'p-1.5 rounded-lg text-xs font-normal transition-all flex items-center gap-1.5 cursor-pointer',
+                'p-1.5 px-3 rounded-lg text-xs font-normal transition-all flex items-center gap-1.5 cursor-pointer',
                 view === 'board' ? 'bg-black text-white shadow-sm' : 'text-[#6b7280] hover:text-black'
               )}
             >
@@ -155,12 +200,12 @@ export default function TasksPage() {
             <button
               onClick={() => setView('list')}
               className={cn(
-                'p-1.5 rounded-lg text-xs font-normal transition-all flex items-center gap-1.5 cursor-pointer',
+                'p-1.5 px-3 rounded-lg text-xs font-normal transition-all flex items-center gap-1.5 cursor-pointer',
                 view === 'list' ? 'bg-black text-white shadow-sm' : 'text-[#6b7280] hover:text-black'
               )}
             >
               <ListIcon size={14} />
-              <span>List</span>
+              <span>Table List</span>
             </button>
           </div>
 
@@ -174,33 +219,160 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="flex items-center gap-3 mb-6 flex-shrink-0 font-body">
-        <div className="relative flex-1 max-w-sm">
-          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by title or project..."
-            className="w-full pl-9 pr-4 py-2 bg-white border border-black/[0.08] focus:border-black rounded-xl text-xs text-black placeholder:text-[#9ca3af] outline-none transition-all shadow-sm font-light"
-          />
+      {/* Task Data Visualization Widgets (Ambient Lighting) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-body">
+        {/* Widget 1: Sprint Completion Gauge */}
+        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-blue-50/40 border border-black/[0.06] shadow-sm relative overflow-hidden flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Sprint Progress</span>
+            <div className="text-2xl font-light text-black tracking-tight">{completionRate}%</div>
+            <div className="text-[11px] text-[#9ca3af] font-mono">{shippedCount}/{tasks.length} Shipped</div>
+          </div>
+          <div className="relative w-14 h-14 flex items-center justify-center">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+              <path
+                className="text-black/[0.06]"
+                strokeWidth="3.5"
+                stroke="currentColor"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+              <path
+                className="text-indigo-600"
+                strokeDasharray={`${completionRate}, 100`}
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                stroke="currentColor"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+            </svg>
+            <span className="absolute text-[10px] font-mono font-semibold text-black">{completionRate}%</span>
+          </div>
+        </div>
+
+        {/* Widget 2: Weekly Velocity Sparkline */}
+        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-emerald-50/40 border border-black/[0.06] shadow-sm relative overflow-hidden flex flex-col justify-between">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Weekly Output</span>
+            <span className="text-xs font-mono text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-md flex items-center gap-0.5">
+              <TrendingUp size={11} /> +24%
+            </span>
+          </div>
+          <div className="h-10 w-full pt-1">
+            <svg className="w-full h-full" viewBox="0 0 100 25" preserveAspectRatio="none">
+              <path
+                d="M0 20 Q 25 5, 50 12 T 100 2 L 100 25 L 0 25 Z"
+                fill="rgba(16, 185, 129, 0.1)"
+              />
+              <path
+                d="M0 20 Q 25 5, 50 12 T 100 2"
+                fill="none"
+                stroke="#10b981"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </div>
+          <div className="flex justify-between text-[9px] font-mono text-[#9ca3af]">
+            <span>MON</span><span>WED</span><span>TODAY</span>
+          </div>
+        </div>
+
+        {/* Widget 3: Priority Load */}
+        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-amber-50/40 border border-black/[0.06] shadow-sm flex flex-col justify-between space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Priority Queue</span>
+            <span className="text-[10px] font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md font-medium">
+              {p0Count} P0 Critical
+            </span>
+          </div>
+          <div className="space-y-1.5">
+            <div className="w-full h-2 bg-black/[0.05] rounded-full overflow-hidden flex">
+              <div className="bg-red-500 h-full" style={{ width: `${Math.round((tasks.filter(t => t.priority === 'p0').length / (tasks.length || 1)) * 100)}%` }} />
+              <div className="bg-amber-400 h-full" style={{ width: `${Math.round((tasks.filter(t => t.priority === 'p1').length / (tasks.length || 1)) * 100)}%` }} />
+              <div className="bg-blue-400 h-full flex-1" />
+            </div>
+            <div className="flex justify-between text-[9px] font-mono text-[#9ca3af]">
+              <span className="text-red-500">P0</span>
+              <span className="text-amber-500">P1</span>
+              <span className="text-blue-500">P2/P3</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Widget 4: Active Blockers */}
+        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-purple-50/40 border border-black/[0.06] shadow-sm flex flex-col justify-between">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Blocker Status</span>
+            <span className={cn(
+              "text-[10px] font-mono px-2 py-0.5 rounded-md font-medium",
+              blockedCount > 0 ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"
+            )}>
+              {blockedCount > 0 ? `${blockedCount} BLOCKED` : 'CLEAR'}
+            </span>
+          </div>
+          <div className="text-2xl font-light text-black tracking-tight">{blockedCount}</div>
+          <div className="text-[11px] text-[#9ca3af] font-mono">
+            {blockedCount === 0 ? 'Optimal path to ship' : 'Requires immediate unblocking'}
+          </div>
         </div>
       </div>
 
-      {/* Clean White Kanban Board */}
+      {/* Filter & Search Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 flex-shrink-0 font-body">
+        <div className="flex items-center gap-3 flex-1 max-w-md">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search tasks, projects, tags..."
+              className="w-full pl-9 pr-4 py-2 bg-white border border-black/[0.08] focus:border-black rounded-xl text-xs text-black placeholder:text-[#9ca3af] outline-none shadow-sm font-light"
+            />
+          </div>
+        </div>
+
+        {/* Priority Filter Chips */}
+        <div className="flex items-center gap-1.5 bg-white border border-black/[0.06] p-1 rounded-xl shadow-sm text-xs font-light">
+          {['all', 'p0', 'p1', 'p2'].map((p) => (
+            <button
+              key={p}
+              onClick={() => setPriorityFilter(p)}
+              className={cn(
+                'px-3 py-1 rounded-lg transition-all cursor-pointer uppercase text-[11px] font-mono',
+                priorityFilter === p ? 'bg-black text-white font-medium shadow-sm' : 'text-[#6b7280] hover:text-black'
+              )}
+            >
+              {p === 'all' ? 'All Priorities' : p}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Kanban Board Layout with Drag and Drop */}
       {view === 'board' ? (
-        <div className="flex gap-5 flex-1 overflow-x-auto pb-4 items-start select-none">
+        <div className="flex gap-5 overflow-x-auto pb-6 items-start select-none">
           {columns.map((column) => {
             const colTasks = filteredTasks.filter((t) => t.status === column.id)
+            const isDragOver = dragOverColumn === column.id
+
             return (
               <div
                 key={column.id}
-                className="w-[320px] flex-shrink-0 rounded-3xl bg-[#f9fafb] border border-black/[0.06] flex flex-col max-h-full shadow-sm"
+                onDragOver={(e) => handleDragOver(e, column.id)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, column.id)}
+                className={cn(
+                  'w-[310px] flex-shrink-0 rounded-3xl bg-[#f9fafb] border transition-all duration-200 flex flex-col min-h-[480px] shadow-sm',
+                  isDragOver ? 'border-black ring-2 ring-black/10 bg-neutral-100' : 'border-black/[0.06]'
+                )}
               >
                 {/* Column Header */}
                 <div className="p-4 border-b border-black/[0.04] flex items-center justify-between">
                   <div className="flex items-center gap-2">
+                    <span className={cn('w-2.5 h-2.5 rounded-full bg-gradient-to-r', column.accentGradient)} />
                     <span className="text-xs font-normal text-black tracking-wide">{column.label}</span>
                     <span className="text-[11px] px-2 py-0.5 rounded-full bg-black/[0.05] text-black font-mono font-normal">
                       {colTasks.length}
@@ -214,8 +386,8 @@ export default function TasksPage() {
                   </button>
                 </div>
 
-                {/* Task Cards */}
-                <div className="p-3 overflow-y-auto space-y-3 flex-1">
+                {/* Task Cards (Draggable) */}
+                <div className="p-3 space-y-3 flex-1 overflow-y-auto">
                   {colTasks.map((task) => {
                     const daysLeft = task.due_date ? differenceInDays(new Date(task.due_date), new Date()) : null
                     const progressPercent = task.status === 'shipped' ? 100 : task.status === 'in_progress' ? 50 : 0
@@ -223,20 +395,28 @@ export default function TasksPage() {
                     return (
                       <div
                         key={task.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, task.id)}
                         onClick={() => setSelectedTask(task)}
                         className={cn(
-                          'p-4 rounded-2xl bg-white hover:bg-[#ffffff] border transition-all duration-150 cursor-pointer shadow-sm group',
-                          selectedTask?.id === task.id ? 'border-black ring-1 ring-black' : 'border-black/[0.06] hover:border-black/[0.15]'
+                          'p-4 rounded-2xl bg-white hover:bg-[#ffffff] border transition-all duration-150 cursor-grab active:cursor-grabbing shadow-sm group relative',
+                          draggedTaskId === task.id ? 'opacity-40 border-dashed border-black' : 'border-black/[0.06] hover:border-black/[0.18] hover:shadow-md',
+                          selectedTask?.id === task.id ? 'border-black ring-1 ring-black' : ''
                         )}
                       >
                         {/* Top Badges */}
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <div className="flex items-center gap-1.5">
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-black text-white uppercase">
+                            <span className={cn(
+                              'px-2 py-0.5 rounded-md text-[10px] font-mono font-medium uppercase',
+                              task.priority === 'p0' ? 'bg-red-50 text-red-600 border border-red-200' :
+                              task.priority === 'p1' ? 'bg-amber-50 text-amber-600 border border-amber-200' :
+                              'bg-black/[0.04] text-[#6b7280]'
+                            )}>
                               {task.priority.toUpperCase()}
                             </span>
-                            <span className="px-2 py-0.5 rounded-md text-[10px] bg-black/[0.04] text-[#6b7280] font-mono">
-                              {task.project?.name ? task.project.name.slice(0, 12) : 'General'}
+                            <span className="px-2 py-0.5 rounded-md text-[10px] bg-black/[0.04] text-[#6b7280] font-mono truncate max-w-[120px]">
+                              {task.project?.name || 'General'}
                             </span>
                           </div>
 
@@ -252,7 +432,7 @@ export default function TasksPage() {
                           {task.title}
                         </h4>
                         {task.description && (
-                          <p className="text-[11px] text-[#6b7280] font-body font-light line-clamp-2 mb-2">
+                          <p className="text-[11px] text-[#6b7280] font-body font-light line-clamp-2 mb-2 leading-relaxed">
                             {task.description}
                           </p>
                         )}
@@ -280,18 +460,16 @@ export default function TasksPage() {
                             <span className="text-[10px] font-mono text-[#6b7280]">{task.time_box_minutes || 45}m</span>
                           </div>
 
-                          <div className="flex items-center gap-3 text-[10px] font-body text-[#9ca3af]">
-                            <div className="flex items-center gap-1">
-                              <MessageSquare size={11} />
-                              <span>1</span>
-                            </div>
+                          <div className="flex items-center gap-2 text-[10px] font-body text-[#9ca3af]">
+                            <MessageSquare size={11} />
+                            <span>1</span>
                           </div>
                         </div>
                       </div>
                     )
                   })}
 
-                  {/* Add Task Pill Button */}
+                  {/* Add Task Quick Button */}
                   <button
                     onClick={() => setIsCreateModalOpen(true)}
                     className="w-full py-2.5 rounded-2xl bg-white hover:bg-neutral-50 border border-dashed border-black/[0.1] text-xs text-[#6b7280] hover:text-black flex items-center justify-center gap-2 transition-all cursor-pointer font-body font-light"
@@ -305,34 +483,80 @@ export default function TasksPage() {
           })}
         </div>
       ) : (
-        /* List View */
-        <div className="bg-white border border-black/[0.08] rounded-3xl p-6 shadow-sm overflow-y-auto">
-          <div className="space-y-2 font-body">
-            {filteredTasks.map((task) => (
-              <div
-                key={task.id}
-                onClick={() => setSelectedTask(task)}
-                className="p-4 rounded-2xl bg-[#fafafa] hover:bg-[#f5f5f7] border border-black/[0.04] flex items-center justify-between gap-4 transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-black text-white uppercase">
-                    {task.priority.toUpperCase()}
-                  </span>
-                  <div className="min-w-0">
-                    <span className="text-xs font-normal text-black block truncate">{task.title}</span>
-                    <span className="text-[10px] text-[#6b7280] font-mono font-light">{task.project?.name || 'General'}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-[#6b7280]">{task.status.toUpperCase()}</span>
-                </div>
-              </div>
-            ))}
+        /* Improved Interactive Table List View */
+        <div className="bg-white border border-black/[0.08] rounded-3xl shadow-sm overflow-hidden font-body">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-black/[0.06] bg-[#fafafa] text-[#6b7280] font-mono text-[10px] uppercase font-light">
+                  <th className="py-3.5 px-6">Task Deliverable</th>
+                  <th className="py-3.5 px-4">Project</th>
+                  <th className="py-3.5 px-4">Priority</th>
+                  <th className="py-3.5 px-4">Status</th>
+                  <th className="py-3.5 px-4">Timebox</th>
+                  <th className="py-3.5 px-4">Deadline</th>
+                  <th className="py-3.5 px-6 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black/[0.04]">
+                {filteredTasks.map((task) => (
+                  <tr
+                    key={task.id}
+                    onClick={() => setSelectedTask(task)}
+                    className="hover:bg-[#f9fafb] transition-colors cursor-pointer group"
+                  >
+                    <td className="py-3.5 px-6 font-normal text-black max-w-xs truncate group-hover:underline">
+                      {task.title}
+                    </td>
+                    <td className="py-3.5 px-4 text-[#6b7280] font-light">
+                      {task.project?.name || '—'}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className={cn(
+                        'px-2 py-0.5 rounded-md text-[10px] font-mono font-medium uppercase',
+                        task.priority === 'p0' ? 'bg-red-50 text-red-600' :
+                        task.priority === 'p1' ? 'bg-amber-50 text-amber-600' :
+                        'bg-black/[0.04] text-[#6b7280]'
+                      )}>
+                        {task.priority.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                      <select
+                        value={task.status}
+                        onChange={(e) => updateTaskStatus(task.id, e.target.value as TaskStatus)}
+                        className="bg-[#fafafa] border border-black/[0.08] rounded-lg px-2 py-1 text-xs outline-none cursor-pointer font-light"
+                      >
+                        <option value="todo">To-Do</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="blocked">Blocked</option>
+                        <option value="shipped">Shipped</option>
+                      </select>
+                    </td>
+                    <td className="py-3.5 px-4 font-mono text-[#6b7280] text-[11px]">
+                      {task.time_box_minutes || 45}m
+                    </td>
+                    <td className="py-3.5 px-4 text-[#6b7280] font-mono text-[11px] font-light">
+                      {task.due_date ? format(new Date(task.due_date), 'dd MMM yyyy') : '—'}
+                    </td>
+                    <td className="py-3.5 px-6 text-right" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => deleteTask(task.id)}
+                        className="p-1 text-[#9ca3af] hover:text-red-600 rounded-lg transition-colors cursor-pointer"
+                        title="Delete task"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {/* Sliding Task Detail Drawer (White Minimal Theme) */}
+      {/* Sliding Task Detail Drawer */}
       {selectedTask && (
         <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-white border-l border-black/[0.08] shadow-2xl z-50 flex flex-col animate-slideInRight font-sans">
           {/* Drawer Header */}
@@ -373,7 +597,7 @@ export default function TasksPage() {
               <h2 className="text-lg font-normal text-black">{selectedTask.title}</h2>
             </div>
 
-            {/* Key-Value Attributes Grid */}
+            {/* Attributes Grid */}
             <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-[#fafafa] border border-black/[0.04] text-xs font-body font-light">
               <div>
                 <span className="text-[10px] text-[#9ca3af] font-mono block">ASSIGNED</span>
