@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   const baseUrl = `${protocol}://${host}`
 
   const openApiSpec = {
-    openapi: '3.0.1',
+    openapi: '3.1.0',
     info: {
       title: 'Focus OS AI Chief of Staff API',
       description:
