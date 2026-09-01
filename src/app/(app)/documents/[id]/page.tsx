@@ -14,6 +14,8 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
+export const dynamic = 'force-dynamic'
+
 export default function DocumentEditorPage({ params }: { params: { id: string } }) {
   const [title, setTitle] = useState('Executive Strategy Memo')
   const [status, setStatus] = useState('live')

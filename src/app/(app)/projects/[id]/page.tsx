@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { 
   ArrowLeft, Clock, Target, AlertTriangle, CheckSquare, 
   Calendar, FileText, Activity, Layers, Image as ImageIcon,
-  Plus, Settings, Share2, MoreVertical, Trash2
+  Plus, Settings, Share2, MoreVertical, Trash2, Edit3
 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
@@ -19,6 +19,9 @@ import ProjectWhiteboard from './components/ProjectWhiteboard'
 import ProjectCalendar from './components/ProjectCalendar'
 import ProjectOverview from './components/ProjectOverview'
 import CreateTaskModal from '@/components/CreateTaskModal'
+import TaskDetailDrawer from '@/components/TaskDetailDrawer'
+
+export const dynamic = 'force-dynamic'
 
 export default function SingleProjectPage() {
   const params = useParams()
@@ -209,6 +212,7 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
   async function fetchTasks(silent = false) {
     if (!projectId) return
@@ -221,7 +225,13 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
         .eq('project_id', projectId)
         .order('created_at', { ascending: false })
       
-      if (!error) setTasks(data || [])
+      if (!error) {
+        setTasks(data || [])
+        if (selectedTask) {
+          const updated = data?.find(t => t.id === selectedTask.id)
+          if (updated) setSelectedTask(updated)
+        }
+      }
     } finally {
       setLoading(false)
     }
@@ -261,6 +271,7 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
     const { error } = await supabase.from('tasks').delete().eq('id', taskId)
     if (!error) {
       toast.success('Task deleted')
+      if (selectedTask?.id === taskId) setSelectedTask(null)
       fetchTasks()
       onUpdate()
     }
@@ -268,8 +279,20 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 font-sans">
+      <TaskDetailDrawer
+        task={selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onUpdate={() => {
+          fetchTasks(true)
+          onUpdate()
+        }}
+      />
+
       <div className="flex justify-between items-center font-body">
-        <h3 className="text-base font-normal text-black">Project Deliverables</h3>
+        <div>
+          <h3 className="text-base font-normal text-black">Project Deliverables</h3>
+          <span className="text-[11px] text-[#9ca3af] font-mono font-light">{tasks.length} total tasks allocated</span>
+        </div>
         <button
           onClick={() => setIsModalOpen(true)}
           className="flex items-center gap-1.5 px-3.5 py-1.5 bg-black hover:bg-neutral-800 text-white text-xs font-normal rounded-xl shadow-sm cursor-pointer"
@@ -293,27 +316,33 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
       <div className="space-y-3 font-body">
         {tasks.length === 0 ? (
           <div className="p-12 text-center text-xs text-[#9ca3af] bg-white border border-dashed border-black/[0.08] rounded-3xl font-light">
-            No tasks assigned to this project yet.
+            No tasks assigned to this project yet. Click &quot;New Task&quot; to add.
           </div>
         ) : (
           tasks.map((task) => (
             <div
               key={task.id}
-              className="p-4 px-6 rounded-2xl bg-white border border-black/[0.06] shadow-sm flex items-center justify-between gap-4 transition-all"
+              onClick={() => setSelectedTask(task)}
+              className="p-4 px-6 rounded-2xl bg-white border border-black/[0.06] hover:border-black/[0.18] shadow-sm hover:shadow-md flex items-center justify-between gap-4 transition-all cursor-pointer group"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-black text-white uppercase">
+                <span className={cn(
+                  'px-2 py-0.5 rounded-md text-[10px] font-mono font-medium uppercase',
+                  task.priority === 'p0' ? 'bg-red-50 text-red-600' :
+                  task.priority === 'p1' ? 'bg-amber-50 text-amber-600' :
+                  'bg-black text-white'
+                )}>
                   {task.priority.toUpperCase()}
                 </span>
                 <div className="min-w-0">
-                  <h4 className="text-xs font-normal text-black truncate">{task.title}</h4>
+                  <h4 className="text-xs font-normal text-black truncate group-hover:underline">{task.title}</h4>
                   <span className="text-[10px] text-[#9ca3af] font-mono font-light">
-                    {task.time_box_minutes || 45}m Box
+                    {task.time_box_minutes || 45}m Box • Click to view full details
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                 <select
                   value={task.status}
                   onChange={(e) => updateTaskStatus(task.id, e.target.value)}
@@ -324,6 +353,14 @@ function ProjectTasks({ projectId, workspaceId, onUpdate }: { projectId: string,
                   <option value="blocked">Blocked</option>
                   <option value="shipped">Shipped</option>
                 </select>
+
+                <button
+                  onClick={() => setSelectedTask(task)}
+                  className="p-1 text-[#9ca3af] hover:text-black rounded-lg transition-colors cursor-pointer"
+                  title="Edit details"
+                >
+                  <Edit3 size={14} />
+                </button>
 
                 <button
                   onClick={() => deleteTask(task.id)}

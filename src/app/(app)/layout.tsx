@@ -8,7 +8,7 @@ import type { User } from '@/types'
 import { getInitials, cn } from '@/lib/utils'
 import {
   LayoutDashboard, FolderKanban, CheckSquare, FileText,
-  Zap, Settings, LogOut, Plus, Search, Sparkles
+  Zap, Settings, LogOut, Plus, Search, Sparkles, Video
 } from 'lucide-react'
 import CommandPalette from '@/components/CommandPalette'
 import FocusTimer from '@/components/FocusTimer'
@@ -18,6 +18,7 @@ const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/projects', label: 'Projects', icon: FolderKanban },
   { href: '/tasks', label: 'Tasks', icon: CheckSquare },
+  { href: '/meetings', label: 'Meetings', icon: Video },
   { href: '/documents', label: 'Documents', icon: FileText },
   { href: '/ai', label: 'AI Assistant', icon: Zap },
 ]

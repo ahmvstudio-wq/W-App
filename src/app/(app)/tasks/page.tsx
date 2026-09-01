@@ -6,7 +6,7 @@ import {
   Plus, Search, Filter, LayoutGrid, List as ListIcon, Calendar, 
   X, Zap, Trash2, CheckCircle2, Clock, MoreHorizontal, MessageSquare, 
   Paperclip, Tag, AlertCircle, ChevronRight, User, Check, Send, Sparkles,
-  TrendingUp, BarChart2, Activity, ArrowUpRight
+  TrendingUp, BarChart2, Activity, ArrowUpRight, Edit3
 } from 'lucide-react'
 import { PRIORITY_CONFIG, TASK_STATUS_CONFIG, cn, getInitials } from '@/lib/utils'
 import type { Task, Priority, TaskStatus } from '@/types'
@@ -14,6 +14,7 @@ import { format, differenceInDays } from 'date-fns'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import CreateTaskModal from '@/components/CreateTaskModal'
+import TaskDetailDrawer from '@/components/TaskDetailDrawer'
 
 export default function TasksPage() {
   const [view, setView] = useState<'board' | 'list'>('board')
@@ -25,11 +26,6 @@ export default function TasksPage() {
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
-  const [activeDrawerTab, setActiveDrawerTab] = useState<'description' | 'discussion' | 'attachments'>('description')
-  const [comments, setComments] = useState<{ id: string; user: string; time: string; text: string }[]>([
-    { id: '1', user: 'AI Assistant', time: 'Just now', text: 'Task scope verified. Ready for execution.' }
-  ])
-  const [newComment, setNewComment] = useState('')
 
   async function fetchTasks(silent = false) {
     if (!silent) setLoading(true)
@@ -77,7 +73,6 @@ export default function TasksPage() {
   ]
 
   async function updateTaskStatus(taskId: string, newStatus: TaskStatus) {
-    // Optimistic UI update
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t))
 
     const updates: any = { status: newStatus }
@@ -97,7 +92,6 @@ export default function TasksPage() {
     toast.success(`Task moved to ${newStatus}`)
   }
 
-  // Drag and drop handlers
   function handleDragStart(e: React.DragEvent, taskId: string) {
     setDraggedTaskId(taskId)
     e.dataTransfer.setData('text/plain', taskId)
@@ -138,16 +132,6 @@ export default function TasksPage() {
     fetchTasks()
   }
 
-  function handleAddComment(textToAdd?: string) {
-    const commentText = textToAdd || newComment
-    if (!commentText.trim()) return
-    setComments(prev => [
-      ...prev,
-      { id: Date.now().toString(), user: 'You', time: 'Just now', text: commentText.trim() }
-    ])
-    if (!textToAdd) setNewComment('')
-  }
-
   // Derived Task Metrics
   const shippedCount = tasks.filter(t => t.status === 'shipped').length
   const inProgressCount = tasks.filter(t => t.status === 'in_progress').length
@@ -167,6 +151,13 @@ export default function TasksPage() {
       {isCreateModalOpen && (
         <CreateTaskModal onClose={() => setIsCreateModalOpen(false)} onSuccess={() => fetchTasks(true)} />
       )}
+
+      {/* Rich Task Detail & Edit Drawer */}
+      <TaskDetailDrawer
+        task={selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onUpdate={() => fetchTasks(true)}
+      />
 
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-shrink-0">
@@ -420,11 +411,23 @@ export default function TasksPage() {
                             </span>
                           </div>
 
-                          {daysLeft !== null && (
-                            <span className="text-[10px] font-mono text-[#6b7280] bg-black/[0.03] px-1.5 py-0.5 rounded">
-                              {daysLeft >= 0 ? `D-${daysLeft}` : `+${Math.abs(daysLeft)}d`}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1">
+                            {daysLeft !== null && (
+                              <span className="text-[10px] font-mono text-[#6b7280] bg-black/[0.03] px-1.5 py-0.5 rounded">
+                                {daysLeft >= 0 ? `D-${daysLeft}` : `+${Math.abs(daysLeft)}d`}
+                              </span>
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                deleteTask(task.id)
+                              }}
+                              className="p-1 text-[#9ca3af] hover:text-red-600 rounded-md transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
+                              title="Delete task"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
                         </div>
 
                         {/* Title & Description */}
@@ -461,8 +464,8 @@ export default function TasksPage() {
                           </div>
 
                           <div className="flex items-center gap-2 text-[10px] font-body text-[#9ca3af]">
-                            <MessageSquare size={11} />
-                            <span>1</span>
+                            <Edit3 size={11} className="text-[#9ca3af] group-hover:text-black transition-colors" />
+                            <span>Edit details</span>
                           </div>
                         </div>
                       </div>
@@ -540,171 +543,27 @@ export default function TasksPage() {
                       {task.due_date ? format(new Date(task.due_date), 'dd MMM yyyy') : '—'}
                     </td>
                     <td className="py-3.5 px-6 text-right" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => deleteTask(task.id)}
-                        className="p-1 text-[#9ca3af] hover:text-red-600 rounded-lg transition-colors cursor-pointer"
-                        title="Delete task"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setSelectedTask(task)}
+                          className="p-1 text-[#9ca3af] hover:text-black rounded-lg transition-colors cursor-pointer"
+                          title="Edit Task"
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                        <button
+                          onClick={() => deleteTask(task.id)}
+                          className="p-1 text-[#9ca3af] hover:text-red-600 rounded-lg transition-colors cursor-pointer"
+                          title="Delete task"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-      )}
-
-      {/* Sliding Task Detail Drawer */}
-      {selectedTask && (
-        <div className="fixed inset-y-0 right-0 w-full max-w-lg bg-white border-l border-black/[0.08] shadow-2xl z-50 flex flex-col animate-slideInRight font-sans">
-          {/* Drawer Header */}
-          <div className="p-6 border-b border-black/[0.06] flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-black text-white flex items-center justify-center font-medium text-xs">
-                CM
-              </div>
-              <div>
-                <h3 className="text-sm font-normal text-black leading-tight">
-                  {selectedTask.project?.name || 'CallMy Mgmt Task'}
-                </h3>
-                <span className="text-[10px] text-[#6b7280] font-mono">ID: {selectedTask.id.slice(0, 8)}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => deleteTask(selectedTask.id)}
-                className="p-1.5 text-[#9ca3af] hover:text-red-600 hover:bg-black/[0.04] rounded-xl transition-colors cursor-pointer"
-                title="Delete task"
-              >
-                <Trash2 size={15} />
-              </button>
-              <button
-                onClick={() => setSelectedTask(null)}
-                className="p-1.5 text-[#9ca3af] hover:text-black hover:bg-black/[0.04] rounded-xl transition-colors cursor-pointer"
-              >
-                <X size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Drawer Body */}
-          <div className="p-6 flex-1 overflow-y-auto space-y-6">
-            <div>
-              <label className="text-[10px] font-mono text-[#9ca3af] uppercase block mb-1">Task Title</label>
-              <h2 className="text-lg font-normal text-black">{selectedTask.title}</h2>
-            </div>
-
-            {/* Attributes Grid */}
-            <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-[#fafafa] border border-black/[0.04] text-xs font-body font-light">
-              <div>
-                <span className="text-[10px] text-[#9ca3af] font-mono block">ASSIGNED</span>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-5 h-5 rounded-full bg-black text-white font-medium text-[9px] flex items-center justify-center">
-                    {getInitials(selectedTask.owner?.name || 'C')}
-                  </div>
-                  <span className="text-black font-normal">{selectedTask.owner?.name || 'Assigned to you'}</span>
-                </div>
-              </div>
-
-              <div>
-                <span className="text-[10px] text-[#9ca3af] font-mono block">DUE DATE</span>
-                <span className="text-black font-normal mt-1 block">
-                  {selectedTask.due_date ? format(new Date(selectedTask.due_date), 'dd MMMM yyyy') : 'No deadline'}
-                </span>
-              </div>
-
-              <div>
-                <span className="text-[10px] text-[#9ca3af] font-mono block">STATUS</span>
-                <select
-                  value={selectedTask.status}
-                  onChange={(e) => updateTaskStatus(selectedTask.id, e.target.value as TaskStatus)}
-                  className="mt-1 bg-white text-black border border-black/[0.1] rounded-lg px-2 py-1 text-xs outline-none cursor-pointer"
-                >
-                  <option value="todo">To-Do</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="blocked">Blocked</option>
-                  <option value="shipped">Shipped</option>
-                </select>
-              </div>
-
-              <div>
-                <span className="text-[10px] text-[#9ca3af] font-mono block">PRIORITY</span>
-                <span className="inline-block mt-1 px-2 py-0.5 rounded-md font-mono text-[10px] font-medium bg-black text-white uppercase">
-                  {selectedTask.priority.toUpperCase()}
-                </span>
-              </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="border-b border-black/[0.06] flex gap-6 text-xs font-body">
-              {(['description', 'discussion', 'attachments'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveDrawerTab(tab)}
-                  className={cn(
-                    'pb-3 capitalize transition-all relative cursor-pointer font-light',
-                    activeDrawerTab === tab ? 'text-black font-normal border-b-2 border-black' : 'text-[#9ca3af] hover:text-black'
-                  )}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-
-            {activeDrawerTab === 'description' ? (
-              <div className="text-xs text-[#4b5563] leading-relaxed whitespace-pre-wrap font-body font-light">
-                {selectedTask.description || 'No detailed description provided for this task.'}
-              </div>
-            ) : activeDrawerTab === 'discussion' ? (
-              <div className="space-y-4 font-body">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
-                    placeholder="Add an update or note..."
-                    className="flex-1 px-3 py-2 bg-[#fafafa] border border-black/[0.08] rounded-xl text-xs text-black placeholder:text-[#9ca3af] outline-none font-light"
-                  />
-                  <button
-                    onClick={() => handleAddComment()}
-                    className="px-3 py-2 bg-black text-white font-medium rounded-xl text-xs cursor-pointer hover:bg-neutral-800"
-                  >
-                    <Send size={13} />
-                  </button>
-                </div>
-
-                <div className="space-y-3 pt-2">
-                  {comments.map((c) => (
-                    <div key={c.id} className="p-3 rounded-xl bg-[#fafafa] border border-black/[0.04] space-y-1">
-                      <div className="flex justify-between text-[10px] font-mono text-[#9ca3af]">
-                        <span className="text-black font-normal">{c.user}</span>
-                        <span>{c.time}</span>
-                      </div>
-                      <p className="text-xs text-[#4b5563] font-light">{c.text}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="p-8 text-center text-xs text-[#9ca3af] font-body font-light">
-                0 files attached.
-              </div>
-            )}
-          </div>
-
-          {/* Drawer Footer Actions */}
-          <div className="p-4 border-t border-black/[0.06] flex items-center justify-between gap-3 bg-[#fdfdfe] font-body">
-            <button
-              onClick={() => updateTaskStatus(selectedTask.id, 'shipped')}
-              className="flex-1 py-2.5 bg-black hover:bg-neutral-800 text-white font-normal rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
-            >
-              <Check size={14} />
-              <span>Mark as Shipped</span>
-            </button>
           </div>
         </div>
       )}
