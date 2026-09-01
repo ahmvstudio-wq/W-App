@@ -193,7 +193,7 @@ export default function TasksPage() {
         </div>
 
         {/* View Switcher & Actions */}
-        <div className="flex items-center gap-3 font-body">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 font-body">
           <div className="flex bg-white border border-black/[0.08] rounded-xl p-1 shadow-sm">
             <button
               onClick={() => setView('board')}
@@ -213,20 +213,20 @@ export default function TasksPage() {
               )}
             >
               <ListIcon size={14} />
-              <span>Table List</span>
+              <span>List</span>
             </button>
           </div>
 
           <button
             onClick={() => setIsSynthesizeOpen(true)}
-            className="flex items-center px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center px-3 sm:px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
           >
-            <span>Synthesize Directives</span>
+            <span>Synthesize</span>
           </button>
 
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer"
           >
             <Plus size={15} />
             <span>Create Task</span>
@@ -368,7 +368,7 @@ export default function TasksPage() {
 
       {/* Kanban Board Layout with Drag and Drop */}
       {view === 'board' ? (
-        <div className="flex gap-5 overflow-x-auto pb-6 items-start select-none">
+        <div className="flex gap-4 sm:gap-5 overflow-x-auto pb-6 items-start select-none touch-pan-x scrollbar-none snap-x snap-mandatory">
           {columns.map((column) => {
             const colTasks = filteredTasks.filter((t) => t.status === column.id)
             const isDragOver = dragOverColumn === column.id
@@ -380,7 +380,7 @@ export default function TasksPage() {
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, column.id)}
                 className={cn(
-                  'w-[310px] flex-shrink-0 rounded-3xl bg-[#f9fafb] border transition-all duration-200 flex flex-col min-h-[480px] shadow-sm',
+                  'w-[285px] sm:w-[310px] flex-shrink-0 snap-start rounded-3xl bg-[#f9fafb] border transition-all duration-200 flex flex-col min-h-[480px] shadow-sm',
                   isDragOver ? 'border-black ring-2 ring-black/10 bg-neutral-100' : 'border-black/[0.06]'
                 )}
               >

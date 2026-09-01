@@ -182,14 +182,20 @@ export default function ProjectsPage() {
     return matchesSearch && matchesMaster
   })
 
-  // Portfolio Analytics
-  const totalProjects = projects.length
-  const allTasks = projects.flatMap(p => p.tasks || [])
-  const totalTasks = allTasks.length
-  const shippedTasks = allTasks.filter((t: any) => t.status === 'shipped').length
-  const portfolioProgress = totalTasks > 0 ? Math.round((shippedTasks / totalTasks) * 100) : 0
-  const healthyCount = projects.filter(p => getProjectHealth(p as any) === 'green').length
-  const atRiskCount = projects.filter(p => getProjectHealth(p as any) === 'amber' || getProjectHealth(p as any) === 'red').length
+  // Dynamic Context-Aware Analytics (strictly calculated for the chosen Master Program or Portfolio)
+  const isAllFilter = selectedMasterFilter === 'all'
+  const scopedProjects = useMemo(() => {
+    if (isAllFilter) return projects
+    return projects.filter(p => (p.master_project || 'Tadbeer TT').toLowerCase() === selectedMasterFilter.toLowerCase())
+  }, [projects, isAllFilter, selectedMasterFilter])
+
+  const scopedMasterName = isAllFilter ? 'Portfolio' : selectedMasterFilter
+  const scopedTasks = useMemo(() => scopedProjects.flatMap(p => p.tasks || []), [scopedProjects])
+  const scopedTotalTasks = scopedTasks.length
+  const scopedShippedTasks = useMemo(() => scopedTasks.filter((t: any) => t.status === 'shipped').length, [scopedTasks])
+  const scopedDeliveryRate = scopedTotalTasks > 0 ? Math.round((scopedShippedTasks / scopedTotalTasks) * 100) : 0
+  const scopedHealthyCount = useMemo(() => scopedProjects.filter(p => getProjectHealth(p as any) === 'green').length, [scopedProjects])
+  const scopedAtRiskCount = useMemo(() => scopedProjects.filter(p => getProjectHealth(p as any) === 'amber' || getProjectHealth(p as any) === 'red').length, [scopedProjects])
 
   function handleCreateNewMasterProject(info: { name: string; subtitle: string; description: string; colorTheme: any }) {
     const newMp: MasterProjectInfo = {
@@ -216,27 +222,27 @@ export default function ProjectsPage() {
           <div className="flex items-center gap-2 text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
             <span>CALLMY</span>
             <span>•</span>
-            <span className="text-black font-normal">{allMasterNames.length} MASTER PROGRAMS &amp; {totalProjects} INITIATIVES</span>
+            <span className="text-black font-normal">{allMasterNames.length} MASTER PROGRAMS &amp; {projects.length} INITIATIVES</span>
           </div>
-          <h1 className="text-3xl font-light tracking-tight text-black">
+          <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-black">
             Master Projects &amp; Initiatives
           </h1>
         </div>
 
-        <div className="flex items-center gap-3 font-body">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 font-body">
           <button
             onClick={() => setIsSynthesizeOpen(true)}
-            className="flex items-center px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center px-3 sm:px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
           >
-            <span>Synthesize from Text</span>
+            <span>Synthesize</span>
           </button>
 
           <button
             onClick={() => setIsCreateMasterModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
           >
             <Building2 size={14} className="text-indigo-600" />
-            <span>New Master Project</span>
+            <span>New Master</span>
           </button>
 
           <button
@@ -244,7 +250,7 @@ export default function ProjectsPage() {
               setCreateInitialMasterProject(activeMasterProjectName)
               setIsCreateModalOpen(true)
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer font-body"
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer font-body"
           >
             <Plus size={15} />
             <span>New Initiative</span>
@@ -487,38 +493,48 @@ export default function ProjectsPage() {
         </div>
       </div>
 
-      {/* Portfolio Metrics Overview */}
+      {/* Program & Portfolio Metrics Overview (Context-Aware to Chosen Master Program) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-body">
-        {/* Metric 1: Overall Delivery Rate */}
-        <div className="p-5 rounded-3xl bg-white border border-black/[0.06] shadow-sm flex items-center justify-between">
+        {/* Metric 1: Delivery Rate */}
+        <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-sm flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Delivery Rate</span>
-            <div className="text-2xl font-light text-black tracking-tight">{portfolioProgress}%</div>
-            <div className="text-[11px] text-[#9ca3af] font-mono">{shippedTasks}/{totalTasks} Tasks Shipped</div>
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-semibold">
+              {isAllFilter ? 'Portfolio Delivery' : `${scopedMasterName} Delivery`}
+            </span>
+            <div className="text-2xl font-normal text-black tracking-tight">{scopedDeliveryRate}%</div>
+            <div className="text-[11px] text-[#4b5563] font-mono">{scopedShippedTasks}/{scopedTotalTasks} Tasks Shipped</div>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-600 flex items-center justify-center">
             <CheckCircle2 size={22} />
           </div>
         </div>
 
-        {/* Metric 2: Portfolio Health */}
-        <div className="p-5 rounded-3xl bg-white border border-black/[0.06] shadow-sm flex items-center justify-between">
+        {/* Metric 2: Program Health */}
+        <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-sm flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Portfolio Health</span>
-            <div className="text-2xl font-light text-emerald-600 tracking-tight">{healthyCount}/{totalProjects || 1}</div>
-            <div className="text-[11px] text-[#9ca3af] font-mono">Initiatives On Track</div>
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-semibold">
+              {isAllFilter ? 'Portfolio Health' : `${scopedMasterName} Health`}
+            </span>
+            <div className="text-2xl font-normal text-emerald-700 tracking-tight">{scopedHealthyCount}/{scopedProjects.length || 1}</div>
+            <div className="text-[11px] text-[#4b5563] font-mono">Initiatives On Track</div>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 flex items-center justify-center">
             <Activity size={22} />
           </div>
         </div>
 
-        {/* Metric 3: Active Sprints Velocity */}
-        <div className="p-5 rounded-3xl bg-white border border-black/[0.06] shadow-sm flex items-center justify-between">
+        {/* Metric 3: Scope Scale (Master Programs or Sub-Initiatives) */}
+        <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-sm flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Master Programs</span>
-            <div className="text-2xl font-light text-purple-700 tracking-tight">{allMasterNames.length}</div>
-            <div className="text-[11px] text-[#9ca3af] font-mono">Selectable Program Hubs</div>
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-semibold">
+              {isAllFilter ? 'Master Programs' : `${scopedMasterName} Scope`}
+            </span>
+            <div className="text-2xl font-normal text-purple-700 tracking-tight">
+              {isAllFilter ? allMasterNames.length : scopedProjects.length}
+            </div>
+            <div className="text-[11px] text-[#4b5563] font-mono">
+              {isAllFilter ? 'Selectable Program Hubs' : `${scopedProjects.length === 1 ? 'Active Sub-Initiative' : 'Active Sub-Initiatives'}`}
+            </div>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-600 flex items-center justify-center">
             <Building2 size={22} />
@@ -526,11 +542,13 @@ export default function ProjectsPage() {
         </div>
 
         {/* Metric 4: Risk / Attention Required */}
-        <div className="p-5 rounded-3xl bg-white border border-black/[0.06] shadow-sm flex items-center justify-between">
+        <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-sm flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Attention Needed</span>
-            <div className="text-2xl font-light text-amber-600 tracking-tight">{atRiskCount}</div>
-            <div className="text-[11px] text-[#9ca3af] font-mono">{atRiskCount === 0 ? 'Zero active bottlenecks' : 'Requires scope review'}</div>
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-semibold">
+              {isAllFilter ? 'Attention Needed' : `${scopedMasterName} Bottlenecks`}
+            </span>
+            <div className="text-2xl font-normal text-amber-600 tracking-tight">{scopedAtRiskCount}</div>
+            <div className="text-[11px] text-[#4b5563] font-mono">{scopedAtRiskCount === 0 ? 'Zero active bottlenecks' : 'Requires scope review'}</div>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center">
             <Target size={22} />

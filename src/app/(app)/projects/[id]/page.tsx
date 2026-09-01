@@ -158,7 +158,7 @@ export default function SingleProjectPage() {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="px-8 bg-white border-b border-black/[0.06] flex gap-8 flex-shrink-0 font-body">
+      <div className="px-4 sm:px-8 bg-white border-b border-black/[0.06] flex gap-4 sm:gap-8 flex-shrink-0 font-body overflow-x-auto scrollbar-none">
         {[
           { id: 'overview', label: 'Overview', icon: Activity },
           { id: 'tasks', label: 'Tasks', icon: CheckSquare },

@@ -173,15 +173,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* Right Actions & User Profile */}
-        <div className="flex items-center gap-3 font-body">
+        <div className="flex items-center gap-2 sm:gap-3 font-body">
           {/* Quick Search */}
           <button
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 bg-[#f5f5f7] hover:bg-[#ebebee] border border-black/[0.04] rounded-xl text-xs text-[#6b7280] hover:text-black transition-all cursor-pointer font-light"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-[#f5f5f7] hover:bg-[#ebebee] border border-black/[0.04] rounded-xl text-xs text-[#6b7280] hover:text-black transition-all cursor-pointer font-light"
+            title="Search workspace"
           >
             <Search size={13} className="text-[#9ca3af]" />
             <span className="hidden sm:inline">Search...</span>
-            <kbd className="px-1.5 py-0.2 bg-white border border-black/[0.06] rounded text-[9px] font-mono text-[#6b7280]">
+            <kbd className="hidden sm:inline px-1.5 py-0.2 bg-white border border-black/[0.06] rounded text-[9px] font-mono text-[#6b7280]">
               ⌘K
             </kbd>
           </button>
@@ -189,7 +190,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* Synthesize One-Input Engine */}
           <button
             onClick={() => setIsSynthesizeOpen(true)}
-            className="flex items-center px-3.5 py-1.5 bg-[#fafafa] hover:bg-[#f0f0f2] text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center px-2.5 sm:px-3.5 py-1.5 bg-[#fafafa] hover:bg-[#f0f0f2] text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
             title="Synthesize project directives and tasks"
           >
             <span>Synthesize</span>
@@ -198,7 +199,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* New Task Trigger */}
           <button
             onClick={() => setIsCreateTaskOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer"
           >
             <Plus size={14} />
             <span className="hidden sm:inline">Create Task</span>
@@ -244,10 +245,37 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* Main Full-Width Page Body */}
-      <main className="flex-1 p-6 sm:p-10 max-w-[1500px] w-full mx-auto">
+      {/* Main Full-Width Page Body with Mobile Responsive Padding */}
+      <main className="flex-1 p-4 sm:p-8 lg:p-10 pb-24 md:pb-12 max-w-[1500px] w-full mx-auto overflow-x-hidden">
         {children}
       </main>
+
+      {/* Sleek Mobile Bottom Navigation Bar (iOS/Android Native Style) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-black/[0.08] px-2 py-1.5 flex items-center justify-around shadow-lg font-body safe-area-bottom">
+        {NAV.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href))
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                'flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-150 relative min-w-[50px]',
+                active
+                  ? 'text-black font-semibold'
+                  : 'text-[#8a8d95] hover:text-black'
+              )}
+            >
+              <div className={cn(
+                'p-1 rounded-lg transition-colors',
+                active && 'bg-black text-white'
+              )}>
+                <Icon size={16} />
+              </div>
+              <span className="text-[10px] tracking-tight mt-0.5">{label}</span>
+            </Link>
+          )
+        })}
+      </div>
 
       <NaturalLanguageInputModal
         isOpen={isSynthesizeOpen}
