@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   const baseUrl = `${protocol}://${host}`
 
   const openApiSpec = {
-    openapi: '3.1.0',
+    openapi: '3.0.1',
     info: {
       title: 'Focus OS AI Chief of Staff API',
       description:
@@ -498,12 +498,11 @@ export async function GET(req: NextRequest) {
       },
     },
     components: {
+      schemas: {},
       securitySchemes: {
         BearerAuth: {
           type: 'http',
           scheme: 'bearer',
-          bearerFormat: 'API Key',
-          description: 'Enter your Focus OS ChatGPT API Key.',
         },
       },
     },

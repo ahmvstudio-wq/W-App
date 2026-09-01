@@ -1,5 +1,5 @@
 {
-  "openapi": "3.1.0",
+  "openapi": "3.0.1",
   "info": {
     "title": "Focus OS AI Chief of Staff API",
     "description": "Official API for ChatGPT Custom GPT Actions to read and manage tasks, projects, documents, blockers, and daily logs in Focus OS.",
@@ -489,12 +489,11 @@
     }
   },
   "components": {
+    "schemas": {},
     "securitySchemes": {
       "BearerAuth": {
         "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "API Key",
-        "description": "Enter your Focus OS ChatGPT API Key."
+        "scheme": "bearer"
       }
     }
   },
