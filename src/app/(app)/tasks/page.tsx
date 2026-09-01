@@ -75,23 +75,38 @@ export default function TasksPage() {
   ]
 
   async function updateTaskStatus(taskId: string, newStatus: TaskStatus) {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t))
-
+    const targetTask = tasks.find(t => t.id === taskId)
     const updates: any = { status: newStatus }
+
     if (newStatus === 'shipped') {
-      updates.completed_at = new Date().toISOString()
+      const now = new Date()
+      updates.completed_at = now.toISOString()
+      
+      // Calculate work hours / duration between when task was moved to in_progress and shipped
+      if (targetTask?.started_at) {
+        const startMs = new Date(targetTask.started_at).getTime()
+        const endMs = now.getTime()
+        const diffMinutes = Math.max(1, Math.round((endMs - startMs) / 60000))
+        updates.time_box_minutes = diffMinutes
+      }
     } else if (newStatus === 'in_progress') {
-      updates.started_at = new Date().toISOString()
-    } else {
+      if (!targetTask?.started_at) {
+        updates.started_at = new Date().toISOString()
+      }
+    } else if (newStatus === 'todo') {
       updates.completed_at = null
     }
+
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updates } : t))
+
     const { error } = await supabase.from('tasks').update(updates).eq('id', taskId)
     if (error) {
       toast.error(`Update failed: ${error.message}`)
       fetchTasks(true)
       return
     }
-    toast.success(`Task moved to ${newStatus}`)
+    toast.success(newStatus === 'shipped' ? 'Task shipped! Work duration recorded.' : `Task moved to ${newStatus}`)
+    fetchTasks(true)
   }
 
   function handleDragStart(e: React.DragEvent, taskId: string) {

@@ -87,28 +87,51 @@ export default function DashboardPage() {
   }
 
   async function updateTaskStatus(taskId: string, newStatus: any) {
+    const targetTask = tasks.find(t => t.id === taskId)
     const updates: any = { status: newStatus }
+
     if (newStatus === 'shipped') {
-      updates.completed_at = new Date().toISOString()
+      const now = new Date()
+      updates.completed_at = now.toISOString()
+      
+      // Calculate work duration between in_progress (started_at) and shipped (completed_at)
+      if (targetTask?.started_at) {
+        const startMs = new Date(targetTask.started_at).getTime()
+        const endMs = now.getTime()
+        const diffMinutes = Math.max(1, Math.round((endMs - startMs) / 60000))
+        updates.time_box_minutes = diffMinutes
+      }
     } else if (newStatus === 'in_progress') {
-      updates.started_at = new Date().toISOString()
+      if (!targetTask?.started_at) {
+        updates.started_at = new Date().toISOString()
+      }
+    } else if (newStatus === 'todo') {
+      updates.completed_at = null
     }
     
     const { error } = await supabase.from('tasks').update(updates).eq('id', taskId)
     if (error) {
       toast.error('Failed to update task')
     } else {
-      toast.success(`Task moved to ${newStatus}`)
+      toast.success(newStatus === 'shipped' ? 'Task shipped! Work duration recorded.' : `Task moved to ${newStatus}`)
       fetchData(true)
     }
   }
 
-  // Derived Real Metrics
+  // Derived Real Metrics strictly for shipped tasks
   const shippedTasks = tasks.filter(t => t.status === 'shipped')
   const todoTasks = tasks.filter(t => t.status === 'todo' || t.status === 'in_progress')
   const blockedTasks = tasks.filter(t => t.status === 'blocked')
   const p0Tasks = tasks.filter(t => (t.priority === 'p0' || t.priority === 'p1') && t.status !== 'shipped' && t.status !== 'killed')
-  const totalFocusMinutes = tasks.reduce((acc, t) => acc + (t.status === 'shipped' ? (t.time_box_minutes || 45) : 0), 0)
+  
+  const totalFocusMinutes = shippedTasks.reduce((acc, t) => {
+    if (t.started_at && t.completed_at) {
+      const diff = Math.round((new Date(t.completed_at).getTime() - new Date(t.started_at).getTime()) / 60000)
+      if (diff > 0) return acc + diff
+    }
+    return acc + (t.time_box_minutes || 0)
+  }, 0)
+
   const totalHours = (totalFocusMinutes / 60).toFixed(1)
   const completionRate = tasks.length > 0 ? Math.round((shippedTasks.length / tasks.length) * 100) : 0
   const realStreak = shippedTasks.length > 0 ? 1 : 0

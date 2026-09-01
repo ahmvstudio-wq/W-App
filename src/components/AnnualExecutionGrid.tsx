@@ -19,9 +19,10 @@ interface LoggedItem {
   title: string
   project: string
   priority: 'p0' | 'p1' | 'p2' | 'p3'
-  status: 'shipped' | 'in_progress' | 'todo'
+  status: 'shipped'
   minutes: number
   timeCompleted: string
+  startedAt?: string
 }
 
 interface DayActivity {
@@ -50,16 +51,16 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
     const endDate = addDays(today, daysCount - 1)
     const daysInterval = eachDayOfInterval({ start: startDate, end: endDate })
 
-    // Index REAL tasks by completion date or due date
+    // Index ONLY SHIPPED tasks by exact completed_at date
     const tasksByDate: Record<string, Task[]> = {}
+    
     tasks.forEach(t => {
-      const taskDate = t.completed_at 
-        ? new Date(t.completed_at) 
-        : (t.due_date ? new Date(t.due_date) : (t.updated_at ? new Date(t.updated_at) : new Date(t.created_at)))
-      
-      const key = format(taskDate, 'yyyy-MM-dd')
-      if (!tasksByDate[key]) tasksByDate[key] = []
-      tasksByDate[key].push(t)
+      // ONLY calculate work done after task is marked shipped with a valid completed_at
+      if (t.status === 'shipped' && t.completed_at) {
+        const key = format(new Date(t.completed_at), 'yyyy-MM-dd')
+        if (!tasksByDate[key]) tasksByDate[key] = []
+        tasksByDate[key].push(t)
+      }
     })
 
     const grid: DayActivity[] = daysInterval.map((date) => {
@@ -68,19 +69,29 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
       const dayOfWeek = getDay(date)
       const isTodayDate = isSameDay(date, today)
 
-      const items: LoggedItem[] = dayTasks.map((t, idx) => ({
-        id: t.id,
-        title: t.title,
-        project: t.project?.name || 'General Task',
-        priority: (t.priority || 'p1') as any,
-        status: (t.status || 'todo') as any,
-        minutes: t.time_box_minutes || 45,
-        timeCompleted: t.completed_at ? format(new Date(t.completed_at), 'hh:mm a') : `${10 + idx}:00 AM`
-      }))
+      const items: LoggedItem[] = dayTasks.map((t, idx) => {
+        // Calculate exact work duration between started_at (in_progress) and completed_at (shipped)
+        let exactMinutes = t.time_box_minutes || 0
+        if (t.started_at && t.completed_at) {
+          const diff = Math.round((new Date(t.completed_at).getTime() - new Date(t.started_at).getTime()) / 60000)
+          if (diff > 0) exactMinutes = diff
+        }
+
+        return {
+          id: t.id,
+          title: t.title,
+          project: t.project?.name || 'General Task',
+          priority: (t.priority || 'p1') as any,
+          status: 'shipped',
+          minutes: exactMinutes,
+          timeCompleted: t.completed_at ? format(new Date(t.completed_at), 'hh:mm a') : `${10 + idx}:00 AM`,
+          startedAt: t.started_at ? format(new Date(t.started_at), 'hh:mm a') : undefined
+        }
+      })
 
       const totalMins = items.reduce((acc, i) => acc + i.minutes, 0)
 
-      // Darkness Intensity based on real completed/active work
+      // Darkness Intensity strictly based on shipped work
       let intensity = 0
       if (items.length >= 5 || totalMins >= 180) intensity = 4
       else if (items.length >= 3 || totalMins >= 100) intensity = 3
@@ -101,9 +112,18 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
       }
     })
 
-    // Compute 100% Real Total Metrics
-    const totalCompleted = tasks.filter(t => t.status === 'shipped').length
-    const totalMins = tasks.filter(t => t.status === 'shipped').reduce((sum, t) => sum + (t.time_box_minutes || 45), 0)
+    // Compute 100% Real Total Metrics from shipped tasks only
+    const shippedTasks = tasks.filter(t => t.status === 'shipped')
+    const totalCompleted = shippedTasks.length
+    
+    const totalMins = shippedTasks.reduce((sum, t) => {
+      if (t.started_at && t.completed_at) {
+        const diff = Math.round((new Date(t.completed_at).getTime() - new Date(t.started_at).getTime()) / 60000)
+        if (diff > 0) return sum + diff
+      }
+      return sum + (t.time_box_minutes || 0)
+    }, 0)
+
     const hours = Math.round((totalMins / 60) * 10) / 10
 
     // Dynamic 12-month timeline starting from current month
@@ -132,24 +152,24 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
             </span>
           </div>
           <h3 className="text-xl font-normal text-black flex items-center gap-3 mt-1">
-            <span>Work &amp; Focus Calendar</span>
+            <span>Shipped Work &amp; Focus Hours</span>
             <span className="text-xs font-mono text-[#6b7280] font-normal">
-              [{totalTasksCompleted} {totalTasksCompleted === 1 ? 'task' : 'tasks'} completed]
+              [{totalTasksCompleted} {totalTasksCompleted === 1 ? 'task' : 'tasks'} shipped]
             </span>
           </h3>
         </div>
 
         {/* Legend / Intensity Scale */}
         <div className="flex items-center gap-4 text-xs font-mono text-[#6b7280]">
-          <span>No tasks</span>
+          <span>No shipped work</span>
           <div className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#f0f1f4] border border-black/[0.04]" title="0 tasks" />
-            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#cbd5e1]" title="1 task" />
-            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#64748b]" title="2 tasks" />
-            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#334155]" title="3-4 tasks" />
-            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#0f172a]" title="5+ tasks" />
+            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#f0f1f4] border border-black/[0.04]" title="0 tasks shipped" />
+            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#cbd5e1]" title="1 task shipped" />
+            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#64748b]" title="2 tasks shipped" />
+            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#334155]" title="3-4 tasks shipped" />
+            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#0f172a]" title="5+ tasks shipped" />
           </div>
-          <span className="text-black font-medium">Most active</span>
+          <span className="text-black font-medium">High output</span>
         </div>
       </div>
 
@@ -177,7 +197,7 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
           className="grid grid-flow-col gap-1.5 min-w-[760px] flex-1 p-3 rounded-2xl bg-[#fafafa] border border-black/[0.04]"
           style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))' }}
         >
-          {activityGrid.map((day, idx) => {
+          {activityGrid.map((day) => {
             const shades = [
               'bg-[#f0f1f4] hover:bg-black/10 border-black/[0.03]',
               'bg-[#cbd5e1] hover:bg-[#94a3b8]',
@@ -201,7 +221,7 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
                   day.isToday && 'ring-2 ring-black font-bold',
                   (isSelected || isHovered) && 'ring-2 ring-indigo-600 scale-125 z-10 shadow-sm'
                 )}
-                title={`${day.formattedDate}${day.isToday ? ' (TODAY)' : ''}: ${day.taskCount} tasks, ${day.totalMinutes}m logged`}
+                title={`${day.formattedDate}${day.isToday ? ' (TODAY)' : ''}: ${day.taskCount} shipped, ${day.totalMinutes}m work duration`}
               >
                 {day.isToday && (
                   <span className="absolute inset-0 flex items-center justify-center">
@@ -226,13 +246,13 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
           <span>•</span>
           <span className="text-emerald-700 font-semibold">
             {hoveredDay 
-              ? `${hoveredDay.taskCount} ${hoveredDay.taskCount === 1 ? 'task' : 'tasks'} (${hoveredDay.totalMinutes}m logged)` 
-              : `${selectedDay ? `${selectedDay.taskCount} tasks` : 'Click to inspect'}`}
+              ? `${hoveredDay.taskCount} ${hoveredDay.taskCount === 1 ? 'task' : 'tasks'} shipped (${hoveredDay.totalMinutes}m work duration)` 
+              : `${selectedDay ? `${selectedDay.taskCount} tasks shipped` : 'Click to inspect'}`}
           </span>
         </div>
 
         <span className="text-[11px] text-[#6b7280]">
-          💡 Click any square to view or log tasks for that day
+          💡 Tracks work duration between task start (in progress) and finish (shipped)
         </span>
       </div>
 
@@ -240,7 +260,7 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
       <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-black/[0.04] text-xs font-mono">
         <div className="flex items-center gap-2 text-[#6b7280]">
           <TrendingUp size={14} className="text-emerald-600" />
-          <span className="text-black font-semibold">{totalTasksCompleted} Tasks Completed</span>
+          <span className="text-black font-semibold">{totalTasksCompleted} Shipped Deliverables</span>
           <span>across all active projects</span>
         </div>
 
@@ -252,7 +272,7 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
           <span>•</span>
           <div className="flex items-center gap-1.5">
             <Clock size={13} className="text-indigo-600" />
-            <span>{totalFocusHours} Focus Hours</span>
+            <span>{totalFocusHours} Tracked Work Hours</span>
           </div>
         </div>
       </div>
@@ -266,7 +286,7 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-xs font-mono text-[#6b7280]">
                   <Calendar size={13} className="text-indigo-600" />
-                  <span>DAY SUMMARY</span>
+                  <span>DAY WORK SUMMARY</span>
                   <span>•</span>
                   <span className="text-black uppercase font-medium">
                     {selectedDay.shortDate} {selectedDay.isToday ? '(TODAY)' : ''}
@@ -286,15 +306,15 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
             {/* Modal Metrics Bar */}
             <div className="grid grid-cols-3 gap-3 p-4 px-6 bg-[#fafafa] border-b border-black/[0.04] text-center font-mono">
               <div className="p-3 bg-white rounded-2xl border border-black/[0.04]">
-                <span className="text-[10px] text-[#9ca3af] uppercase block">SCHEDULED / DONE</span>
+                <span className="text-[10px] text-[#9ca3af] uppercase block">SHIPPED TASKS</span>
                 <span className="text-lg font-semibold text-black">{selectedDay.taskCount}</span>
               </div>
               <div className="p-3 bg-white rounded-2xl border border-black/[0.04]">
-                <span className="text-[10px] text-[#9ca3af] uppercase block">TIME FOCUSED</span>
+                <span className="text-[10px] text-[#9ca3af] uppercase block">TRACKED WORK DURATION</span>
                 <span className="text-lg font-semibold text-black">{selectedDay.totalMinutes}m</span>
               </div>
               <div className="p-3 bg-white rounded-2xl border border-black/[0.04]">
-                <span className="text-[10px] text-[#9ca3af] uppercase block">INTENSITY</span>
+                <span className="text-[10px] text-[#9ca3af] uppercase block">OUTPUT INTENSITY</span>
                 <span className="text-lg font-semibold text-indigo-600">Level {selectedDay.intensity} of 4</span>
               </div>
             </div>
@@ -303,15 +323,15 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
             <div className="p-6 overflow-y-auto space-y-4 flex-1">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block">
-                  TASKS FOR THIS DATE
+                  TASKS SHIPPED ON THIS DATE
                 </span>
                 <span className="text-xs font-mono text-[#9ca3af]">{selectedDay.items.length} tasks</span>
               </div>
 
               {selectedDay.items.length === 0 ? (
                 <div className="py-12 text-center text-xs text-[#9ca3af] border border-dashed border-black/[0.08] rounded-2xl space-y-1">
-                  <p className="text-black font-medium">No tasks logged on this day</p>
-                  <p>Tasks created, scheduled, or completed on this calendar date will appear here automatically.</p>
+                  <p className="text-black font-medium">No tasks shipped on this date</p>
+                  <p>Tasks completed and marked &quot;Shipped&quot; on this calendar date will appear here.</p>
                 </div>
               ) : (
                 <div className="space-y-2.5">
@@ -332,19 +352,25 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
                             {item.project}
                           </span>
                           <span className="text-[10px] font-mono text-[#6b7280]">
-                            • {item.timeCompleted}
+                            • Shipped at {item.timeCompleted}
                           </span>
                         </div>
 
                         <h4 className="text-xs font-normal text-black truncate group-hover:underline">
                           {item.title}
                         </h4>
+
+                        {item.startedAt && (
+                          <span className="text-[10px] font-mono text-[#9ca3af] block">
+                            Started at {item.startedAt} • Tracked duration: {item.minutes}m
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-3 flex-shrink-0">
                         <div className="text-right font-mono text-xs">
                           <span className="text-black font-medium">{item.minutes}m</span>
-                          <span className="text-[10px] text-[#9ca3af] block">timebox</span>
+                          <span className="text-[10px] text-[#9ca3af] block">work duration</span>
                         </div>
 
                         <Link

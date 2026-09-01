@@ -244,14 +244,19 @@ export default function MeetingsPage() {
       })
     })
 
-    // 3. Map Real Tasks & Deadlines
+    // 3. Map Real Tasks & Deadlines (ONLY if due_date is explicitly assigned OR task was shipped on that date)
     tasks.forEach((t) => {
-      const date = t.due_date ? new Date(t.due_date) : new Date(t.created_at)
+      if (!t.due_date && (!t.completed_at || t.status !== 'shipped')) {
+        // Skip unassigned backlog tasks from cluttering the calendar
+        return
+      }
+
+      const taskDate = t.due_date ? new Date(t.due_date) : new Date(t.completed_at!)
       list.push({
         id: `task-${t.id}`,
         title: t.title,
-        date,
-        time: t.due_date ? format(new Date(t.due_date), 'hh:mm a') : 'Scheduled',
+        date: taskDate,
+        time: t.due_date ? format(new Date(t.due_date), 'hh:mm a') : format(new Date(t.completed_at!), 'hh:mm a'),
         durationMinutes: t.time_box_minutes || 45,
         type: 'task',
         priority: t.priority as any,

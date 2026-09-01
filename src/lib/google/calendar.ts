@@ -50,8 +50,9 @@ export function generateIcsCalendar(tasks: Task[], calendarName = 'CallMy Tasks'
 
   tasks.forEach((task) => {
     if (task.status === 'killed') return
+    if (!task.due_date && (!task.completed_at || task.status !== 'shipped')) return
 
-    const startDate = task.due_date ? new Date(task.due_date) : new Date(task.created_at)
+    const startDate = task.due_date ? new Date(task.due_date) : new Date(task.completed_at!)
     const durationMinutes = task.time_box_minutes || 45
     const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000)
 

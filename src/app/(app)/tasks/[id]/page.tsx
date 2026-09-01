@@ -150,7 +150,14 @@ export default function DedicatedTaskPage() {
       }
 
       if (status === 'shipped') {
-        updates.completed_at = new Date().toISOString()
+        const now = new Date()
+        updates.completed_at = now.toISOString()
+        if (task?.started_at) {
+          const startMs = new Date(task.started_at).getTime()
+          const endMs = now.getTime()
+          const diffMinutes = Math.max(1, Math.round((endMs - startMs) / 60000))
+          updates.time_box_minutes = diffMinutes
+        }
       } else if (status === 'in_progress' && !task?.started_at) {
         updates.started_at = new Date().toISOString()
       } else if (status === 'todo') {
