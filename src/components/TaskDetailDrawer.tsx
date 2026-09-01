@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { format, differenceInDays, formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
+import Link from 'next/link'
 import { cn, getInitials } from '@/lib/utils'
 import { challengeTask } from '@/lib/groq/client'
 import type { Task, Priority, TaskStatus, Project } from '@/types'
@@ -184,7 +185,15 @@ export default function TaskDetailDrawer({ task, onClose, onUpdate }: TaskDetail
           <span className="text-xs font-mono text-[#9ca3af]">TASK-{task.id.slice(0, 6).toUpperCase()}</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <Link
+            href={`/tasks/${task.id}`}
+            className="p-1.5 text-[#9ca3af] hover:text-black hover:bg-black/[0.04] rounded-xl transition-colors cursor-pointer flex items-center gap-1 text-xs"
+            title="Open Dedicated Full Page"
+          >
+            <ExternalLink size={15} />
+            <span className="hidden sm:inline">Full Page</span>
+          </Link>
           <button
             onClick={handleDeleteTask}
             disabled={isDeleting}
@@ -350,6 +359,36 @@ export default function TaskDetailDrawer({ task, onClose, onUpdate }: TaskDetail
 
         {activeTab === 'subtasks' && (
           <div className="space-y-4">
+            {/* Header & AI Decompose */}
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block">
+                ATOMIC MICRO-TASKS
+              </span>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/ai/microtasks', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ title, description })
+                    })
+                    const data = await res.json()
+                    if (data.success && Array.isArray(data.microtasks)) {
+                      setSubtasks(data.microtasks.map((m: any) => ({ id: m.id, title: m.title, completed: false })))
+                      toast.success(`Generated ${data.microtasks.length} micro-tasks with AI!`)
+                    }
+                  } catch (e) {
+                    toast.error('AI decomposition failed')
+                  }
+                }}
+                className="text-[11px] text-indigo-600 hover:underline flex items-center gap-1 font-mono cursor-pointer"
+              >
+                <Sparkles size={12} />
+                <span>✦ Decompose with AI</span>
+              </button>
+            </div>
+
             {/* Progress */}
             <div className="p-4 rounded-2xl bg-white border border-black/[0.06] shadow-sm space-y-2">
               <div className="flex justify-between items-center text-xs font-mono">
