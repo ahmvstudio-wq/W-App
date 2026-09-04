@@ -11,13 +11,16 @@ import {
   Play, Check, X, RefreshCw, MessageSquare, ChevronRight, Zap,
   Flame, Clock, Target, Calendar as CalendarIcon, ArrowUpRight,
   ShieldCheck, Activity, Award, Sparkles, FolderKanban, BarChart3,
-  Layers, CheckSquare
+  Layers, CheckSquare, Plus, ListTodo, Sun, CircleDot
 } from 'lucide-react'
 import type { Task, Project, User } from '@/types'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { format, subDays, addDays, isSameDay, startOfDay } from 'date-fns'
 import AnnualExecutionGrid from '@/components/AnnualExecutionGrid'
 import InteractiveVelocityChart from '@/components/InteractiveVelocityChart'
+import CreateTaskModal from '@/components/CreateTaskModal'
+import TaskDetailDrawer from '@/components/TaskDetailDrawer'
 
 export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -26,6 +29,10 @@ export default function DashboardPage() {
   const [brief, setBrief] = useState<string | null>(null)
   const [generatingBrief, setGeneratingBrief] = useState(false)
   const [userName, setUserName] = useState<string>('Founder')
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [agendaDate, setAgendaDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'))
+  const [showShippedToday, setShowShippedToday] = useState(false)
 
   useEffect(() => {
     fetchData(false)
@@ -137,6 +144,31 @@ export default function DashboardPage() {
   const totalHours = (totalFocusMinutes / 60).toFixed(1)
   const completionRate = tasks.length > 0 ? Math.round((shippedTasks.length / tasks.length) * 100) : 0
   const realStreak = shippedTasks.length > 0 ? 1 : 0
+
+  const todayKey = format(new Date(), 'yyyy-MM-dd')
+  const tomorrowKey = format(addDays(new Date(), 1), 'yyyy-MM-dd')
+  const isAgendaToday = agendaDate === todayKey
+
+  // Calculate day-specific tasks for the active date
+  const agendaTasks = tasks.filter(t => {
+    const dueKey = t.due_date ? format(new Date(t.due_date), 'yyyy-MM-dd') : null
+    const completedKey = t.completed_at ? format(new Date(t.completed_at), 'yyyy-MM-dd') : null
+    const startKey = t.started_at ? format(new Date(t.started_at), 'yyyy-MM-dd') : null
+
+    if (isAgendaToday) {
+      if (completedKey === todayKey) return true
+      if (t.status === 'in_progress') return true
+      if (dueKey === todayKey) return true
+      if (t.status === 'todo' && dueKey && dueKey < todayKey) return true
+      if (t.status === 'todo' && !dueKey) return true
+      return false
+    } else {
+      return dueKey === agendaDate || completedKey === agendaDate || startKey === agendaDate
+    }
+  })
+
+  const agendaActiveTasks = agendaTasks.filter(t => t.status !== 'shipped' && t.status !== 'killed')
+  const agendaShippedTasks = agendaTasks.filter(t => t.status === 'shipped')
 
   return (
     <div className="space-y-8 pb-16 animate-fadeIn font-sans">
@@ -312,56 +344,236 @@ export default function DashboardPage() {
       {/* Full-Width Interactive Annual Execution Grid */}
       <AnnualExecutionGrid tasks={tasks} />
 
-      {/* Priority Focus Queue */}
-      <div className="bg-white border border-black/[0.08] rounded-3xl p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
+      {/* TODAY'S ACTIVE TASKS & DAILY AGENDA SECTION (Requested Feature) */}
+      <div className="bg-white border border-black/[0.08] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 font-body">
+        {/* Section Header with Date Selector & Quick Actions */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-black/[0.06] pb-5">
           <div>
-            <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">TODAY&apos;S PRIORITIES</span>
-            <h3 className="text-base font-normal text-black">High Priority Tasks</h3>
+            <div className="flex items-center gap-2 text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
+              <Sun size={13} className="text-amber-500" />
+              <span>DAILY EXECUTION AGENDA</span>
+              <span>•</span>
+              <span className="text-black font-medium">{isAgendaToday ? "TODAY'S WORK" : 'SCHEDULED DAY'}</span>
+            </div>
+            <h3 className="text-xl font-normal text-black flex items-center gap-3">
+              <span>Active Tasks to be Done</span>
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-black text-white font-mono font-medium">
+                {agendaActiveTasks.length} pending
+              </span>
+              {agendaShippedTasks.length > 0 && (
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-medium">
+                  {agendaShippedTasks.length} shipped
+                </span>
+              )}
+            </h3>
+            <p className="text-xs text-[#6b7280] font-light mt-1">
+              Showing active deliverables for <strong className="text-black font-medium">{format(new Date(agendaDate + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}</strong>
+            </p>
           </div>
-          <Link href="/tasks" className="text-xs text-[#6b7280] hover:text-black font-body font-light flex items-center gap-1">
-            <span>View Board</span>
-            <ChevronRight size={13} />
-          </Link>
+
+          {/* Quick Date Switchers & Add Task */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex bg-[#f3f4f6] p-1 rounded-xl border border-black/[0.06] text-xs font-mono">
+              <button
+                onClick={() => setAgendaDate(todayKey)}
+                className={cn(
+                  'px-3 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1',
+                  agendaDate === todayKey ? 'bg-black text-white shadow-xs font-semibold' : 'text-[#6b7280] hover:text-black'
+                )}
+              >
+                <span>Today</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              </button>
+              <button
+                onClick={() => setAgendaDate(tomorrowKey)}
+                className={cn(
+                  'px-3 py-1 rounded-lg transition-all cursor-pointer',
+                  agendaDate === tomorrowKey ? 'bg-black text-white shadow-xs font-semibold' : 'text-[#6b7280] hover:text-black'
+                )}
+              >
+                Tomorrow
+              </button>
+            </div>
+
+            {/* Custom Date Input */}
+            <div className="flex items-center gap-1.5 border border-black/[0.08] rounded-xl px-2.5 py-1 bg-white">
+              <input
+                type="date"
+                value={agendaDate}
+                onChange={(e) => setAgendaDate(e.target.value)}
+                className="text-xs font-mono bg-transparent outline-none text-black cursor-pointer"
+              />
+            </div>
+
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-sm"
+            >
+              <Plus size={14} />
+              <span>Add Task</span>
+            </button>
+          </div>
         </div>
 
-          <div className="space-y-2.5">
-            {p0Tasks.length === 0 ? (
-              <div className="p-8 text-center rounded-2xl bg-[#fafafa] border border-black/[0.04] text-[#6b7280] text-xs font-body font-light">
-                🎉 All critical deliverables shipped! Zero urgent blockers.
+        {/* Active Deliverables List */}
+        <div className="space-y-3">
+          {agendaActiveTasks.length === 0 ? (
+            <div className="py-12 px-6 text-center rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto text-xl shadow-xs">
+                🎯
               </div>
-            ) : (
-              p0Tasks.slice(0, 4).map((task) => (
-                <div
-                  key={task.id}
-                  className="p-3.5 rounded-2xl bg-[#fafafa] hover:bg-[#f5f5f7] border border-black/[0.04] flex items-center justify-between gap-4 transition-all group"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-black text-white uppercase">
-                      {task.priority.toUpperCase()}
-                    </span>
-                    <div className="min-w-0">
-                      <span className="text-xs font-normal text-black truncate block group-hover:underline">
-                        {task.title}
+              <div className="space-y-1">
+                <h4 className="text-sm font-normal text-black">
+                  {isAgendaToday 
+                    ? 'All planned tasks for today are completed!' 
+                    : `Zero pending tasks scheduled for ${format(new Date(agendaDate + 'T00:00:00'), 'MMM d')}`}
+                </h4>
+                <p className="text-xs text-[#6b7280] font-light max-w-md mx-auto">
+                  {agendaShippedTasks.length > 0 
+                    ? `Great shipping velocity! You have logged ${agendaShippedTasks.length} shipped deliverables for this date.`
+                    : 'Schedule tasks or assign deadlines to plan your high-leverage deep work.'}
+                </p>
+              </div>
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-black hover:bg-neutral-800 text-white text-xs font-normal transition-all cursor-pointer shadow-sm"
+              >
+                <Plus size={13} />
+                <span>Create Task for this Date</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-2.5">
+              {agendaActiveTasks.map((task) => {
+                const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'shipped'
+                const formattedDeadline = task.due_date ? format(new Date(task.due_date), 'hh:mm a') : null
+
+                return (
+                  <div
+                    key={task.id}
+                    onClick={() => setSelectedTask(task)}
+                    className="p-4 rounded-2xl bg-[#fbfbfd] hover:bg-white border border-black/[0.06] hover:border-black/[0.15] flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all group cursor-pointer shadow-xs"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                      {/* Priority Pill */}
+                      <span className={cn(
+                        'px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold uppercase flex-shrink-0',
+                        task.priority === 'p0' ? 'bg-red-50 text-red-700 border border-red-200' :
+                        task.priority === 'p1' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                        'bg-black/[0.05] text-black'
+                      )}>
+                        {task.priority.toUpperCase()}
                       </span>
-                      <span className="text-[10px] text-[#6b6e75] font-mono font-light">
-                        {task.project?.name ? `PROJECT: ${task.project.name}` : 'GENERAL'} • {task.time_box_minutes || 45}m box
-                      </span>
+
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-black truncate group-hover:underline block">
+                            {task.title}
+                          </span>
+                          {task.status === 'in_progress' && (
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-medium bg-blue-50 text-blue-700 border border-blue-200 flex-shrink-0">
+                              IN FLIGHT
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-[#6b7280]">
+                          <span className="text-[#374151] font-medium">
+                            {task.project?.name ? `PROJECT: ${task.project.name}` : 'GENERAL'}
+                          </span>
+                          <span>•</span>
+                          <span>{task.time_box_minutes || 45}m box</span>
+                          {formattedDeadline && (
+                            <>
+                              <span>•</span>
+                              <span className={cn(isOverdue ? 'text-red-600 font-semibold' : 'text-[#6b7280]')}>
+                                {isOverdue ? `Overdue (${formattedDeadline})` : `Deadline: ${formattedDeadline}`}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quick Action Status Controls */}
+                    <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                      {task.status === 'todo' ? (
+                        <button
+                          onClick={() => updateTaskStatus(task.id, 'in_progress')}
+                          className="px-3 py-1.5 bg-white hover:bg-neutral-50 border border-black/[0.1] text-black rounded-xl text-xs font-normal transition-all flex items-center gap-1.5 cursor-pointer shadow-xs font-body"
+                          title="Put in flight"
+                        >
+                          <Play size={11} className="text-blue-600 fill-blue-600" />
+                          <span>Start</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => updateTaskStatus(task.id, 'shipped')}
+                          className="px-3.5 py-1.5 bg-black text-white hover:bg-neutral-800 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-sm font-body"
+                          title="Mark task completed and shipped"
+                        >
+                          <Check size={12} className="text-[#c8f135]" />
+                          <span>Ship Deliverable</span>
+                        </button>
+                      )}
                     </div>
                   </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
 
-                  <button
-                    onClick={() => updateTaskStatus(task.id, 'shipped')}
-                    className="px-3 py-1 bg-black text-white hover:bg-neutral-800 rounded-xl text-xs font-medium transition-all flex items-center gap-1 cursor-pointer shadow-sm font-body"
+        {/* Shipped Deliverables for this Date (Toggle) */}
+        {agendaShippedTasks.length > 0 && (
+          <div className="pt-4 border-t border-black/[0.04]">
+            <button
+              onClick={() => setShowShippedToday(!showShippedToday)}
+              className="text-xs font-mono text-[#6b7280] hover:text-black flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>{showShippedToday ? 'Hide' : 'Show'} {agendaShippedTasks.length} shipped {agendaShippedTasks.length === 1 ? 'task' : 'tasks'} for this date</span>
+              <ChevronRight size={13} className={cn('transition-transform', showShippedToday && 'rotate-90')} />
+            </button>
+
+            {showShippedToday && (
+              <div className="space-y-2 mt-3 animate-fadeIn">
+                {agendaShippedTasks.map((t) => (
+                  <div
+                    key={t.id}
+                    onClick={() => setSelectedTask(t)}
+                    className="p-3 rounded-xl bg-[#f9fafb] border border-black/[0.04] flex items-center justify-between text-xs cursor-pointer hover:bg-white transition-colors"
                   >
-                    <Check size={12} />
-                    <span>Ship</span>
-                  </button>
-                </div>
-              ))
+                    <div className="flex items-center gap-2.5 truncate">
+                      <CheckCircle2 size={15} className="text-emerald-600 flex-shrink-0" />
+                      <span className="text-black truncate">{t.title}</span>
+                      <span className="text-[10px] font-mono text-[#9ca3af]">({t.project?.name || 'General'})</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md flex-shrink-0">
+                      Shipped
+                    </span>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-        </div>
+        )}
       </div>
+
+      {/* Create Task Modal with Date Context */}
+      {isCreateModalOpen && (
+        <CreateTaskModal
+          onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={() => fetchData(true)}
+          initialDate={new Date(agendaDate + 'T18:00:00')}
+        />
+      )}
+
+      {/* Task Detail & Edit Drawer */}
+      <TaskDetailDrawer
+        task={selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onUpdate={() => fetchData(true)}
+      />
+    </div>
   )
 }

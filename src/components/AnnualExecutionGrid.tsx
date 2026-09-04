@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { format, addDays, addMonths, eachDayOfInterval, getDay, isSameDay, startOfDay } from 'date-fns'
+import { format, subDays, addDays, subMonths, addMonths, eachDayOfInterval, getDay, isSameDay, startOfDay } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { 
   Clock, CheckCircle2, Flame, TrendingUp, Calendar, 
-  X, ExternalLink, Sparkles
+  X, ExternalLink, Sparkles, ArrowRight, Filter
 } from 'lucide-react'
 import Link from 'next/link'
 import type { Task } from '@/types'
@@ -19,10 +19,11 @@ interface LoggedItem {
   title: string
   project: string
   priority: 'p0' | 'p1' | 'p2' | 'p3'
-  status: 'shipped'
+  status: string
   minutes: number
   timeCompleted: string
   startedAt?: string
+  dueDate?: string
 }
 
 interface DayActivity {
@@ -41,25 +42,46 @@ interface DayActivity {
 export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps) {
   const [selectedDay, setSelectedDay] = useState<DayActivity | null>(null)
   const [hoveredDay, setHoveredDay] = useState<DayActivity | null>(null)
+  const [gridMode, setGridMode] = useState<'past' | 'future'>('past')
 
-  // 364 days spanning from Today forward into the next 52 weeks
+  // 364 days = 52 weeks exactly
   const daysCount = 364
 
   const { activityGrid, totalTasksCompleted, totalFocusHours, realStreak, months } = useMemo(() => {
     const today = startOfDay(new Date())
-    const startDate = today
-    const endDate = addDays(today, daysCount - 1)
+    
+    // Past 52 weeks ending today (standard execution history heatmap)
+    // or upcoming 52 weeks starting today (forward deadline planning)
+    const startDate = gridMode === 'past' ? subDays(today, daysCount - 1) : today
+    const endDate = gridMode === 'past' ? today : addDays(today, daysCount - 1)
     const daysInterval = eachDayOfInterval({ start: startDate, end: endDate })
 
-    // Index ONLY SHIPPED tasks by exact completed_at date
+    // Index tasks by date
     const tasksByDate: Record<string, Task[]> = {}
     
     tasks.forEach(t => {
-      // ONLY calculate work done after task is marked shipped with a valid completed_at
-      if (t.status === 'shipped' && t.completed_at) {
-        const key = format(new Date(t.completed_at), 'yyyy-MM-dd')
-        if (!tasksByDate[key]) tasksByDate[key] = []
-        tasksByDate[key].push(t)
+      if (gridMode === 'past') {
+        // In past mode: track tasks shipped on their exact completed_at date
+        if (t.status === 'shipped') {
+          const rawDate = t.completed_at || t.updated_at || t.created_at
+          if (rawDate) {
+            try {
+              const key = format(new Date(rawDate), 'yyyy-MM-dd')
+              if (!tasksByDate[key]) tasksByDate[key] = []
+              tasksByDate[key].push(t)
+            } catch {}
+          }
+        }
+      } else {
+        // In future mode: track tasks by their scheduled deadline (due_date)
+        const rawDate = t.due_date || t.start_time
+        if (rawDate) {
+          try {
+            const key = format(new Date(rawDate), 'yyyy-MM-dd')
+            if (!tasksByDate[key]) tasksByDate[key] = []
+            tasksByDate[key].push(t)
+          } catch {}
+        }
       }
     })
 
@@ -70,28 +92,32 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
       const isTodayDate = isSameDay(date, today)
 
       const items: LoggedItem[] = dayTasks.map((t, idx) => {
-        // Calculate exact work duration between started_at (in_progress) and completed_at (shipped)
         let exactMinutes = t.time_box_minutes || 0
         if (t.started_at && t.completed_at) {
           const diff = Math.round((new Date(t.completed_at).getTime() - new Date(t.started_at).getTime()) / 60000)
           if (diff > 0) exactMinutes = diff
         }
 
+        const timeLabel = t.completed_at 
+          ? format(new Date(t.completed_at), 'hh:mm a')
+          : (t.due_date ? format(new Date(t.due_date), 'hh:mm a') : `${10 + (idx % 8)}:00 AM`)
+
         return {
           id: t.id,
           title: t.title,
           project: t.project?.name || 'General Task',
           priority: (t.priority || 'p1') as any,
-          status: 'shipped',
+          status: t.status,
           minutes: exactMinutes,
-          timeCompleted: t.completed_at ? format(new Date(t.completed_at), 'hh:mm a') : `${10 + idx}:00 AM`,
-          startedAt: t.started_at ? format(new Date(t.started_at), 'hh:mm a') : undefined
+          timeCompleted: timeLabel,
+          startedAt: t.started_at ? format(new Date(t.started_at), 'hh:mm a') : undefined,
+          dueDate: t.due_date ? format(new Date(t.due_date), 'MMM d, hh:mm a') : undefined
         }
       })
 
       const totalMins = items.reduce((acc, i) => acc + i.minutes, 0)
 
-      // Darkness Intensity strictly based on shipped work
+      // Darkness Intensity strictly based on activity count or duration
       let intensity = 0
       if (items.length >= 5 || totalMins >= 180) intensity = 4
       else if (items.length >= 3 || totalMins >= 100) intensity = 3
@@ -112,7 +138,7 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
       }
     })
 
-    // Compute 100% Real Total Metrics from shipped tasks only
+    // Compute metrics
     const shippedTasks = tasks.filter(t => t.status === 'shipped')
     const totalCompleted = shippedTasks.length
     
@@ -126,17 +152,45 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
 
     const hours = Math.round((totalMins / 60) * 10) / 10
 
-    // Dynamic 12-month timeline starting from current month
-    const dynamicMonths = Array.from({ length: 12 }).map((_, i) => format(addMonths(today, i), 'MMM'))
+    // Consecutive Daily Streak calculation
+    let streakCount = 0
+    let checkDate = today
+    // If today has tasks, start streak from today; otherwise check if yesterday had tasks
+    const todayKey = format(today, 'yyyy-MM-dd')
+    const yesterdayKey = format(subDays(today, 1), 'yyyy-MM-dd')
+    
+    if ((tasksByDate[todayKey] || []).length > 0) {
+      streakCount = 1
+      checkDate = subDays(today, 1)
+      while ((tasksByDate[format(checkDate, 'yyyy-MM-dd')] || []).length > 0) {
+        streakCount++
+        checkDate = subDays(checkDate, 1)
+      }
+    } else if ((tasksByDate[yesterdayKey] || []).length > 0) {
+      streakCount = 1
+      checkDate = subDays(today, 2)
+      while ((tasksByDate[format(checkDate, 'yyyy-MM-dd')] || []).length > 0) {
+        streakCount++
+        checkDate = subDays(checkDate, 1)
+      }
+    }
+
+    // Dynamic 12-month timeline:
+    // In past mode: 11 months ago through current month
+    // In future mode: current month through next 11 months
+    const dynamicMonths = Array.from({ length: 12 }).map((_, i) => {
+      const d = gridMode === 'past' ? subMonths(today, 11 - i) : addMonths(today, i)
+      return format(d, 'MMM')
+    })
 
     return {
       activityGrid: grid,
       totalTasksCompleted: totalCompleted,
       totalFocusHours: hours,
-      realStreak: totalCompleted > 0 ? 1 : 0,
+      realStreak: streakCount,
       months: dynamicMonths
     }
-  }, [tasks])
+  }, [tasks, gridMode])
 
   return (
     <div className="bg-white border border-black/[0.08] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 font-body relative">
@@ -147,29 +201,52 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
             <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">
               YEARLY ACTIVITY
             </span>
-            <span className="px-2 py-0.5 rounded-md bg-black text-white font-mono text-[10px] font-medium">
-              365 DAYS (STARTING TODAY)
+            <span className="px-2 py-0.5 rounded-md bg-black text-white font-mono text-[10px] font-medium uppercase">
+              {gridMode === 'past' ? 'PAST 52 WEEKS (ENDING TODAY)' : 'UPCOMING 52 WEEKS (SCHEDULE)'}
             </span>
           </div>
           <h3 className="text-xl font-normal text-black flex items-center gap-3 mt-1">
-            <span>Shipped Work &amp; Focus Hours</span>
+            <span>{gridMode === 'past' ? 'Shipped Work & Focus Hours' : 'Scheduled Tasks & Deadlines'}</span>
             <span className="text-xs font-mono text-[#6b7280] font-normal">
               [{totalTasksCompleted} {totalTasksCompleted === 1 ? 'task' : 'tasks'} shipped]
             </span>
           </h3>
         </div>
 
-        {/* Legend / Intensity Scale */}
-        <div className="flex items-center gap-4 text-xs font-mono text-[#6b7280]">
-          <span>No shipped work</span>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#f0f1f4] border border-black/[0.04]" title="0 tasks shipped" />
-            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#cbd5e1]" title="1 task shipped" />
-            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#64748b]" title="2 tasks shipped" />
-            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#334155]" title="3-4 tasks shipped" />
-            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#0f172a]" title="5+ tasks shipped" />
+        {/* Mode Switcher & Legend */}
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex bg-[#f3f4f6] p-1 rounded-xl border border-black/[0.06]">
+            <button
+              onClick={() => setGridMode('past')}
+              className={cn(
+                'px-3 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer',
+                gridMode === 'past' ? 'bg-black text-white shadow-xs font-semibold' : 'text-[#6b7280] hover:text-black'
+              )}
+            >
+              Shipped History
+            </button>
+            <button
+              onClick={() => setGridMode('future')}
+              className={cn(
+                'px-3 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer',
+                gridMode === 'future' ? 'bg-black text-white shadow-xs font-semibold' : 'text-[#6b7280] hover:text-black'
+              )}
+            >
+              Upcoming Deadlines
+            </button>
           </div>
-          <span className="text-black font-medium">High output</span>
+
+          <div className="flex items-center gap-3 text-xs font-mono text-[#6b7280]">
+            <span>{gridMode === 'past' ? 'No shipped work' : 'No deadlines'}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3.5 h-3.5 rounded-[3px] bg-[#f0f1f4] border border-black/[0.04]" title="0 tasks" />
+              <span className="w-3.5 h-3.5 rounded-[3px] bg-[#cbd5e1]" title="1 task" />
+              <span className="w-3.5 h-3.5 rounded-[3px] bg-[#64748b]" title="2 tasks" />
+              <span className="w-3.5 h-3.5 rounded-[3px] bg-[#334155]" title="3-4 tasks" />
+              <span className="w-3.5 h-3.5 rounded-[3px] bg-[#0f172a]" title="5+ tasks" />
+            </div>
+            <span className="text-black font-medium">High output</span>
+          </div>
         </div>
       </div>
 

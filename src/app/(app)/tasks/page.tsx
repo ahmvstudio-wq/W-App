@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { PRIORITY_CONFIG, TASK_STATUS_CONFIG, cn, getInitials } from '@/lib/utils'
 import type { Task, Priority, TaskStatus } from '@/types'
-import { format, differenceInDays } from 'date-fns'
+import { format, differenceInDays, subDays, addDays } from 'date-fns'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import CreateTaskModal from '@/components/CreateTaskModal'
@@ -27,6 +27,8 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [priorityFilter, setPriorityFilter] = useState<string>('all')
+  const [selectedDate, setSelectedDate] = useState<string>('')
+  const [dateFilterMode, setDateFilterMode] = useState<'all_activity' | 'deadline' | 'completed'>('all_activity')
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -74,6 +76,7 @@ export default function TasksPage() {
     { id: 'in_progress', label: 'In Progress', accentGradient: 'from-blue-500 to-indigo-500' },
     { id: 'blocked', label: 'Blocked', accentGradient: 'from-amber-500 to-orange-500' },
     { id: 'shipped', label: 'Shipped', accentGradient: 'from-emerald-500 to-teal-500' },
+    { id: 'killed', label: 'Killed', accentGradient: 'from-rose-500 to-red-600' },
   ]
 
   async function updateTaskStatus(taskId: string, newStatus: TaskStatus) {
@@ -158,11 +161,35 @@ export default function TasksPage() {
   const p0Count = tasks.filter(t => t.priority === 'p0' && t.status !== 'shipped').length
   const completionRate = tasks.length > 0 ? Math.round((shippedCount / tasks.length) * 100) : 0
 
+  const todayDateKey = format(new Date(), 'yyyy-MM-dd')
+  const yesterdayDateKey = format(subDays(new Date(), 1), 'yyyy-MM-dd')
+  const tomorrowDateKey = format(addDays(new Date(), 1), 'yyyy-MM-dd')
+
   const filteredTasks = tasks.filter(t => {
     const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.project?.name?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesPriority = priorityFilter === 'all' || t.priority === priorityFilter
-    return matchesSearch && matchesPriority
+
+    if (!selectedDate) {
+      return matchesSearch && matchesPriority
+    }
+
+    const dueKey = t.due_date ? format(new Date(t.due_date), 'yyyy-MM-dd') : null
+    const completedKey = t.completed_at ? format(new Date(t.completed_at), 'yyyy-MM-dd') : null
+    const startedKey = t.started_at ? format(new Date(t.started_at), 'yyyy-MM-dd') : null
+    const createdKey = t.created_at ? format(new Date(t.created_at), 'yyyy-MM-dd') : null
+
+    let matchesDate = false
+    if (dateFilterMode === 'deadline') {
+      matchesDate = dueKey === selectedDate
+    } else if (dateFilterMode === 'completed') {
+      matchesDate = completedKey === selectedDate
+    } else {
+      // all_activity: matches deadline OR completed date OR started date OR created date on this day
+      matchesDate = dueKey === selectedDate || completedKey === selectedDate || startedKey === selectedDate || createdKey === selectedDate
+    }
+
+    return matchesSearch && matchesPriority && matchesDate
   })
 
   return (
@@ -334,6 +361,136 @@ export default function TasksPage() {
             {blockedCount === 0 ? 'Optimal path to ship' : 'Requires immediate unblocking'}
           </div>
         </div>
+      </div>
+
+      {/* Date-Wise Automatic Filtering & Calendar Bar */}
+      <div className="bg-white border border-black/[0.08] rounded-2xl p-4 shadow-sm space-y-3 font-body">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-black text-white flex-shrink-0 shadow-xs">
+              <Calendar size={15} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-black">Date &amp; Schedule Filter</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-black/[0.05] text-black">
+                  {selectedDate ? `${filteredTasks.length} tasks on this date` : `${tasks.length} total tasks`}
+                </span>
+              </div>
+              <span className="text-[11px] font-mono text-[#6b7280] block">
+                {selectedDate 
+                  ? `Active date: ${format(new Date(selectedDate + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}` 
+                  : 'Filter Kanban by specific execution date, deadline, or completion day'}
+              </span>
+            </div>
+          </div>
+
+          {/* Quick Date Buttons & Picker */}
+          <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+            <button
+              onClick={() => setSelectedDate('')}
+              className={cn(
+                'px-3 py-1.5 rounded-xl border transition-all cursor-pointer font-body text-xs',
+                !selectedDate ? 'bg-black text-white border-black shadow-xs font-medium' : 'bg-[#fafafa] border-black/[0.06] text-[#6b7280] hover:text-black'
+              )}
+            >
+              All Dates
+            </button>
+            <button
+              onClick={() => setSelectedDate(todayDateKey)}
+              className={cn(
+                'px-3 py-1.5 rounded-xl border transition-all cursor-pointer font-body text-xs flex items-center gap-1.5',
+                selectedDate === todayDateKey ? 'bg-black text-white border-black shadow-xs font-medium' : 'bg-[#fafafa] border-black/[0.06] text-[#6b7280] hover:text-black'
+              )}
+            >
+              <span>Today</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            </button>
+            <button
+              onClick={() => setSelectedDate(yesterdayDateKey)}
+              className={cn(
+                'px-3 py-1.5 rounded-xl border transition-all cursor-pointer font-body text-xs',
+                selectedDate === yesterdayDateKey ? 'bg-black text-white border-black shadow-xs font-medium' : 'bg-[#fafafa] border-black/[0.06] text-[#6b7280] hover:text-black'
+              )}
+            >
+              Yesterday
+            </button>
+            <button
+              onClick={() => setSelectedDate(tomorrowDateKey)}
+              className={cn(
+                'px-3 py-1.5 rounded-xl border transition-all cursor-pointer font-body text-xs',
+                selectedDate === tomorrowDateKey ? 'bg-black text-white border-black shadow-xs font-medium' : 'bg-[#fafafa] border-black/[0.06] text-[#6b7280] hover:text-black'
+              )}
+            >
+              Tomorrow
+            </button>
+
+            {/* Custom Date Input */}
+            <div className="flex items-center gap-1.5 border border-black/[0.08] rounded-xl px-2.5 py-1 bg-[#fafafa]">
+              <span className="text-[10px] text-[#6b7280] font-mono uppercase">Choose:</span>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="text-xs font-mono bg-transparent outline-none text-black cursor-pointer"
+              />
+              {selectedDate && (
+                <button
+                  onClick={() => setSelectedDate('')}
+                  className="text-[#9ca3af] hover:text-black p-0.5 cursor-pointer"
+                  title="Clear date filter"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Scope Options (Visible when a date is picked) */}
+        {selectedDate && (
+          <div className="pt-2.5 border-t border-black/[0.04] flex flex-wrap items-center justify-between gap-2 text-xs font-body">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono text-[#6b7280]">Date Scope:</span>
+              <div className="flex bg-[#f3f4f6] p-0.5 rounded-lg border border-black/[0.04] text-[11px] font-mono">
+                <button
+                  onClick={() => setDateFilterMode('all_activity')}
+                  className={cn(
+                    'px-2.5 py-0.5 rounded-md transition-all cursor-pointer',
+                    dateFilterMode === 'all_activity' ? 'bg-white text-black font-medium shadow-xs' : 'text-[#6b7280] hover:text-black'
+                  )}
+                >
+                  All Activity &amp; Deadlines
+                </button>
+                <button
+                  onClick={() => setDateFilterMode('deadline')}
+                  className={cn(
+                    'px-2.5 py-0.5 rounded-md transition-all cursor-pointer',
+                    dateFilterMode === 'deadline' ? 'bg-white text-black font-medium shadow-xs' : 'text-[#6b7280] hover:text-black'
+                  )}
+                >
+                  Deadlines Only
+                </button>
+                <button
+                  onClick={() => setDateFilterMode('completed')}
+                  className={cn(
+                    'px-2.5 py-0.5 rounded-md transition-all cursor-pointer',
+                    dateFilterMode === 'completed' ? 'bg-white text-black font-medium shadow-xs' : 'text-[#6b7280] hover:text-black'
+                  )}
+                >
+                  Shipped Only
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setSelectedDate('')}
+              className="text-xs text-black underline hover:opacity-70 cursor-pointer font-light"
+            >
+              Reset to view all tasks ({tasks.length}) →
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Filter & Search Bar */}
@@ -560,6 +717,7 @@ export default function TasksPage() {
                         <option value="in_progress">In Progress</option>
                         <option value="blocked">Blocked</option>
                         <option value="shipped">Shipped</option>
+                        <option value="killed">Killed</option>
                       </select>
                     </td>
                     <td className="py-3.5 px-4 font-mono text-[#6b7280] text-[11px]">

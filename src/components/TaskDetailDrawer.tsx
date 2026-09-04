@@ -64,9 +64,14 @@ export default function TaskDetailDrawer({ task, onClose, onUpdate }: TaskDetail
       setDueDate(task.due_date ? task.due_date.slice(0, 16) : '')
       setStartTime(task.start_time ? task.start_time.slice(0, 16) : '')
       setEndTime(task.end_time ? task.end_time.slice(0, 16) : '')
+      setCompletedAt(task.completed_at ? task.completed_at.slice(0, 16) : '')
+      setStartedAt(task.started_at ? task.started_at.slice(0, 16) : '')
       setProjectId(task.project_id || '')
     }
   }, [task])
+
+  const [completedAt, setCompletedAt] = useState('')
+  const [startedAt, setStartedAt] = useState('')
 
   useEffect(() => {
     async function fetchProjects() {
@@ -96,16 +101,22 @@ export default function TaskDetailDrawer({ task, onClose, onUpdate }: TaskDetail
       }
 
       if (status === 'shipped') {
-        const now = new Date()
-        updates.completed_at = now.toISOString()
-        if (task.started_at) {
+        const shippedDate = completedAt ? new Date(completedAt) : new Date()
+        updates.completed_at = shippedDate.toISOString()
+        if (startedAt) {
+          updates.started_at = new Date(startedAt).toISOString()
+          const startMs = new Date(startedAt).getTime()
+          const endMs = shippedDate.getTime()
+          const diffMinutes = Math.max(1, Math.round((endMs - startMs) / 60000))
+          updates.time_box_minutes = diffMinutes
+        } else if (task.started_at) {
           const startMs = new Date(task.started_at).getTime()
-          const endMs = now.getTime()
+          const endMs = shippedDate.getTime()
           const diffMinutes = Math.max(1, Math.round((endMs - startMs) / 60000))
           updates.time_box_minutes = diffMinutes
         }
-      } else if (status === 'in_progress' && !task.started_at) {
-        updates.started_at = new Date().toISOString()
+      } else if (status === 'in_progress') {
+        updates.started_at = startedAt ? new Date(startedAt).toISOString() : (task.started_at || new Date().toISOString())
       } else if (status === 'todo') {
         updates.completed_at = null
       }
@@ -329,25 +340,95 @@ export default function TaskDetailDrawer({ task, onClose, onUpdate }: TaskDetail
             </div>
 
             {/* Due Date & Scheduled Block */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block mb-1">DEADLINE</label>
-                <input
-                  type="datetime-local"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-white border border-black/[0.08] rounded-xl text-xs text-black outline-none font-light shadow-sm"
-                />
+            <div className="p-4 rounded-2xl bg-white border border-black/[0.08] shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-mono text-black font-semibold uppercase tracking-wider block">
+                  DEADLINE / DUE DATE
+                </label>
+                <div className="flex gap-1.5 font-mono text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const d = new Date()
+                      d.setHours(18, 0, 0, 0)
+                      const year = d.getFullYear()
+                      const month = String(d.getMonth() + 1).padStart(2, '0')
+                      const day = String(d.getDate()).padStart(2, '0')
+                      setDueDate(`${year}-${month}-${day}T18:00`)
+                    }}
+                    className="px-2 py-0.5 rounded-md bg-[#f3f4f6] hover:bg-[#e5e7eb] text-black transition-all cursor-pointer"
+                  >
+                    Today 6 PM
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const d = new Date()
+                      d.setDate(d.getDate() + 1)
+                      d.setHours(18, 0, 0, 0)
+                      const year = d.getFullYear()
+                      const month = String(d.getMonth() + 1).padStart(2, '0')
+                      const day = String(d.getDate()).padStart(2, '0')
+                      setDueDate(`${year}-${month}-${day}T18:00`)
+                    }}
+                    className="px-2 py-0.5 rounded-md bg-[#f3f4f6] hover:bg-[#e5e7eb] text-black transition-all cursor-pointer"
+                  >
+                    Tomorrow 6 PM
+                  </button>
+                  {dueDate && (
+                    <button
+                      type="button"
+                      onClick={() => setDueDate('')}
+                      className="px-2 py-0.5 rounded-md text-red-500 hover:bg-red-50 border border-red-200 transition-all cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div>
-                <label className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block mb-1">CALENDAR SCHEDULE START</label>
-                <input
-                  type="datetime-local"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-white border border-black/[0.08] rounded-xl text-xs text-black outline-none font-light shadow-sm"
-                />
+              <input
+                type="datetime-local"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full px-3.5 py-2 bg-[#fbfbfd] border border-black/[0.08] rounded-xl text-xs text-black outline-none font-mono shadow-xs"
+              />
+
+              {/* Lifecycle Dates: Shipped & Started */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-black/[0.04]">
+                <div>
+                  <label className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block mb-1">
+                    {status === 'shipped' ? 'SHIPPED / COMPLETED ON' : 'CALENDAR START'}
+                  </label>
+                  {status === 'shipped' ? (
+                    <input
+                      type="datetime-local"
+                      value={completedAt}
+                      onChange={(e) => setCompletedAt(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-[#fbfbfd] border border-black/[0.08] rounded-xl text-xs text-black outline-none font-mono"
+                    />
+                  ) : (
+                    <input
+                      type="datetime-local"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-[#fbfbfd] border border-black/[0.08] rounded-xl text-xs text-black outline-none font-mono"
+                    />
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block mb-1">
+                    STARTED AT (IN PROGRESS)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={startedAt}
+                    onChange={(e) => setStartedAt(e.target.value)}
+                    placeholder="Task start timestamp"
+                    className="w-full px-3 py-1.5 bg-[#fbfbfd] border border-black/[0.08] rounded-xl text-xs text-black outline-none font-mono"
+                  />
+                </div>
               </div>
             </div>
 
