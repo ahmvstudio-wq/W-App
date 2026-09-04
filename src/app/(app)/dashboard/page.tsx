@@ -154,6 +154,7 @@ export default function DashboardPage() {
     const dueKey = t.due_date ? format(new Date(t.due_date), 'yyyy-MM-dd') : null
     const completedKey = t.completed_at ? format(new Date(t.completed_at), 'yyyy-MM-dd') : null
     const startKey = t.started_at ? format(new Date(t.started_at), 'yyyy-MM-dd') : null
+    const createdKey = t.created_at ? format(new Date(t.created_at), 'yyyy-MM-dd') : null
 
     if (isAgendaToday) {
       if (completedKey === todayKey) return true
@@ -163,7 +164,32 @@ export default function DashboardPage() {
       if (t.status === 'todo' && !dueKey) return true
       return false
     } else {
-      return dueKey === agendaDate || completedKey === agendaDate || startKey === agendaDate
+      // Historical or planned date: only match tasks that were due, completed, started, or created on that specific date
+      return dueKey === agendaDate || completedKey === agendaDate || startKey === agendaDate || createdKey === agendaDate
+    }
+  }).map(t => {
+    if (isAgendaToday) return t
+
+    // Project status back in time if inspecting a past date
+    const targetDate = startOfDay(new Date(agendaDate + 'T00:00:00'))
+    const nextDay = addDays(targetDate, 1)
+
+    const completedAt = t.completed_at ? new Date(t.completed_at) : null
+    const startedAt = t.started_at ? new Date(t.started_at) : null
+
+    let historicalStatus = t.status
+    if (completedAt && completedAt < nextDay) {
+      historicalStatus = 'shipped'
+    } else if (startedAt && startedAt < nextDay) {
+      historicalStatus = 'in_progress'
+    } else if (startedAt && startedAt >= nextDay) {
+      // If task was started on a future date (e.g. Sept 5) but we are viewing Sept 3, it was still to-do!
+      historicalStatus = 'todo'
+    }
+
+    return {
+      ...t,
+      status: historicalStatus
     }
   })
 

@@ -1,7 +1,11 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { format, subDays, addDays, subMonths, addMonths, eachDayOfInterval, getDay, isSameDay, startOfDay } from 'date-fns'
+import { 
+  format, subDays, addDays, subMonths, addMonths, 
+  eachDayOfInterval, getDay, isSameDay, startOfDay,
+  startOfWeek, endOfWeek
+} from 'date-fns'
 import { cn } from '@/lib/utils'
 import { 
   Clock, CheckCircle2, Flame, TrendingUp, Calendar, 
@@ -43,18 +47,65 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
   const [selectedDay, setSelectedDay] = useState<DayActivity | null>(null)
   const [hoveredDay, setHoveredDay] = useState<DayActivity | null>(null)
   const [gridMode, setGridMode] = useState<'past' | 'future'>('past')
+  type RangePreset = '4w' | '12w' | '26w' | '52w' | 'ytd' | 'custom'
+  const [rangePreset, setRangePreset] = useState<RangePreset>('52w')
+  const [customStartDate, setCustomStartDate] = useState<string>(() => {
+    return format(subDays(new Date(), 30), 'yyyy-MM-dd')
+  })
+  const [customEndDate, setCustomEndDate] = useState<string>(() => {
+    return format(new Date(), 'yyyy-MM-dd')
+  })
 
-  // 364 days = 52 weeks exactly
-  const daysCount = 364
-
-  const { activityGrid, totalTasksCompleted, totalFocusHours, realStreak, months } = useMemo(() => {
+  const {
+    activityGrid,
+    totalTasksCompleted,
+    totalFocusHours,
+    tasksInRangeCount,
+    hoursInRangeCount,
+    realStreak,
+    monthLabels,
+    startDate,
+    endDate,
+    rangeBadgeLabel
+  } = useMemo(() => {
     const today = startOfDay(new Date())
     
-    // Past 52 weeks ending today (standard execution history heatmap)
-    // or upcoming 52 weeks starting today (forward deadline planning)
-    const startDate = gridMode === 'past' ? subDays(today, daysCount - 1) : today
-    const endDate = gridMode === 'past' ? today : addDays(today, daysCount - 1)
-    const daysInterval = eachDayOfInterval({ start: startDate, end: endDate })
+    let rangeStart: Date
+    let rangeEnd: Date
+
+    if (rangePreset === 'custom') {
+      const parsedStart = customStartDate ? startOfDay(new Date(customStartDate)) : subDays(today, 30)
+      const parsedEnd = customEndDate ? startOfDay(new Date(customEndDate)) : today
+      if (parsedStart > parsedEnd) {
+        rangeStart = parsedEnd
+        rangeEnd = parsedStart
+      } else {
+        rangeStart = parsedStart
+        rangeEnd = parsedEnd
+      }
+    } else if (rangePreset === 'ytd') {
+      if (gridMode === 'past') {
+        rangeStart = new Date(today.getFullYear(), 0, 1)
+        rangeEnd = today
+      } else {
+        rangeStart = today
+        rangeEnd = new Date(today.getFullYear(), 11, 31)
+      }
+    } else {
+      const days = rangePreset === '4w' ? 28 : rangePreset === '12w' ? 84 : rangePreset === '26w' ? 182 : 364
+      if (gridMode === 'past') {
+        rangeStart = subDays(today, days - 1)
+        rangeEnd = today
+      } else {
+        rangeStart = today
+        rangeEnd = addDays(today, days - 1)
+      }
+    }
+
+    // Align grid to week boundaries starting on Monday (1)
+    const gridStart = startOfWeek(rangeStart, { weekStartsOn: 1 })
+    const gridEnd = endOfWeek(rangeEnd, { weekStartsOn: 1 })
+    const daysInterval = eachDayOfInterval({ start: gridStart, end: gridEnd })
 
     // Index tasks by date
     const tasksByDate: Record<string, Task[]> = {}
@@ -87,7 +138,8 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
 
     const grid: DayActivity[] = daysInterval.map((date) => {
       const dateKey = format(date, 'yyyy-MM-dd')
-      const dayTasks = tasksByDate[dateKey] || []
+      const isOutOfRange = date < rangeStart || date > rangeEnd
+      const dayTasks = isOutOfRange ? [] : (tasksByDate[dateKey] || [])
       const dayOfWeek = getDay(date)
       const isTodayDate = isSameDay(date, today)
 
@@ -117,7 +169,6 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
 
       const totalMins = items.reduce((acc, i) => acc + i.minutes, 0)
 
-      // Darkness Intensity strictly based on activity count or duration
       let intensity = 0
       if (items.length >= 5 || totalMins >= 180) intensity = 4
       else if (items.length >= 3 || totalMins >= 100) intensity = 3
@@ -152,10 +203,14 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
 
     const hours = Math.round((totalMins / 60) * 10) / 10
 
+    // Range-specific metrics
+    const inRangeCount = grid.reduce((acc, day) => acc + day.taskCount, 0)
+    const inRangeMins = grid.reduce((acc, day) => acc + day.totalMinutes, 0)
+    const inRangeHours = Math.round((inRangeMins / 60) * 10) / 10
+
     // Consecutive Daily Streak calculation
     let streakCount = 0
     let checkDate = today
-    // If today has tasks, start streak from today; otherwise check if yesterday had tasks
     const todayKey = format(today, 'yyyy-MM-dd')
     const yesterdayKey = format(subDays(today, 1), 'yyyy-MM-dd')
     
@@ -175,46 +230,69 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
       }
     }
 
-    // Dynamic 12-month timeline:
-    // In past mode: 11 months ago through current month
-    // In future mode: current month through next 11 months
-    const dynamicMonths = Array.from({ length: 12 }).map((_, i) => {
-      const d = gridMode === 'past' ? subMonths(today, 11 - i) : addMonths(today, i)
-      return format(d, 'MMM')
+    // Dynamic month positions across the columns
+    const dynamicMonthLabels: { label: string; colIndex: number }[] = []
+    let lastMonth = -1
+    daysInterval.forEach((date, idx) => {
+      const colIndex = Math.floor(idx / 7)
+      const monthNum = date.getMonth()
+      if (monthNum !== lastMonth) {
+        lastMonth = monthNum
+        dynamicMonthLabels.push({
+          label: format(date, 'MMM'),
+          colIndex
+        })
+      }
     })
+
+    const badgeLabel = (() => {
+      const direction = gridMode === 'past' ? 'PAST' : 'UPCOMING'
+      if (rangePreset === '4w') return `${direction} 4 WEEKS`
+      if (rangePreset === '12w') return `${direction} 12 WEEKS (QUARTER)`
+      if (rangePreset === '26w') return `${direction} 26 WEEKS (HALF YEAR)`
+      if (rangePreset === '52w') return `${direction} 52 WEEKS (FULL YEAR)`
+      if (rangePreset === 'ytd') return `YEAR TO DATE (${format(today, 'yyyy')})`
+      return `CUSTOM: ${format(rangeStart, 'MMM d')} – ${format(rangeEnd, 'MMM d, yyyy')}`
+    })()
 
     return {
       activityGrid: grid,
       totalTasksCompleted: totalCompleted,
       totalFocusHours: hours,
+      tasksInRangeCount: inRangeCount,
+      hoursInRangeCount: inRangeHours,
       realStreak: streakCount,
-      months: dynamicMonths
+      monthLabels: dynamicMonthLabels,
+      startDate: rangeStart,
+      endDate: rangeEnd,
+      rangeBadgeLabel: badgeLabel
     }
-  }, [tasks, gridMode])
+  }, [tasks, gridMode, rangePreset, customStartDate, customEndDate])
 
   return (
     <div className="bg-white border border-black/[0.08] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 font-body relative">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-black/[0.06] pb-5">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-black/[0.06] pb-5">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">
-              YEARLY ACTIVITY
+              ACTIVITY HEATMAP
             </span>
-            <span className="px-2 py-0.5 rounded-md bg-black text-white font-mono text-[10px] font-medium uppercase">
-              {gridMode === 'past' ? 'PAST 52 WEEKS (ENDING TODAY)' : 'UPCOMING 52 WEEKS (SCHEDULE)'}
+            <span className="px-2.5 py-0.5 rounded-md bg-black text-white font-mono text-[10px] font-medium uppercase tracking-wide">
+              {rangeBadgeLabel}
             </span>
           </div>
-          <h3 className="text-xl font-normal text-black flex items-center gap-3 mt-1">
+          <h3 className="text-xl font-normal text-black flex flex-wrap items-center gap-3 mt-1">
             <span>{gridMode === 'past' ? 'Shipped Work & Focus Hours' : 'Scheduled Tasks & Deadlines'}</span>
             <span className="text-xs font-mono text-[#6b7280] font-normal">
-              [{totalTasksCompleted} {totalTasksCompleted === 1 ? 'task' : 'tasks'} shipped]
+              [{tasksInRangeCount} {tasksInRangeCount === 1 ? 'task' : 'tasks'} in range • {hoursInRangeCount}h logged]
             </span>
           </h3>
         </div>
 
-        {/* Mode Switcher & Legend */}
-        <div className="flex flex-wrap items-center gap-4">
+        {/* Mode Switcher & Range Presets */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* History vs Deadlines */}
           <div className="flex bg-[#f3f4f6] p-1 rounded-xl border border-black/[0.06]">
             <button
               onClick={() => setGridMode('past')}
@@ -236,78 +314,160 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
             </button>
           </div>
 
-          <div className="flex items-center gap-3 text-xs font-mono text-[#6b7280]">
-            <span>{gridMode === 'past' ? 'No shipped work' : 'No deadlines'}</span>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3.5 h-3.5 rounded-[3px] bg-[#f0f1f4] border border-black/[0.04]" title="0 tasks" />
-              <span className="w-3.5 h-3.5 rounded-[3px] bg-[#cbd5e1]" title="1 task" />
-              <span className="w-3.5 h-3.5 rounded-[3px] bg-[#64748b]" title="2 tasks" />
-              <span className="w-3.5 h-3.5 rounded-[3px] bg-[#334155]" title="3-4 tasks" />
-              <span className="w-3.5 h-3.5 rounded-[3px] bg-[#0f172a]" title="5+ tasks" />
-            </div>
-            <span className="text-black font-medium">High output</span>
+          {/* Range Presets */}
+          <div className="flex bg-[#f3f4f6] p-1 rounded-xl border border-black/[0.06]">
+            {(['4w', '12w', '26w', '52w', 'ytd', 'custom'] as RangePreset[]).map((preset) => (
+              <button
+                key={preset}
+                onClick={() => setRangePreset(preset)}
+                className={cn(
+                  'px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all cursor-pointer uppercase',
+                  rangePreset === preset ? 'bg-black text-white shadow-xs font-semibold' : 'text-[#6b7280] hover:text-black'
+                )}
+              >
+                {preset}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Months Header Timeline (Starting from Current Month) */}
-      <div className="flex justify-between text-[11px] font-mono text-[#9ca3af] px-8 select-none">
-        {months.map((m, idx) => (
-          <span key={`${m}-${idx}`} className={cn(idx === 0 && 'text-black font-semibold')}>
-            {m}
-          </span>
-        ))}
+      {/* Custom Date Range Picker Bar (visible when 'custom' is selected) */}
+      {rangePreset === 'custom' && (
+        <div className="p-3.5 px-5 rounded-2xl bg-[#fafafa] border border-black/[0.08] flex flex-wrap items-center justify-between gap-4 text-xs font-mono animate-fadeIn">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-black font-medium flex items-center gap-1.5">
+              <Calendar size={13} className="text-indigo-600" />
+              Custom Range:
+            </span>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="bg-white border border-black/[0.1] rounded-lg px-2.5 py-1 text-xs text-black focus:outline-none focus:ring-1 focus:ring-black"
+              />
+              <span className="text-[#9ca3af]">to</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="bg-white border border-black/[0.1] rounded-lg px-2.5 py-1 text-xs text-black focus:outline-none focus:ring-1 focus:ring-black"
+              />
+            </div>
+          </div>
+
+          {/* Quick presets for custom */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setCustomStartDate(format(subDays(new Date(), 30), 'yyyy-MM-dd'))
+                setCustomEndDate(format(new Date(), 'yyyy-MM-dd'))
+              }}
+              className="px-2.5 py-1 rounded-md text-[11px] bg-white border border-black/[0.08] hover:border-black text-[#4b5563] hover:text-black transition-colors"
+            >
+              Last 30 Days
+            </button>
+            <button
+              onClick={() => {
+                setCustomStartDate(format(subDays(new Date(), 90), 'yyyy-MM-dd'))
+                setCustomEndDate(format(new Date(), 'yyyy-MM-dd'))
+              }}
+              className="px-2.5 py-1 rounded-md text-[11px] bg-white border border-black/[0.08] hover:border-black text-[#4b5563] hover:text-black transition-colors"
+            >
+              Last 90 Days
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Legend & Summary */}
+      <div className="flex items-center justify-between text-xs font-mono text-[#6b7280]">
+        <div className="flex items-center gap-3">
+          <span>{gridMode === 'past' ? 'No shipped work' : 'No deadlines'}</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#f0f1f4] border border-black/[0.04]" title="0 tasks" />
+            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#cbd5e1]" title="1 task" />
+            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#64748b]" title="2 tasks" />
+            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#334155]" title="3-4 tasks" />
+            <span className="w-3.5 h-3.5 rounded-[3px] bg-[#0f172a]" title="5+ tasks" />
+          </div>
+          <span className="text-black font-medium">High output</span>
+        </div>
+        <span className="hidden sm:inline text-[11px] text-[#9ca3af]">
+          Showing {activityGrid.length} days ({Math.ceil(activityGrid.length / 7)} weeks)
+        </span>
       </div>
 
-      {/* 52-Week Day-Wise Calendar Matrix (Starts Today) */}
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
-        {/* Day-of-week labels column */}
-        <div className="flex flex-col justify-between text-[10px] font-mono text-[#9ca3af] py-1 select-none flex-shrink-0">
-          <span>Mon</span>
-          <span>Wed</span>
-          <span>Fri</span>
-          <span>Sun</span>
-        </div>
+      {/* Dynamic Calendar Matrix with Synchronized Month Header */}
+      <div className="overflow-x-auto pb-2 scrollbar-thin">
+        <div className="inline-flex flex-col gap-1.5 min-w-full">
+          {/* Months Header Timeline (Synchronous with column positions) */}
+          <div className="flex gap-3 pl-8">
+            <div className="relative h-4 text-[10px] font-mono text-[#6b7280] select-none flex-1">
+              {monthLabels.map((m, idx) => (
+                <span
+                  key={`${m.label}-${idx}`}
+                  className="absolute font-medium uppercase tracking-wider"
+                  style={{ left: `${12 + m.colIndex * 20}px` }}
+                >
+                  {m.label}
+                </span>
+              ))}
+            </div>
+          </div>
 
-        {/* 52-Column Grid (7 rows per column = Mon to Sun) */}
-        <div 
-          className="grid grid-flow-col gap-1.5 min-w-[760px] flex-1 p-3 rounded-2xl bg-[#fafafa] border border-black/[0.04]"
-          style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))' }}
-        >
-          {activityGrid.map((day) => {
-            const shades = [
-              'bg-[#f0f1f4] hover:bg-black/10 border-black/[0.03]',
-              'bg-[#cbd5e1] hover:bg-[#94a3b8]',
-              'bg-[#64748b] hover:bg-[#475569]',
-              'bg-[#334155] hover:bg-[#1e293b]',
-              'bg-[#0f172a] hover:bg-black',
-            ]
+          {/* Day-of-week labels + Grid */}
+          <div className="flex gap-3 items-start">
+            {/* Day-of-week labels column (Row 0=Mon, Row 2=Wed, Row 4=Fri, Row 6=Sun) */}
+            <div className="flex flex-col justify-between text-[10px] font-mono text-[#9ca3af] py-3 select-none flex-shrink-0 w-6 h-[142px]">
+              <span>Mon</span>
+              <span>Wed</span>
+              <span>Fri</span>
+              <span>Sun</span>
+            </div>
 
-            const isSelected = selectedDay?.dateString === day.dateString
-            const isHovered = hoveredDay?.dateString === day.dateString
+            {/* Dynamic Column Grid (7 rows per column: Mon to Sun) */}
+            <div 
+              className="grid grid-flow-col auto-cols-max gap-1.5 p-3 rounded-2xl bg-[#fafafa] border border-black/[0.04]"
+              style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))' }}
+            >
+              {activityGrid.map((day) => {
+                const shades = [
+                  'bg-[#f0f1f4] hover:bg-black/10 border-black/[0.03]',
+                  'bg-[#cbd5e1] hover:bg-[#94a3b8]',
+                  'bg-[#64748b] hover:bg-[#475569]',
+                  'bg-[#334155] hover:bg-[#1e293b]',
+                  'bg-[#0f172a] hover:bg-black',
+                ]
 
-            return (
-              <button
-                key={day.dateString}
-                type="button"
-                onClick={() => setSelectedDay(day)}
-                onMouseEnter={() => setHoveredDay(day)}
-                className={cn(
-                  'w-3.5 h-3.5 rounded-[3px] transition-all duration-150 cursor-pointer border relative',
-                  shades[day.intensity],
-                  day.isToday && 'ring-2 ring-black font-bold',
-                  (isSelected || isHovered) && 'ring-2 ring-indigo-600 scale-125 z-10 shadow-sm'
-                )}
-                title={`${day.formattedDate}${day.isToday ? ' (TODAY)' : ''}: ${day.taskCount} shipped, ${day.totalMinutes}m work duration`}
-              >
-                {day.isToday && (
-                  <span className="absolute inset-0 flex items-center justify-center">
-                    <span className="w-1 h-1 rounded-full bg-emerald-500" />
-                  </span>
-                )}
-              </button>
-            )
-          })}
+                const isSelected = selectedDay?.dateString === day.dateString
+                const isHovered = hoveredDay?.dateString === day.dateString
+
+                return (
+                  <button
+                    key={day.dateString}
+                    type="button"
+                    onClick={() => setSelectedDay(day)}
+                    onMouseEnter={() => setHoveredDay(day)}
+                    className={cn(
+                      'w-3.5 h-3.5 rounded-[3px] transition-all duration-150 cursor-pointer border relative',
+                      shades[day.intensity],
+                      day.isToday && 'ring-2 ring-black font-bold',
+                      (isSelected || isHovered) && 'ring-2 ring-indigo-600 scale-125 z-10 shadow-sm'
+                    )}
+                    title={`${day.formattedDate}${day.isToday ? ' (TODAY)' : ''}: ${day.taskCount} ${gridMode === 'past' ? 'shipped' : 'scheduled'}, ${day.totalMinutes}m duration`}
+                  >
+                    {day.isToday && (
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <span className="w-1 h-1 rounded-full bg-emerald-500" />
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -141,7 +141,7 @@ export async function fetchFathomRecordingDetail(recordingId: number | string): 
   }
 
   try {
-    // 1. Fetch AI Summary
+    // 1. Fetch AI Summary directly from Fathom API
     const sumRes = await fetch(`https://api.fathom.ai/external/v1/recordings/${recordingId}/summary`, {
       headers: { 'X-Api-Key': FATHOM_API_KEY },
       cache: 'no-store'
@@ -152,23 +152,40 @@ export async function fetchFathomRecordingDetail(recordingId: number | string): 
       if (sumData?.summary?.markdown_formatted) {
         result.summary = sumData.summary.markdown_formatted
 
-        // Parse action items & key takeaways from markdown if present
+        // Parse action items & key takeaways directly from Fathom summary markdown
         const lines = sumData.summary.markdown_formatted.split('\n')
         let inActionSection = false
         const parsedActions: FathomActionItem[] = []
 
         lines.forEach((line: string, idx: number) => {
-          if (line.toLowerCase().includes('action item') || line.toLowerCase().includes('next step')) {
+          const trimmed = line.trim()
+          if (trimmed.toLowerCase().includes('action item') || trimmed.toLowerCase().includes('next step')) {
             inActionSection = true
-          } else if (line.startsWith('#')) {
+          } else if (trimmed.startsWith('#') && inActionSection && !trimmed.toLowerCase().includes('next step') && !trimmed.toLowerCase().includes('action item')) {
             inActionSection = false
-          } else if (inActionSection && (line.startsWith('-') || line.startsWith('*') || /^\d+\./.test(line))) {
-            const cleanText = line.replace(/^[-*\d.]+\s*/, '').trim()
+          } else if (inActionSection && (trimmed.startsWith('-') || trimmed.startsWith('*') || /^\d+\./.test(trimmed))) {
+            // Strip list markers and extract text inside markdown links: [Text](URL) -> Text
+            let cleanText = trimmed.replace(/^[-*\d.]+\s*/, '').trim()
+            const linkMatch = cleanText.match(/\[(.*?)\]\([^)]+\)/)
+            if (linkMatch && linkMatch[1]) {
+              cleanText = linkMatch[1].trim()
+            }
+            cleanText = cleanText.replace(/\*\*/g, '').replace(/\*/g, '')
+
             if (cleanText.length > 3) {
+              let assignee = 'Team'
+              if (cleanText.includes(':')) {
+                const parts = cleanText.split(':')
+                if (parts[0].length < 35) {
+                  assignee = parts[0].trim()
+                  cleanText = parts.slice(1).join(':').trim()
+                }
+              }
+
               parsedActions.push({
-                id: `act-parsed-${idx}`,
+                id: `act-fathom-${recordingId}-${idx}`,
                 text: cleanText,
-                assignee: 'Participant',
+                assignee,
                 converted_to_task: false
               })
             }
@@ -185,7 +202,7 @@ export async function fetchFathomRecordingDetail(recordingId: number | string): 
   }
 
   try {
-    // 2. Fetch full Transcript
+    // 2. Fetch full Transcript directly from Fathom API
     const tranRes = await fetch(`https://api.fathom.ai/external/v1/recordings/${recordingId}/transcript`, {
       headers: { 'X-Api-Key': FATHOM_API_KEY },
       cache: 'no-store'
@@ -203,54 +220,6 @@ export async function fetchFathomRecordingDetail(recordingId: number | string): 
     }
   } catch (e) {
     console.warn(`[Fathom Client] Failed fetching transcript for ${recordingId}:`, e)
-  }
-
-  // 3. If summary or action items are missing, generate via Groq
-  if (result.transcript.length > 0 && (!result.summary || result.action_items.length === 0)) {
-    try {
-      const transcriptText = result.transcript.slice(0, 40).map((t: any) => `${t.speaker}: ${t.text}`).join('\n')
-      
-      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'openai/gpt-oss-20b',
-          temperature: 0.1,
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an executive chief of staff. Given a meeting transcript, output JSON with "summary" (concise executive summary) and "action_items" (array of strings for specific tasks mentioned).'
-            },
-            {
-              role: 'user',
-              content: `Meeting Transcript:\n${transcriptText}\n\nRespond with valid JSON: {"summary": "...", "action_items": ["...", "..."]}`
-            }
-          ],
-          response_format: { type: 'json_object' }
-        })
-      })
-
-      if (groqRes.ok) {
-        const gData = await groqRes.json()
-        const parsed = JSON.parse(gData.choices?.[0]?.message?.content || '{}')
-        if (parsed.summary && !result.summary) {
-          result.summary = parsed.summary
-        }
-        if (Array.isArray(parsed.action_items) && parsed.action_items.length > 0) {
-          result.action_items = parsed.action_items.map((text: string, idx: number) => ({
-            id: `groq-act-${idx}`,
-            text,
-            assignee: 'Team',
-            converted_to_task: false
-          }))
-        }
-      }
-    } catch (err) {
-      console.warn('[Fathom Groq AI Synthesis error]', err)
-    }
   }
 
   return result

@@ -984,13 +984,55 @@ export default function MeetingsPage() {
               {/* Summary View */}
               {activeModalTab === 'summary' && (
                 <div className="space-y-4">
-                  <div className="p-5 rounded-2xl bg-[#fafafa] border border-black/[0.04] space-y-2">
-                    <h4 className="text-xs font-mono uppercase tracking-wider text-[#6b7280]">
-                      Key Discussion Points
-                    </h4>
-                    <p className="text-xs text-[#374151] font-light leading-relaxed whitespace-pre-line">
-                      {selectedMeeting.summary}
-                    </p>
+                  <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.04] space-y-4">
+                    <div className="flex items-center justify-between border-b border-black/[0.04] pb-3">
+                      <h4 className="text-xs font-mono uppercase tracking-wider text-[#6b7280]">
+                        Official Fathom Meeting Intelligence (Direct API Source)
+                      </h4>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                        Fathom Enhanced Summary
+                      </span>
+                    </div>
+
+                    <div className="space-y-3 text-xs text-[#374151] leading-relaxed">
+                      {selectedMeeting.summary.split('\n\n').map((block, bIdx) => {
+                        const trimmedBlock = block.trim()
+                        if (!trimmedBlock) return null
+
+                        if (trimmedBlock.startsWith('## ')) {
+                          return (
+                            <h3 key={bIdx} className="text-sm font-semibold text-black pt-3 pb-1 border-b border-black/[0.04]">
+                              {trimmedBlock.replace('## ', '')}
+                            </h3>
+                          )
+                        }
+
+                        if (trimmedBlock.startsWith('### ')) {
+                          return (
+                            <h4 key={bIdx} className="text-xs font-medium text-black pt-2 text-indigo-900">
+                              {trimmedBlock.replace('### ', '')}
+                            </h4>
+                          )
+                        }
+
+                        // Bullet points or paragraphs
+                        const lines = trimmedBlock.split('\n')
+                        return (
+                          <div key={bIdx} className="space-y-1.5">
+                            {lines.map((l, lIdx) => {
+                              const cleanLine = l.replace(/\[(.*?)\]\(.*?\)/g, (match, text) => text)
+                              const isBullet = cleanLine.trim().startsWith('-') || cleanLine.trim().startsWith('*')
+                              return (
+                                <p key={lIdx} className={cn(isBullet ? 'pl-3 relative' : '', 'font-light leading-relaxed')}>
+                                  {isBullet && <span className="absolute left-0 text-purple-600 font-bold">•</span>}
+                                  {cleanLine.replace(/^[-*]\s*/, '')}
+                                </p>
+                              )
+                            })}
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
 
                   {(selectedMeeting.share_url || selectedMeeting.video_url || selectedMeeting.meeting_url) && (

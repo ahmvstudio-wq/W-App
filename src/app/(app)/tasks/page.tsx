@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { PRIORITY_CONFIG, TASK_STATUS_CONFIG, cn, getInitials } from '@/lib/utils'
 import type { Task, Priority, TaskStatus } from '@/types'
-import { format, differenceInDays, subDays, addDays } from 'date-fns'
+import { format, differenceInDays, subDays, addDays, startOfDay } from 'date-fns'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import CreateTaskModal from '@/components/CreateTaskModal'
@@ -165,6 +165,48 @@ export default function TasksPage() {
   const yesterdayDateKey = format(subDays(new Date(), 1), 'yyyy-MM-dd')
   const tomorrowDateKey = format(addDays(new Date(), 1), 'yyyy-MM-dd')
 
+  // Point-in-time Task State Calculation:
+  // When a user selects a date (e.g. Sept 3), every task is evaluated based on what its true status was on that date.
+  // A task started on Sept 5 was NOT in_progress on Sept 3.
+  const getTaskStatusOnDate = (t: Task, dateStr: string): TaskStatus => {
+    if (!dateStr) return t.status
+
+    const targetDate = startOfDay(new Date(dateStr + 'T00:00:00'))
+    const nextDay = addDays(targetDate, 1)
+
+    const completedAt = t.completed_at ? new Date(t.completed_at) : null
+    const startedAt = t.started_at ? new Date(t.started_at) : null
+    const createdAt = t.created_at ? new Date(t.created_at) : null
+
+    // 1. Was it shipped on or before this day?
+    if (completedAt && completedAt < nextDay) {
+      // If completed on this exact date, it is definitely 'shipped'
+      if (format(completedAt, 'yyyy-MM-dd') === dateStr) {
+        return 'shipped'
+      }
+      // If completed before this date, it remains shipped historically
+      return 'shipped'
+    }
+
+    // 2. Was it in progress on this date?
+    if (startedAt && startedAt < nextDay) {
+      return 'in_progress'
+    }
+
+    // 3. Blocked status check
+    if (t.status === 'blocked' && (!startedAt || startedAt < nextDay)) {
+      return 'blocked'
+    }
+
+    // 4. Killed status check
+    if (t.status === 'killed') {
+      return 'killed'
+    }
+
+    // 5. Default to To-Do if created on or before this day
+    return 'todo'
+  }
+
   const filteredTasks = tasks.filter(t => {
     const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.project?.name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -185,11 +227,20 @@ export default function TasksPage() {
     } else if (dateFilterMode === 'completed') {
       matchesDate = completedKey === selectedDate
     } else {
-      // all_activity: matches deadline OR completed date OR started date OR created date on this day
+      // all_activity: show tasks that had real activity or were scheduled for this date
+      // (due on this date, completed on this date, started on this date, or created on this date)
       matchesDate = dueKey === selectedDate || completedKey === selectedDate || startedKey === selectedDate || createdKey === selectedDate
     }
 
     return matchesSearch && matchesPriority && matchesDate
+  }).map(t => {
+    if (!selectedDate) return t
+    // Dynamically project the task status to what it was on that selected date
+    const historicalStatus = getTaskStatusOnDate(t, selectedDate)
+    return {
+      ...t,
+      status: historicalStatus
+    }
   })
 
   return (
