@@ -39,31 +39,65 @@ export interface FathomMeeting {
   attendees: FathomAttendee[]
 }
 
-const FATHOM_API_KEY = process.env.FATHOM_API_KEY || ''
+const FATHOM_API_KEY = process.env.FATHOM_API_KEY || 'VB4MPQZrn0K7K_hFiXCsRg.mfJeDGKBdb_HZwMgjmgfa_eI_Ultt1J3SGJuN1h2VKY'
 const GROQ_API_KEY = process.env.GROQ_API_KEY || ''
 
-/**
- * Fetch all real meetings from Fathom API
- */
-export async function fetchFathomMeetings(): Promise<FathomMeeting[]> {
-  try {
-    const res = await fetch('https://api.fathom.ai/external/v1/meetings', {
-      headers: {
-        'X-Api-Key': FATHOM_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      cache: 'no-store'
-    })
+let cachedMeetings: FathomMeeting[] | null = null
+let cacheTimestamp = 0
+const CACHE_TTL_MS = 60 * 1000 // 60s memory cache
 
-    if (!res.ok) {
-      console.error(`[Fathom API Error] HTTP ${res.status}:`, await res.text())
-      return []
+/**
+ * Fetch all real meetings from Fathom API with full pagination across all historical pages
+ */
+export async function fetchFathomMeetings(limit?: number, forceRefresh = false): Promise<FathomMeeting[]> {
+  const now = Date.now()
+  if (!forceRefresh && cachedMeetings && (now - cacheTimestamp < CACHE_TTL_MS)) {
+    if (limit) return cachedMeetings.slice(0, limit)
+    return cachedMeetings
+  }
+
+  try {
+    const apiKey = FATHOM_API_KEY
+    let allRawItems: any[] = []
+    let cursor: string | null = null
+    let pages = 0
+
+    // Paginate through all historical Fathom recordings (up to 30 pages = 300+ meetings)
+    while (pages < 30) {
+      const url: string = cursor
+        ? `https://api.fathom.ai/external/v1/meetings?cursor=${encodeURIComponent(cursor)}`
+        : 'https://api.fathom.ai/external/v1/meetings'
+
+      const res = await fetch(url, {
+        headers: {
+          'X-Api-Key': apiKey,
+          'Content-Type': 'application/json'
+        },
+        cache: 'no-store'
+      })
+
+      if (!res.ok) {
+        console.error(`[Fathom API Error] HTTP ${res.status}:`, await res.text())
+        break
+      }
+
+      const data = await res.json()
+      const items = data.items || []
+      allRawItems = allRawItems.concat(items)
+
+      if (!data.next_cursor || items.length === 0) {
+        break
+      }
+      cursor = data.next_cursor
+      pages++
+
+      if (limit && allRawItems.length >= limit) {
+        allRawItems = allRawItems.slice(0, limit)
+        break
+      }
     }
 
-    const data = await res.json()
-    const items = data.items || []
-
-    const meetings: FathomMeeting[] = items.map((item: any) => {
+    const meetings: FathomMeeting[] = allRawItems.map((item: any) => {
       const startTime = item.recording_start_time || item.scheduled_start_time || item.created_at
       const endTime = item.recording_end_time || item.scheduled_end_time
       let durationMinutes = 30
@@ -118,10 +152,13 @@ export async function fetchFathomMeetings(): Promise<FathomMeeting[]> {
       }
     })
 
-    return meetings
+    cachedMeetings = meetings
+    cacheTimestamp = Date.now()
+
+    return limit ? meetings.slice(0, limit) : meetings
   } catch (err) {
     console.error('[Fathom Client] Exception fetching meetings:', err)
-    return []
+    return cachedMeetings || []
   }
 }
 

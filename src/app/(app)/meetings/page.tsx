@@ -7,7 +7,8 @@ import {
   Video, Play, Sparkles, Clock, Calendar as CalendarIcon, Users, 
   CheckSquare, ArrowRight, RefreshCw, Search, 
   ExternalLink, FileText, Check, Plus, MessageSquare, ChevronRight, X,
-  ChevronLeft, Filter, AlertCircle, CheckCircle2, Copy
+  ChevronLeft, Filter, AlertCircle, CheckCircle2, Copy,
+  BarChart3, PieChart, SlidersHorizontal, Timer, TrendingUp, UserCheck, Layers, ArrowUpDown
 } from 'lucide-react'
 import { 
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, 
@@ -24,6 +25,10 @@ import Link from 'next/link'
 
 type CalendarView = 'month' | 'week' | 'day'
 type EventFilter = 'all' | 'meetings' | 'tasks'
+
+type FathomDateRange = 'all' | '7d' | '30d' | '90d' | 'ytd' | 'custom'
+type FathomSortBy = 'newest' | 'oldest' | 'longest' | 'shortest'
+type FathomDurationFilter = 'all' | 'short' | 'medium' | 'long'
 
 interface UnifiedCalendarEvent {
   id: string
@@ -57,6 +62,15 @@ export default function MeetingsPage() {
   const [activeModalTab, setActiveModalTab] = useState<'summary' | 'transcript' | 'actions'>('summary')
   const [convertedActionIds, setConvertedActionIds] = useState<Record<string, boolean>>({})
 
+  // Fathom Enhanced Filters & Analytics State
+  const [fathomDateRange, setFathomDateRange] = useState<FathomDateRange>('all')
+  const [fathomCustomStart, setFathomCustomStart] = useState<string>(() => format(subDays(new Date(), 30), 'yyyy-MM-dd'))
+  const [fathomCustomEnd, setFathomCustomEnd] = useState<string>(() => format(new Date(), 'yyyy-MM-dd'))
+  const [fathomSelectedAttendee, setFathomSelectedAttendee] = useState<string>('all')
+  const [fathomDurationFilter, setFathomDurationFilter] = useState<FathomDurationFilter>('all')
+  const [fathomSortBy, setFathomSortBy] = useState<FathomSortBy>('newest')
+  const [showFathomAnalytics, setShowFathomAnalytics] = useState<boolean>(true)
+
   // Master Calendar State
   const [calendarView, setCalendarView] = useState<CalendarView>('month')
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -69,7 +83,7 @@ export default function MeetingsPage() {
   const [newEventDuration, setNewEventDuration] = useState(30)
   const [creatingEvent, setCreatingEvent] = useState(false)
 
-  const fetchAllData = useCallback(async (silent = false) => {
+  const fetchAllData = useCallback(async (silent = false, forceRefresh = false) => {
     if (!silent) setLoading(true)
     try {
       // 1. Fetch real tasks from Supabase
@@ -81,9 +95,9 @@ export default function MeetingsPage() {
 
       if (tasksData) setTasks(tasksData as Task[])
 
-      // 2. Fetch Fathom meetings
+      // 2. Fetch Fathom meetings (all-time with pagination)
       try {
-        const res = await fetch('/api/fathom/meetings')
+        const res = await fetch('/api/fathom/meetings' + (forceRefresh ? '?refresh=true' : ''))
         const data = await res.json()
         if (data.success && Array.isArray(data.meetings)) {
           setMeetings(data.meetings)
@@ -119,7 +133,7 @@ export default function MeetingsPage() {
   async function handleSyncAll() {
     setSyncingAll(true)
     try {
-      await fetchAllData(true)
+      await fetchAllData(true, true)
       toast.success('Live synced Google Calendar, Fathom AI, and Tasks!')
     } finally {
       setSyncingAll(false)
@@ -285,15 +299,132 @@ export default function MeetingsPage() {
     return eachDayOfInterval({ start, end })
   }, [currentDate])
 
-  // Fathom Analytics
+  // Unique attendees across all meetings
+  const allUniqueAttendees = useMemo(() => {
+    const counts: Record<string, number> = {}
+    meetings.forEach(m => {
+      const names = new Set(m.attendees.map(a => a.name.trim()).filter(Boolean))
+      names.forEach(name => {
+        counts[name] = (counts[name] || 0) + 1
+      })
+    })
+    return Object.entries(counts).sort((a, b) => b[1] - a[1])
+  }, [meetings])
+
+  // Filtered Fathom Meetings based on Date Range, Attendee, Duration, Search, and Sort
+  const filteredFathomMeetings = useMemo(() => {
+    const now = new Date()
+    let startDate: Date | null = null
+    let endDate: Date | null = null
+
+    if (fathomDateRange === '7d') startDate = subDays(now, 7)
+    else if (fathomDateRange === '30d') startDate = subDays(now, 30)
+    else if (fathomDateRange === '90d') startDate = subDays(now, 90)
+    else if (fathomDateRange === 'ytd') startDate = new Date(now.getFullYear(), 0, 1)
+    else if (fathomDateRange === 'custom') {
+      if (fathomCustomStart) startDate = startOfDay(new Date(fathomCustomStart))
+      if (fathomCustomEnd) endDate = new Date(new Date(fathomCustomEnd).setHours(23, 59, 59, 999))
+    }
+
+    let list = meetings.filter(m => {
+      const mDate = new Date(m.recorded_at)
+
+      // Date range filter
+      if (startDate && mDate < startDate) return false
+      if (endDate && mDate > endDate) return false
+
+      // Attendee filter
+      if (fathomSelectedAttendee !== 'all') {
+        const hasAttendee = m.attendees.some(a => a.name.toLowerCase() === fathomSelectedAttendee.toLowerCase())
+        if (!hasAttendee) return false
+      }
+
+      // Duration filter
+      if (fathomDurationFilter === 'short' && m.duration_minutes >= 15) return false
+      if (fathomDurationFilter === 'medium' && (m.duration_minutes < 15 || m.duration_minutes > 45)) return false
+      if (fathomDurationFilter === 'long' && m.duration_minutes <= 45) return false
+
+      // Search query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase()
+        const matchTitle = m.title.toLowerCase().includes(q)
+        const matchSummary = m.summary.toLowerCase().includes(q)
+        const matchAttendee = m.attendees.some(a => a.name.toLowerCase().includes(q))
+        if (!matchTitle && !matchSummary && !matchAttendee) return false
+      }
+
+      return true
+    })
+
+    // Sort
+    list.sort((a, b) => {
+      const timeA = new Date(a.recorded_at).getTime()
+      const timeB = new Date(b.recorded_at).getTime()
+      if (fathomSortBy === 'newest') return timeB - timeA
+      if (fathomSortBy === 'oldest') return timeA - timeB
+      if (fathomSortBy === 'longest') return (b.duration_minutes || 0) - (a.duration_minutes || 0)
+      if (fathomSortBy === 'shortest') return (a.duration_minutes || 0) - (b.duration_minutes || 0)
+      return 0
+    })
+
+    return list
+  }, [meetings, fathomDateRange, fathomCustomStart, fathomCustomEnd, fathomSelectedAttendee, fathomDurationFilter, fathomSortBy, searchQuery])
+
+  // Fathom Analytics & Aggregations
+  const fathomStats = useMemo(() => {
+    const totalCalls = filteredFathomMeetings.length
+    const totalMins = filteredFathomMeetings.reduce((acc, m) => acc + (m.duration_minutes || 0), 0)
+    const totalHrs = Math.round((totalMins / 60) * 10) / 10
+    const avgMins = totalCalls > 0 ? Math.round(totalMins / totalCalls) : 0
+    const participantCounts: Record<string, number> = {}
+    filteredFathomMeetings.forEach(m => {
+      m.attendees.forEach(a => {
+        const n = a.name.trim()
+        if (n) participantCounts[n] = (participantCounts[n] || 0) + 1
+      })
+    })
+    const uniqueParticipantsCount = Object.keys(participantCounts).length
+    const topSpeaker = Object.entries(participantCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'
+
+    // Monthly breakdown for bar graph
+    const monthMap: Record<string, { monthLabel: string; callCount: number; minutes: number; order: number }> = {}
+    filteredFathomMeetings.forEach(m => {
+      const d = new Date(m.recorded_at)
+      const key = format(d, 'yyyy-MM')
+      const label = format(d, 'MMM yy')
+      if (!monthMap[key]) {
+        monthMap[key] = { monthLabel: label, callCount: 0, minutes: 0, order: d.getTime() }
+      }
+      monthMap[key].callCount++
+      monthMap[key].minutes += m.duration_minutes || 0
+    })
+
+    const monthlyTrend = Object.values(monthMap).sort((a, b) => a.order - b.order)
+
+    // Duration distribution
+    const shortCalls = filteredFathomMeetings.filter(m => (m.duration_minutes || 0) < 15).length
+    const mediumCalls = filteredFathomMeetings.filter(m => (m.duration_minutes || 0) >= 15 && (m.duration_minutes || 0) <= 45).length
+    const longCalls = filteredFathomMeetings.filter(m => (m.duration_minutes || 0) > 45).length
+
+    return {
+      totalCalls,
+      totalMins,
+      totalHrs,
+      avgMins,
+      uniqueParticipantsCount,
+      topSpeaker,
+      monthlyTrend,
+      durationDistribution: {
+        short: shortCalls,
+        medium: mediumCalls,
+        long: longCalls
+      },
+      topParticipants: Object.entries(participantCounts).sort((a, b) => b[1] - a[1]).slice(0, 5)
+    }
+  }, [filteredFathomMeetings])
+
   const totalMinutes = meetings.reduce((acc, m) => acc + m.duration_minutes, 0)
   const totalAttendees = new Set(meetings.flatMap(m => m.attendees.map(a => a.name))).size
-
-  const filteredFathomMeetings = meetings.filter(m => 
-    m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.attendees.some(a => a.name.toLowerCase().includes(searchQuery.toLowerCase()))
-  )
 
   const navigateCalendar = (dir: 'prev' | 'next') => {
     if (calendarView === 'month') {
@@ -711,38 +842,393 @@ export default function MeetingsPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: FATHOM VIDEO AI CALLS & TRANSCRIPTS                                  */}
+      {/* TAB 2: FATHOM VIDEO AI CALLS, ANALYTICS & RECORDINGS                        */}
       {/* ========================================================================= */}
       {activeMainTab === 'fathom' && (
         <div className="space-y-6 animate-fadeIn font-body">
-          {/* Fathom Overview Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs space-y-1">
-              <span className="text-[10px] font-mono text-[#9ca3af] uppercase block">TOTAL CALLS</span>
-              <span className="text-2xl font-light text-black">{meetings.length}</span>
+          {/* Top Bar: Live Status & Graph Toggle */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 px-6 rounded-2xl bg-white border border-black/[0.08] shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse" />
+              <span className="text-xs font-mono text-black font-medium">
+                FATHOM AI LIVE SYNC
+              </span>
+              <span className="text-xs font-mono text-[#6b7280]">
+                • {meetings.length} Total Historical Calls Indexed
+              </span>
             </div>
 
-            <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs space-y-1">
-              <span className="text-[10px] font-mono text-[#9ca3af] uppercase block">RECORDED MINUTES</span>
-              <span className="text-2xl font-light text-black">{totalMinutes}m</span>
-            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowFathomAnalytics(prev => !prev)}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono transition-all cursor-pointer border',
+                  showFathomAnalytics 
+                    ? 'bg-purple-50 text-purple-800 border-purple-200 font-semibold' 
+                    : 'bg-white text-[#6b7280] border-black/[0.08] hover:text-black'
+                )}
+              >
+                <BarChart3 size={13} />
+                <span>{showFathomAnalytics ? 'Hide Visual Graphs' : 'Show Visual Graphs'}</span>
+              </button>
 
-            <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs space-y-1">
-              <span className="text-[10px] font-mono text-[#9ca3af] uppercase block">ACTIVE PARTICIPANTS</span>
-              <span className="text-2xl font-light text-black">{totalAttendees}</span>
+              <button
+                onClick={handleSyncAll}
+                disabled={syncingAll}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-mono bg-black hover:bg-neutral-800 text-white transition-all cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw size={12} className={cn(syncingAll && 'animate-spin')} />
+                <span>{syncingAll ? 'Syncing...' : 'Sync All'}</span>
+              </button>
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="relative">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search meetings by title, attendee, or AI summary..."
-              className="w-full pl-11 pr-4 py-3 bg-white border border-black/[0.08] focus:border-black rounded-2xl text-xs text-black outline-none font-light shadow-xs"
-            />
+          {/* Fathom Overview Aggregation Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono text-[#9ca3af] uppercase block">FILTERED CALLS</span>
+                <Video size={14} className="text-purple-600" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-light text-black">{fathomStats.totalCalls}</span>
+                <span className="text-[11px] font-mono text-[#6b7280]">
+                  of {meetings.length} all-time
+                </span>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono text-[#9ca3af] uppercase block">RECORDED TIME</span>
+                <Clock size={14} className="text-indigo-600" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-light text-black">{fathomStats.totalHrs}h</span>
+                <span className="text-[11px] font-mono text-[#6b7280]">
+                  ({fathomStats.totalMins.toLocaleString()} mins)
+                </span>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono text-[#9ca3af] uppercase block">AVG DURATION</span>
+                <Timer size={14} className="text-emerald-600" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-light text-black">{fathomStats.avgMins}m</span>
+                <span className="text-[11px] font-mono text-[#6b7280]">
+                  per discussion
+                </span>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono text-[#9ca3af] uppercase block">ACTIVE PARTICIPANTS</span>
+                <Users size={14} className="text-amber-500" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-light text-black">{fathomStats.uniqueParticipantsCount}</span>
+                <span className="text-[11px] font-mono text-[#6b7280] truncate max-w-[120px]" title={fathomStats.topSpeaker}>
+                  Top: {fathomStats.topSpeaker}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive Visual Graphs & Distribution Analytics */}
+          {showFathomAnalytics && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
+              {/* Graph 1: Call Volume Trend Over Time */}
+              <div className="lg:col-span-2 p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-black/[0.05] pb-3">
+                  <div className="flex items-center gap-2 text-xs font-mono text-black font-medium">
+                    <TrendingUp size={15} className="text-purple-600" />
+                    <span>Call Volume &amp; Activity Trend</span>
+                  </div>
+                  <span className="text-[11px] font-mono text-[#6b7280]">
+                    {fathomStats.monthlyTrend.length} periods active
+                  </span>
+                </div>
+
+                {fathomStats.monthlyTrend.length === 0 ? (
+                  <div className="py-12 text-center text-xs text-[#9ca3af] font-mono">
+                    No calls recorded in selected period
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {/* Bar Chart Visualization */}
+                    <div className="h-44 flex items-end gap-2 pt-4 px-2 overflow-x-auto scrollbar-thin">
+                      {(() => {
+                        const maxCalls = Math.max(...fathomStats.monthlyTrend.map(t => t.callCount), 1)
+                        return fathomStats.monthlyTrend.map((t, idx) => {
+                          const heightPercent = Math.max(12, Math.round((t.callCount / maxCalls) * 100))
+                          return (
+                            <div key={idx} className="flex-1 min-w-[36px] flex flex-col items-center gap-1.5 group relative">
+                              {/* Hover Tooltip */}
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-12 z-10 pointer-events-none bg-black text-white text-[10px] font-mono py-1 px-2 rounded-lg whitespace-nowrap shadow-lg">
+                                {t.callCount} calls • {Math.round((t.minutes / 60) * 10) / 10}h
+                              </div>
+
+                              <span className="text-[10px] font-mono text-[#6b7280] font-medium group-hover:text-purple-600">
+                                {t.callCount}
+                              </span>
+
+                              <div 
+                                className="w-full rounded-t-md bg-gradient-to-t from-purple-800 to-purple-500 group-hover:from-purple-900 group-hover:to-indigo-500 transition-all duration-300"
+                                style={{ height: `${heightPercent}%` }}
+                              />
+
+                              <span className="text-[9px] font-mono text-[#9ca3af] truncate max-w-[42px] select-none">
+                                {t.monthLabel}
+                              </span>
+                            </div>
+                          )
+                        })
+                      })()}
+                    </div>
+                    <div className="text-[10px] font-mono text-[#9ca3af] text-right">
+                      Hover bars to inspect exact meetings &amp; logged hours
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Graph 2: Call Duration Distribution & Top Attendees */}
+              <div className="p-6 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-5">
+                <div className="flex items-center justify-between border-b border-black/[0.05] pb-3">
+                  <div className="flex items-center gap-2 text-xs font-mono text-black font-medium">
+                    <PieChart size={15} className="text-indigo-600" />
+                    <span>Duration &amp; Attendees</span>
+                  </div>
+                  <span className="text-[11px] font-mono text-[#6b7280]">
+                    Distribution
+                  </span>
+                </div>
+
+                {/* Duration Distribution Bar */}
+                <div className="space-y-2">
+                  <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block">
+                    CALL DURATION SPREAD
+                  </span>
+                  <div className="h-3 rounded-full bg-[#f0f1f4] flex overflow-hidden">
+                    {fathomStats.totalCalls > 0 && (
+                      <>
+                        <div 
+                          className="bg-emerald-500 transition-all duration-500" 
+                          style={{ width: `${(fathomStats.durationDistribution.short / fathomStats.totalCalls) * 100}%` }}
+                          title={`<15 min: ${fathomStats.durationDistribution.short} calls`}
+                        />
+                        <div 
+                          className="bg-purple-500 transition-all duration-500" 
+                          style={{ width: `${(fathomStats.durationDistribution.medium / fathomStats.totalCalls) * 100}%` }}
+                          title={`15-45 min: ${fathomStats.durationDistribution.medium} calls`}
+                        />
+                        <div 
+                          className="bg-indigo-600 transition-all duration-500" 
+                          style={{ width: `${(fathomStats.durationDistribution.long / fathomStats.totalCalls) * 100}%` }}
+                          title={`>45 min: ${fathomStats.durationDistribution.long} calls`}
+                        />
+                      </>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-3 text-[10px] font-mono text-[#6b7280] pt-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span>&lt;15m ({fathomStats.durationDistribution.short})</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-purple-500" />
+                      <span>15-45m ({fathomStats.durationDistribution.medium})</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                      <span>45m+ ({fathomStats.durationDistribution.long})</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Top Participants List */}
+                <div className="space-y-2.5 pt-2 border-t border-black/[0.04]">
+                  <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block">
+                    FREQUENT PARTICIPANTS
+                  </span>
+                  <div className="space-y-2">
+                    {fathomStats.topParticipants.slice(0, 4).map(([name, count], idx) => {
+                      const maxP = Math.max(...fathomStats.topParticipants.map(p => p[1]), 1)
+                      const pct = Math.round((count / maxP) * 100)
+                      return (
+                        <div key={idx} className="space-y-1">
+                          <div className="flex items-center justify-between text-xs font-mono">
+                            <span className="text-black font-medium truncate max-w-[140px]">{name}</span>
+                            <span className="text-[#6b7280]">{count} calls</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-[#f0f1f4] overflow-hidden">
+                            <div 
+                              className="h-full bg-black/80 rounded-full transition-all duration-300"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Filtering & Custom Selection Bar */}
+          <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-xs space-y-4">
+            {/* Range Presets & Attendee Selection */}
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              {/* Date Range Selector */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-mono text-[#6b7280] uppercase flex items-center gap-1 mr-1">
+                  <CalendarIcon size={13} className="text-purple-600" />
+                  Date Range:
+                </span>
+                <div className="flex bg-[#f3f4f6] p-1 rounded-xl border border-black/[0.06]">
+                  {(['all', '7d', '30d', '90d', 'ytd', 'custom'] as FathomDateRange[]).map((range) => (
+                    <button
+                      key={range}
+                      onClick={() => setFathomDateRange(range)}
+                      className={cn(
+                        'px-2.5 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer uppercase',
+                        fathomDateRange === range 
+                          ? 'bg-black text-white shadow-xs font-semibold' 
+                          : 'text-[#6b7280] hover:text-black'
+                      )}
+                    >
+                      {range === 'all' ? 'All Time' : range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : range === '90d' ? '90 Days' : range === 'ytd' ? 'This Year' : 'Custom'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Attendee Dropdown Filter */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono text-[#6b7280] uppercase flex items-center gap-1">
+                  <UserCheck size={13} className="text-indigo-600" />
+                  Attendee:
+                </span>
+                <select
+                  value={fathomSelectedAttendee}
+                  onChange={(e) => setFathomSelectedAttendee(e.target.value)}
+                  className="bg-[#f3f4f6] border border-black/[0.06] rounded-xl px-3 py-1.5 text-xs text-black font-mono focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
+                >
+                  <option value="all">All Attendees ({meetings.length})</option>
+                  {allUniqueAttendees.map(([name, count]) => (
+                    <option key={name} value={name}>
+                      {name} ({count})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sort & Duration Filters */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono text-[#6b7280] uppercase flex items-center gap-1">
+                  <ArrowUpDown size={13} className="text-[#9ca3af]" />
+                  Sort:
+                </span>
+                <select
+                  value={fathomSortBy}
+                  onChange={(e) => setFathomSortBy(e.target.value as FathomSortBy)}
+                  className="bg-[#f3f4f6] border border-black/[0.06] rounded-xl px-3 py-1.5 text-xs text-black font-mono focus:outline-none focus:ring-1 focus:ring-black cursor-pointer"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="longest">Longest Duration</option>
+                  <option value="shortest">Shortest Duration</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Custom Date Range Picker Bar */}
+            {fathomDateRange === 'custom' && (
+              <div className="p-3 px-4 rounded-xl bg-[#fafafa] border border-black/[0.06] flex flex-wrap items-center justify-between gap-3 text-xs font-mono animate-fadeIn">
+                <div className="flex items-center gap-2">
+                  <span className="text-black font-medium">Custom Range:</span>
+                  <input
+                    type="date"
+                    value={fathomCustomStart}
+                    onChange={(e) => setFathomCustomStart(e.target.value)}
+                    className="bg-white border border-black/[0.1] rounded-lg px-2.5 py-1 text-xs text-black focus:outline-none"
+                  />
+                  <span className="text-[#9ca3af]">to</span>
+                  <input
+                    type="date"
+                    value={fathomCustomEnd}
+                    onChange={(e) => setFathomCustomEnd(e.target.value)}
+                    className="bg-white border border-black/[0.1] rounded-lg px-2.5 py-1 text-xs text-black focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => {
+                      setFathomCustomStart(format(subDays(new Date(), 30), 'yyyy-MM-dd'))
+                      setFathomCustomEnd(format(new Date(), 'yyyy-MM-dd'))
+                    }}
+                    className="px-2.5 py-1 bg-white border border-black/[0.08] hover:border-black rounded-md text-[11px] text-[#4b5563]"
+                  >
+                    Last 30 Days
+                  </button>
+                  <button
+                    onClick={() => {
+                      setFathomCustomStart(format(subDays(new Date(), 90), 'yyyy-MM-dd'))
+                      setFathomCustomEnd(format(new Date(), 'yyyy-MM-dd'))
+                    }}
+                    className="px-2.5 py-1 bg-white border border-black/[0.08] hover:border-black rounded-md text-[11px] text-[#4b5563]"
+                  >
+                    Last 90 Days
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Search Input & Reset */}
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="relative flex-1 w-full">
+                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search meetings by title, attendee name, or discussed topic..."
+                  className="w-full pl-11 pr-4 py-2.5 bg-[#fafafa] focus:bg-white border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light shadow-2xs"
+                />
+              </div>
+
+              {(searchQuery || fathomSelectedAttendee !== 'all' || fathomDateRange !== 'all') && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('')
+                    setFathomSelectedAttendee('all')
+                    setFathomDateRange('all')
+                    setFathomDurationFilter('all')
+                  }}
+                  className="px-3 py-2 bg-neutral-100 hover:bg-neutral-200 text-[#4b5563] text-xs font-mono rounded-xl transition-colors cursor-pointer flex-shrink-0"
+                >
+                  Reset Filters
+                </button>
+              )}
+            </div>
+
+            {/* Active Filters Summary */}
+            <div className="flex items-center justify-between text-xs font-mono text-[#6b7280] pt-1 border-t border-black/[0.04]">
+              <span>
+                Showing <strong className="text-black font-semibold">{filteredFathomMeetings.length}</strong> of {meetings.length} meetings
+                {fathomSelectedAttendee !== 'all' ? ` • Filtered by: ${fathomSelectedAttendee}` : ''}
+              </span>
+              <span>
+                Total Duration: <strong className="text-black font-semibold">{fathomStats.totalHrs} hrs</strong>
+              </span>
+            </div>
           </div>
 
           {/* Meeting Cards List */}

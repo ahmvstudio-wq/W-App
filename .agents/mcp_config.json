@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "fathom": {
+      "command": "node",
+      "args": ["scripts/fathom-mcp-server.js"],
+      "env": {
+        "FATHOM_API_KEY": "VB4MPQZrn0K7K_hFiXCsRg.mfJeDGKBdb_HZwMgjmgfa_eI_Ultt1J3SGJuN1h2VKY"
+      }
+    }
+  }
+}
