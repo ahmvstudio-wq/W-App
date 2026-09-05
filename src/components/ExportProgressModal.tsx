@@ -4,12 +4,14 @@ import React, { useRef, useState, useMemo } from 'react'
 import { toPng } from 'html-to-image'
 import { 
   Download, X, Check, Sparkles, TrendingUp, CheckCircle2, 
-  Clock, Flame, Target, Layers, Copy, Share2, Eye, Sun, Moon
+  Clock, Flame, Target, Layers, Copy, Share2, Eye, Sun, Moon,
+  FileSpreadsheet
 } from 'lucide-react'
 import { format, subDays, isSameDay } from 'date-fns'
 import { cn } from '@/lib/utils'
 import type { Task } from '@/types'
 import { toast } from 'sonner'
+import { exportTasksToCSV } from '@/lib/exportUtils'
 
 interface ExportProgressModalProps {
   tasks: Task[]
@@ -213,6 +215,18 @@ export default function ExportProgressModal({ tasks, onClose }: ExportProgressMo
                 <span>Light</span>
               </button>
             </div>
+
+            <button
+              onClick={() => {
+                exportTasksToCSV(tasks)
+                toast.success(`Exported ${tasks.length} tasks to CSV!`)
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl text-xs font-mono transition-colors border border-white/10 cursor-pointer"
+              title="Download clean CSV spreadsheet"
+            >
+              <FileSpreadsheet size={13} className="text-emerald-400" />
+              <span>Export CSV</span>
+            </button>
 
             <button
               onClick={handleCopy}

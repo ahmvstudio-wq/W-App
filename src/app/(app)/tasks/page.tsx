@@ -8,7 +8,7 @@ import {
   Plus, Search, Filter, LayoutGrid, List as ListIcon, Calendar, 
   X, Zap, Trash2, CheckCircle2, Clock, MoreHorizontal, MessageSquare, 
   Paperclip, Tag, AlertCircle, ChevronRight, User, Check, Send, Sparkles,
-  TrendingUp, BarChart2, Activity, ArrowUpRight, Edit3, Download
+  TrendingUp, BarChart2, Activity, ArrowUpRight, Edit3, Download, FileSpreadsheet
 } from 'lucide-react'
 import { PRIORITY_CONFIG, TASK_STATUS_CONFIG, cn, getInitials } from '@/lib/utils'
 import type { Task, Priority, TaskStatus } from '@/types'
@@ -19,6 +19,7 @@ import CreateTaskModal from '@/components/CreateTaskModal'
 import TaskDetailDrawer from '@/components/TaskDetailDrawer'
 import NaturalLanguageInputModal from '@/components/NaturalLanguageInputModal'
 import ExportProgressModal from '@/components/ExportProgressModal'
+import { exportTasksToCSV } from '@/lib/exportUtils'
 
 export default function TasksPage() {
   const [view, setView] = useState<'board' | 'list'>('board')
@@ -314,6 +315,18 @@ export default function TasksPage() {
           >
             <Download size={14} className="text-indigo-600" />
             <span>Export Progress</span>
+          </button>
+
+          <button
+            onClick={() => {
+              exportTasksToCSV(tasks)
+              toast.success(`Exported ${tasks.length} tasks to CSV!`)
+            }}
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            title="Download tasks as spreadsheet CSV"
+          >
+            <FileSpreadsheet size={14} className="text-emerald-600" />
+            <span>Export CSV</span>
           </button>
 
           <button
