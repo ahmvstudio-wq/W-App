@@ -8,7 +8,7 @@ import {
   Plus, Search, Filter, LayoutGrid, List as ListIcon, Calendar, 
   X, Zap, Trash2, CheckCircle2, Clock, MoreHorizontal, MessageSquare, 
   Paperclip, Tag, AlertCircle, ChevronRight, User, Check, Send, Sparkles,
-  TrendingUp, BarChart2, Activity, ArrowUpRight, Edit3
+  TrendingUp, BarChart2, Activity, ArrowUpRight, Edit3, Download
 } from 'lucide-react'
 import { PRIORITY_CONFIG, TASK_STATUS_CONFIG, cn, getInitials } from '@/lib/utils'
 import type { Task, Priority, TaskStatus } from '@/types'
@@ -18,11 +18,13 @@ import { toast } from 'sonner'
 import CreateTaskModal from '@/components/CreateTaskModal'
 import TaskDetailDrawer from '@/components/TaskDetailDrawer'
 import NaturalLanguageInputModal from '@/components/NaturalLanguageInputModal'
+import ExportProgressModal from '@/components/ExportProgressModal'
 
 export default function TasksPage() {
   const [view, setView] = useState<'board' | 'list'>('board')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false)
   const [tasks, setTasks] = useState<Task[]>([]) 
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -256,6 +258,14 @@ export default function TasksPage() {
         onUpdate={() => fetchTasks(true)}
       />
 
+      {/* Export Progress Modal */}
+      {isExportModalOpen && (
+        <ExportProgressModal
+          tasks={tasks}
+          onClose={() => setIsExportModalOpen(false)}
+        />
+      )}
+
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-shrink-0">
         <div>
@@ -296,6 +306,15 @@ export default function TasksPage() {
               <span>List</span>
             </button>
           </div>
+
+          <button
+            onClick={() => setIsExportModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            title="Export high-resolution progress infographic / image"
+          >
+            <Download size={14} className="text-indigo-600" />
+            <span>Export Progress</span>
+          </button>
 
           <button
             onClick={() => setIsSynthesizeOpen(true)}
