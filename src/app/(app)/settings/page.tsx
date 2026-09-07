@@ -43,11 +43,21 @@ export default function SettingsPage() {
   const [inviting, setInviting] = useState(false)
   const [showSqlMigration, setShowSqlMigration] = useState(false)
 
+  const [fathomKey, setFathomKey] = useState('')
+  const [savingFathomKey, setSavingFathomKey] = useState(false)
+  const [testingFathom, setTestingFathom] = useState(false)
+  const [copiedWebhook, setCopiedWebhook] = useState(false)
+
   useEffect(() => {
     if (currentWorkspace?.name) {
       setWsName(currentWorkspace.name)
     }
-  }, [currentWorkspace?.name])
+    if (currentWorkspace?.settings?.fathom_api_key) {
+      setFathomKey(currentWorkspace.settings.fathom_api_key)
+    } else {
+      setFathomKey('')
+    }
+  }, [currentWorkspace?.name, currentWorkspace?.settings?.fathom_api_key])
 
   const googleConnected = searchParams.get('google_connected') === 'true'
   const googleError = searchParams.get('google_error')
@@ -148,6 +158,68 @@ export default function SettingsPage() {
     setCopiedWsId(true)
     toast.success('Workspace ID copied!')
     setTimeout(() => setCopiedWsId(false), 2000)
+  }
+
+  const handleSaveFathomKey = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!currentWorkspace?.id || savingFathomKey) return
+    setSavingFathomKey(true)
+    try {
+      const updatedSettings = {
+        ...(currentWorkspace.settings || {}),
+        fathom_api_key: fathomKey.trim() || undefined,
+      }
+      const res = await fetch(`/api/workspaces/${currentWorkspace.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: updatedSettings }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success(fathomKey.trim() ? 'Custom Fathom API Key saved for this workspace!' : 'Reset to default Fathom integration.')
+        await refreshWorkspaces()
+      } else {
+        toast.error(data.error || 'Failed to save Fathom key')
+      }
+    } catch {
+      toast.error('Error saving Fathom settings')
+    } finally {
+      setSavingFathomKey(false)
+    }
+  }
+
+  const handleTestFathom = async () => {
+    if (!fathomKey.trim() || testingFathom) return
+    setTestingFathom(true)
+    try {
+      const res = await fetch('/api/fathom/test-connection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_key: fathomKey.trim() }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success(data.message || 'Fathom connection verified!')
+      } else {
+        toast.error(data.error || 'Connection failed. Please check the key.')
+      }
+    } catch {
+      toast.error('Could not connect to Fathom')
+    } finally {
+      setTestingFathom(false)
+    }
+  }
+
+  const getWebhookUrl = () => {
+    if (typeof window === 'undefined') return '/api/fathom/webhook'
+    return `${window.location.origin}/api/fathom/webhook`
+  }
+
+  const copyWebhookUrl = () => {
+    navigator.clipboard.writeText(getWebhookUrl())
+    setCopiedWebhook(true)
+    toast.success('Webhook URL copied to clipboard!')
+    setTimeout(() => setCopiedWebhook(false), 2500)
   }
 
   return (
@@ -296,23 +368,109 @@ export default function SettingsPage() {
               </div>
 
               {/* Fathom Video AI Integration */}
-              <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.06] flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white border border-black/[0.08] flex items-center justify-center shadow-xs">
-                    <Video size={20} className="text-purple-600" />
+              <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-black/[0.08] flex items-center justify-center shadow-xs">
+                      <Video size={20} className="text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-normal text-black">Fathom Video AI</h3>
+                      <p className="text-xs text-[#6b7280] font-light">
+                        Live meeting sync, action item synthesis, and transcript extraction for this workspace.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-normal text-black">Fathom Video AI</h3>
-                    <p className="text-xs text-[#6b7280] font-light">
-                      Live meeting sync, action item synthesis, and transcript extraction.
-                    </p>
-                  </div>
+
+                  <span className={cn(
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[10px] font-medium border",
+                    currentWorkspace?.settings?.fathom_api_key
+                      ? "bg-purple-50 text-purple-700 border-purple-200"
+                      : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  )}>
+                    <CheckCircle2 size={12} />
+                    <span>{currentWorkspace?.settings?.fathom_api_key ? 'Workspace Key Active' : 'System Default Active'}</span>
+                  </span>
                 </div>
 
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-mono text-[10px] font-medium border border-emerald-200">
-                  <CheckCircle2 size={12} />
-                  <span>Connected</span>
-                </span>
+                {/* API Key Configuration Form */}
+                <form onSubmit={handleSaveFathomKey} className="p-4 rounded-xl bg-white border border-black/[0.06] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-mono text-black font-medium uppercase">
+                      Workspace Fathom API Key
+                    </label>
+                    <a
+                      href="https://fathom.video/settings/api"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[10px] font-mono text-indigo-600 hover:underline flex items-center gap-1"
+                    >
+                      <span>Get API Key from Fathom</span>
+                      <ExternalLink size={10} />
+                    </a>
+                  </div>
+
+                  <p className="text-xs text-[#6b7280] font-light leading-relaxed">
+                    Provide your Fathom API Key to isolate meeting recordings and transcripts strictly to this workspace.
+                  </p>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="password"
+                      placeholder="Paste your Fathom API key (starts with VB4...)"
+                      value={fathomKey}
+                      onChange={(e) => setFathomKey(e.target.value)}
+                      className="flex-1 px-3.5 py-2 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-xs font-mono text-black outline-none focus:border-black"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleTestFathom}
+                      disabled={testingFathom || !fathomKey.trim()}
+                      className="px-3 py-2 border border-black/[0.08] bg-white hover:bg-neutral-50 disabled:opacity-40 text-black rounded-xl text-xs font-normal transition-all cursor-pointer whitespace-nowrap shadow-2xs"
+                    >
+                      {testingFathom ? 'Testing...' : 'Test Key'}
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingFathomKey}
+                      className="px-4 py-2 bg-black hover:bg-neutral-800 disabled:opacity-40 text-white rounded-xl text-xs font-normal transition-all cursor-pointer whitespace-nowrap shadow-xs"
+                    >
+                      {savingFathomKey ? 'Saving...' : 'Save Key'}
+                    </button>
+                  </div>
+                </form>
+
+                {/* Webhook Configuration */}
+                <div className="p-4 rounded-xl bg-white border border-black/[0.06] space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-mono text-black font-medium uppercase">
+                      Automated Meeting Webhook
+                    </span>
+                    <span className="text-[10px] font-mono text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md">
+                      Instant Sync
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#6b7280] font-light leading-relaxed">
+                    In your Fathom settings under <strong>Webhooks</strong>, add this URL. Fathom will automatically push newly recorded calls into your workspace.
+                  </p>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="text"
+                      readOnly
+                      value={getWebhookUrl()}
+                      className="flex-1 px-3.5 py-2 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-xs font-mono text-black outline-none select-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={copyWebhookUrl}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                    >
+                      {copiedWebhook ? <Check size={13} /> : <Copy size={13} />}
+                      <span>{copiedWebhook ? 'Copied' : 'Copy Webhook'}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* Groq AI Engine */}

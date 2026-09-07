@@ -23,7 +23,6 @@ const NAV = [
   { href: '/tasks', label: 'Tasks', icon: CheckSquare },
   { href: '/meetings', label: 'Meetings', icon: Video },
   { href: '/documents', label: 'Documents', icon: FileText },
-  { href: '/ai', label: 'AI Assistant', icon: Zap },
 ]
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -167,11 +166,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   )}
                 />
                 <span>{label}</span>
-                {href === '/ai' && (
-                  <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-black/[0.04] text-[#6b7280]">
-                    24/7
-                  </span>
-                )}
               </Link>
             )
           })}

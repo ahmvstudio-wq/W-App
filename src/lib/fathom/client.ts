@@ -49,15 +49,15 @@ const CACHE_TTL_MS = 60 * 1000 // 60s memory cache
 /**
  * Fetch all real meetings from Fathom API with full pagination across all historical pages
  */
-export async function fetchFathomMeetings(limit?: number, forceRefresh = false): Promise<FathomMeeting[]> {
+export async function fetchFathomMeetings(limit?: number, forceRefresh = false, customApiKey?: string): Promise<FathomMeeting[]> {
+  const apiKey = customApiKey || FATHOM_API_KEY
   const now = Date.now()
-  if (!forceRefresh && cachedMeetings && (now - cacheTimestamp < CACHE_TTL_MS)) {
+  if (!forceRefresh && !customApiKey && cachedMeetings && (now - cacheTimestamp < CACHE_TTL_MS)) {
     if (limit) return cachedMeetings.slice(0, limit)
     return cachedMeetings
   }
 
   try {
-    const apiKey = FATHOM_API_KEY
     let allRawItems: any[] = []
     let cursor: string | null = null
     let pages = 0
@@ -165,12 +165,13 @@ export async function fetchFathomMeetings(limit?: number, forceRefresh = false):
 /**
  * Fetch detailed summary and transcript for a single recording from Fathom
  */
-export async function fetchFathomRecordingDetail(recordingId: number | string): Promise<{
+export async function fetchFathomRecordingDetail(recordingId: number | string, customApiKey?: string): Promise<{
   summary?: string
   key_takeaways?: string[]
   transcript?: { speaker: string; timestamp: string; text: string }[]
   action_items?: FathomActionItem[]
 }> {
+  const apiKey = customApiKey || FATHOM_API_KEY
   const result: any = {
     key_takeaways: [],
     transcript: [],
@@ -180,7 +181,7 @@ export async function fetchFathomRecordingDetail(recordingId: number | string): 
   try {
     // 1. Fetch AI Summary directly from Fathom API
     const sumRes = await fetch(`https://api.fathom.ai/external/v1/recordings/${recordingId}/summary`, {
-      headers: { 'X-Api-Key': FATHOM_API_KEY },
+      headers: { 'X-Api-Key': apiKey },
       cache: 'no-store'
     })
 
@@ -241,7 +242,7 @@ export async function fetchFathomRecordingDetail(recordingId: number | string): 
   try {
     // 2. Fetch full Transcript directly from Fathom API
     const tranRes = await fetch(`https://api.fathom.ai/external/v1/recordings/${recordingId}/transcript`, {
-      headers: { 'X-Api-Key': FATHOM_API_KEY },
+      headers: { 'X-Api-Key': apiKey },
       cache: 'no-store'
     })
 
