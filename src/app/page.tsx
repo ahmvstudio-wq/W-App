@@ -28,19 +28,63 @@ export default function LandingPage() {
   const [selectedFocus, setSelectedFocus] = useState<string>('Creators & Digital Studios')
   
   // Interactive Dashboard Preview State
-  const [activeTab, setActiveTab] = useState<'tasks' | 'instagram' | 'chatgpt' | 'projects' | 'meetings'>('tasks')
+  const [activeTab, setActiveTab] = useState<'tasks' | 'youtube' | 'instagram' | 'chatgpt' | 'meetings'>('tasks')
   const [taskFilter, setTaskFilter] = useState<'all' | 'active' | 'done'>('all')
   const [demoTasks, setDemoTasks] = useState([
-    { id: 1, title: 'Finalize client proposal presentation', done: true, priority: 'P1', tag: 'Proposal', due: 'Done' },
-    { id: 2, title: 'Schedule Instagram Reel: Studio BTS editing workflow', done: false, priority: 'P0', tag: 'Social', due: '6:00 PM' },
-    { id: 3, title: 'Review onboarding feedback with product team', done: false, priority: 'P0', tag: 'Product', due: '2:30 PM' },
-    { id: 4, title: 'Prep meeting notes for tomorrow sprint call', done: false, priority: 'P2', tag: 'Sprint', due: 'Tomorrow' },
-    { id: 5, title: 'Export monthly sponsor deliverable report', done: false, priority: 'P1', tag: 'Sponsor', due: 'Friday' },
+    { id: 1, title: 'Finalize brand partnership proposal', done: true, priority: 'P1', tag: 'Sponsor', due: 'Done' },
+    { id: 2, title: 'Upload YouTube Long-form: 1-Person Business Stack', done: false, priority: 'P0', tag: 'YouTube', due: '4:00 PM' },
+    { id: 3, title: 'Schedule Instagram Reel: Studio BTS editing workflow', done: false, priority: 'P0', tag: 'Social', due: '6:15 PM' },
+    { id: 4, title: 'Prep meeting notes for brand strategy call', done: false, priority: 'P2', tag: 'Strategy', due: 'Tomorrow' },
+    { id: 5, title: 'Stage thumbnail A/B test variations', done: false, priority: 'P1', tag: 'YouTube', due: 'Thursday' },
   ])
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [showAddInput, setShowAddInput] = useState(false)
   const [actionAdded, setActionAdded] = useState(false)
   const [selectedProject, setSelectedProject] = useState(0)
+
+  // YouTube & Creator State
+  const [selectedYoutubeVideo, setSelectedYoutubeVideo] = useState(0)
+  const youtubeVideos = [
+    {
+      id: 1,
+      title: 'How I Run a 1-Person Business (Full Stack)',
+      format: 'Long-Form • 18:42',
+      status: 'Ready to Publish',
+      views: '48.2k projected',
+      ctr: '11.4% CTR',
+      rpm: '$8.40 RPM',
+      retention: '62% at 5:00',
+      hook: 'Most solo creators build an unpaid prison, not a business. Here is how I automate 80% of my week.',
+      tag: 'Long-Form Drop',
+      gradient: 'from-red-600 via-rose-600 to-amber-600'
+    },
+    {
+      id: 2,
+      title: 'Why Jira Sucks for Creators (Short)',
+      format: 'Shorts (9:16) • 0:54',
+      status: 'Live & Scaling',
+      views: '142.8k Views',
+      ctr: '84.2% Viewed',
+      rpm: '$0.85 RPM',
+      retention: '118% APV',
+      hook: 'If your project management tool requires a 2-hour onboarding video, run away.',
+      tag: 'YouTube Short',
+      gradient: 'from-purple-600 via-pink-600 to-red-500'
+    },
+    {
+      id: 3,
+      title: 'Desk Setup & Production Pipeline 2026',
+      format: 'Sponsor Integration • 14:10',
+      status: 'Brand Approved',
+      views: '65.0k projected',
+      ctr: '9.8% CTR',
+      rpm: '$14.20 RPM',
+      retention: '58% at 3:00',
+      hook: 'The 3 hardware pieces that doubled our solo editing velocity this month.',
+      tag: 'Sponsorship Drop',
+      gradient: 'from-amber-500 via-orange-600 to-rose-600'
+    }
+  ]
 
   // Creator & Instagram State
   const [selectedInstaPost, setSelectedInstaPost] = useState(0)
@@ -281,36 +325,39 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#ffffff] text-[#0c0d0f] font-sans selection:bg-black/10 relative overflow-hidden">
-      {/* Soft Ambient Apple-grade Glow Effects */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[550px] bg-gradient-to-b from-neutral-200/50 via-neutral-100/20 to-transparent blur-3xl rounded-full pointer-events-none -z-10" />
-      <div className="absolute top-96 -right-48 w-[400px] h-[400px] bg-rose-100/30 blur-3xl rounded-full pointer-events-none -z-10" />
-      <div className="absolute top-[650px] -left-48 w-[400px] h-[400px] bg-blue-100/30 blur-3xl rounded-full pointer-events-none -z-10" />
+      {/* Soft Ambient Apple-grade Glow Mesh with Pulse Animation */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[580px] bg-gradient-to-b from-neutral-200/50 via-rose-100/20 to-transparent blur-3xl rounded-full pointer-events-none -z-10 animate-ambient" />
+      <div className="absolute top-80 -right-36 w-[450px] h-[450px] bg-rose-200/25 blur-3xl rounded-full pointer-events-none -z-10 animate-float" />
+      <div className="absolute top-[600px] -left-36 w-[450px] h-[450px] bg-emerald-200/25 blur-3xl rounded-full pointer-events-none -z-10 animate-float-delayed" />
 
       {/* Top Floating Apple-grade Navigation */}
       <nav className="fixed top-5 left-0 right-0 z-40 max-w-5xl mx-auto px-6">
         <div className="bg-white/85 backdrop-blur-2xl border border-black/[0.08] shadow-sm shadow-black/[0.03] rounded-full px-6 py-3 flex items-center justify-between transition-all">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-lg bg-black text-white flex items-center justify-center font-semibold text-[11px]">
+            <div className="w-6 h-6 rounded-lg bg-black text-white flex items-center justify-center font-semibold text-[11px] shadow-xs">
               F
             </div>
-            <span className="font-medium tracking-tight text-sm text-black">Focus</span>
-            <span className="text-[10px] font-mono text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded-full hidden sm:inline">
-              For Creators &amp; Studios
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-semibold tracking-tight text-sm text-black">Focus</span>
+              <span className="text-[10px] text-neutral-400 font-mono tracking-tight hidden sm:inline">by AHMV Systems</span>
+            </div>
+            <span className="text-[9px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full hidden md:inline">
+              Solo &amp; Creators
             </span>
           </div>
 
           <div className="hidden md:flex items-center gap-6 text-xs font-normal text-[#6b7280]">
             <a href="#why-different" className="hover:text-black transition-colors">Why It&apos;s Different</a>
-            <a href="#instagram-planner" className="hover:text-black transition-colors">Instagram &amp; Social</a>
+            <a href="#youtube-pipeline" className="hover:text-black transition-colors">YouTube Metrics</a>
+            <a href="#instagram-planner" className="hover:text-black transition-colors">Instagram</a>
             <a href="#chatgpt-engine" className="hover:text-black transition-colors">ChatGPT Context</a>
-            <a href="#efficiency" className="hover:text-black transition-colors">Team Velocity</a>
             <a href="#faq" className="hover:text-black transition-colors">FAQ</a>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={() => { setMode('login'); setConfirmationSent(false); setIsAuthOpen(true) }}
-              className="px-4 py-1.5 text-xs text-black hover:opacity-75 transition-opacity cursor-pointer font-light"
+              className="px-3.5 py-1.5 text-xs text-black hover:opacity-75 transition-opacity cursor-pointer font-light"
             >
               Sign In
             </button>
@@ -325,491 +372,563 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section: De-cluttered, High-Finesse Apple Aesthetics */}
       <section className="pt-36 pb-20 px-6 sm:px-10 max-w-6xl mx-auto relative">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          {/* Left Copy: Gen X Voice & High-Energy Realism */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-100/80 backdrop-blur-md border border-black/[0.06] text-xs text-[#52525b]">
+          {/* Left Copy: Clean, Crisp, Solo Entrepreneur & Creator Focused */}
+          <div className="lg:col-span-6 space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/[0.03] border border-black/[0.08] text-xs text-neutral-700">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-medium text-black">Built for Creators &amp; Agile Studios</span>
-              <span className="text-neutral-400">•</span>
-              <span className="text-neutral-600">Zero Corporate Fluff</span>
+              <span className="font-medium text-black">Focus by AHMV Systems</span>
+              <span className="text-neutral-300">•</span>
+              <span className="text-neutral-500">Solo Operators &amp; Creators</span>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl font-light tracking-tight text-black leading-[1.12]">
+            <h1 className="text-4xl sm:text-6xl font-light tracking-tight text-black leading-[1.1]">
               Stop playing project manager. <br />
-              <span className="font-semibold text-black bg-gradient-to-r from-black via-neutral-800 to-neutral-600 bg-clip-text text-transparent">
-                Start shipping what actually matters.
+              <span className="font-semibold text-black bg-gradient-to-r from-black via-neutral-900 to-neutral-600 bg-clip-text text-transparent">
+                Ship what makes you money.
               </span>
             </h1>
 
-            <p className="text-sm sm:text-base text-[#52525b] font-light leading-relaxed max-w-xl">
-              The anti-bloat workspace for creators, video studios, and operators who actually produce. Automate your Instagram content pipeline, give ChatGPT your entire life context to structure your work, and convert meetings into shipped deliverables — without the soul-crushing corporate theater.
+            <p className="text-sm sm:text-base text-[#52525b] font-light leading-relaxed max-w-lg">
+              The calm, high-velocity workspace for solo entrepreneurs and creators. Track your YouTube &amp; Instagram pipelines with real-time metrics, feed ChatGPT your entire life context to auto-structure your schedule, and execute without corporate bloat.
             </p>
 
-            <div className="flex flex-wrap items-center gap-3.5 pt-2">
+            {/* Classy Gen Z Tongue-in-Cheek Badge */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50/70 border border-emerald-200 text-xs text-emerald-900 font-light shadow-2xs">
+              <span className="font-mono text-emerald-700 font-semibold">$0 Free</span>
+              <span className="text-emerald-300">•</span>
+              <span>You don&apos;t need to pay, lil bro. Keep the bag for camera gear.</span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3.5 pt-1">
               <button
                 onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
                 className="px-6 py-3 rounded-full bg-black hover:bg-neutral-800 text-white text-xs font-medium shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-2 group"
               >
-                <span>Launch Your Workspace Free</span>
+                <span>Launch Free Workspace</span>
                 <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
               <a
-                href="#instagram-planner"
+                href="#youtube-pipeline"
                 className="px-5 py-3 rounded-full bg-white hover:bg-neutral-50 border border-black/[0.1] text-black text-xs font-normal transition-all shadow-2xs"
               >
-                Explore Creator Features ↓
+                Explore Creator Suite ↓
               </a>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-5 pt-3 text-xs text-[#71717a] font-light">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={14} className="text-emerald-600" />
-                <span>Zero ticket bureaucracy</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={14} className="text-emerald-600" />
-                <span>Automated Instagram workflow</span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={14} className="text-emerald-600" />
-                <span>ChatGPT life context sync</span>
-              </span>
             </div>
           </div>
 
-          {/* Right Interactive Functional Apple-Grade Dashboard Preview */}
-          <div className="lg:col-span-5 p-5 sm:p-6 rounded-3xl bg-white/95 backdrop-blur-xl border border-black/[0.08] shadow-2xl shadow-black/[0.05] space-y-4 hover:border-black/[0.15] transition-all duration-300 relative group">
-            {/* Ambient subtle card glow */}
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-neutral-200/60 via-rose-100/40 to-blue-100/50 rounded-3xl blur-md -z-10 opacity-75 group-hover:opacity-100 transition-opacity" />
-
-            {/* Top Workspace Header & Interactive Tab Switcher */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-black/[0.06]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-black text-white flex items-center justify-center font-semibold text-xs shadow-xs">
-                  CS
-                </div>
-                <div>
-                  <div className="text-xs font-semibold text-black">Creator Studio Hub</div>
-                  <div className="text-[10px] text-[#8a8d95] font-light">Live Interactive Workspace</div>
-                </div>
+          {/* Right Interactive Apple-Grade Dashboard Preview with Motion Graphics */}
+          <div className="lg:col-span-6 relative">
+            {/* Motion Pill 1: YouTube Real-Time CTR (Floating Top-Right) */}
+            <div className="absolute -top-4 -right-2 z-30 bg-white/90 backdrop-blur-xl border border-black/[0.08] shadow-lg rounded-full px-3 py-1.5 flex items-center gap-2 text-[11px] animate-float select-none">
+              <div className="w-4 h-4 rounded-full bg-red-600 text-white flex items-center justify-center text-[8px] font-bold">
+                ▶
               </div>
-
-              {/* Tab Switcher - 5 Live Creator Tabs */}
-              <div className="flex items-center bg-[#f4f4f5] p-1 rounded-xl border border-black/[0.04] text-[11px] overflow-x-auto">
-                {[
-                  { id: 'tasks', label: 'Tasks' },
-                  { id: 'instagram', label: 'Instagram' },
-                  { id: 'chatgpt', label: 'ChatGPT' },
-                  { id: 'projects', label: 'Projects' },
-                  { id: 'meetings', label: 'Meetings' },
-                ].map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setActiveTab(t.id as any)}
-                    className={cn(
-                      'px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer whitespace-nowrap',
-                      activeTab === t.id
-                        ? 'bg-white text-black shadow-xs font-medium'
-                        : 'text-[#71717a] hover:text-black font-light'
-                    )}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
+              <span className="font-medium text-black">YouTube Drop</span>
+              <span className="text-neutral-300">•</span>
+              <span className="font-mono text-emerald-600 font-medium">48.2k Views (11.4% CTR)</span>
             </div>
 
-            {/* TAB 1: INTERACTIVE TASKS */}
-            {activeTab === 'tasks' && (
-              <div className="space-y-3 animate-in fade-in duration-200">
-                {/* Progress bar header */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#71717a] font-light">
-                      Sprint Velocity: <strong className="text-black font-medium">{completedCount} of {demoTasks.length} shipped</strong>
-                    </span>
-                    <span className="text-[11px] font-mono text-emerald-700 font-medium">
-                      {progressPercent}% Complete
-                    </span>
+            {/* Motion Pill 2: Instagram Reel Status (Floating Top-Left) */}
+            <div className="absolute -top-4 -left-3 z-30 bg-white/90 backdrop-blur-xl border border-black/[0.08] shadow-lg rounded-full px-3 py-1.5 hidden sm:flex items-center gap-2 text-[11px] animate-float-delayed select-none">
+              <Camera size={12} className="text-purple-600" />
+              <span className="font-medium text-black">Reel #42</span>
+              <span className="text-neutral-300">•</span>
+              <span className="text-purple-700 font-mono text-[10px]">6:15 PM Ready</span>
+            </div>
+
+            {/* Motion Pill 3: ChatGPT Context Synced (Floating Bottom-Left) */}
+            <div className="absolute -bottom-4 -left-3 z-30 bg-white/90 backdrop-blur-xl border border-black/[0.08] shadow-lg rounded-full px-3 py-1.5 flex items-center gap-2 text-[11px] animate-float-delayed select-none">
+              <Sparkles size={12} className="text-emerald-600" />
+              <span className="font-medium text-black">ChatGPT</span>
+              <span className="text-neutral-300">•</span>
+              <span className="text-emerald-700 font-mono text-[10px]">Life Context Synced</span>
+            </div>
+
+            {/* Main Interactive Glass Card */}
+            <div className="p-5 sm:p-6 rounded-3xl bg-white/95 backdrop-blur-xl border border-black/[0.08] shadow-2xl shadow-black/[0.05] space-y-4 hover:border-black/[0.15] transition-all duration-300 relative group overflow-hidden">
+              {/* Dynamic Ambient Glow Backlight */}
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-200/50 via-rose-100/40 to-blue-100/50 rounded-3xl blur-md -z-10 opacity-75 group-hover:opacity-100 transition-opacity" />
+
+              {/* Workspace Header & Tab Switcher */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-black/[0.06]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-black text-white flex items-center justify-center font-semibold text-xs shadow-xs">
+                    F
                   </div>
-                  <div className="w-full h-1.5 bg-[#f4f4f5] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out"
-                      style={{ width: `${progressPercent}%` }}
-                    />
+                  <div>
+                    <div className="text-xs font-semibold text-black">Solo Studio Hub</div>
+                    <div className="text-[10px] text-[#8a8d95] font-light">Focus by AHMV Systems</div>
                   </div>
                 </div>
 
-                {/* Filter Pills & Add Task Toggle */}
-                <div className="flex items-center justify-between pt-1">
-                  <div className="flex items-center gap-1.5">
-                    {(['all', 'active', 'done'] as const).map((f) => (
-                      <button
-                        key={f}
-                        type="button"
-                        onClick={() => setTaskFilter(f)}
-                        className={cn(
-                          'px-2 py-0.5 rounded-md text-[10px] capitalize transition-colors cursor-pointer',
-                          taskFilter === f
-                            ? 'bg-black text-white font-normal'
-                            : 'bg-black/[0.03] text-[#71717a] hover:text-black hover:bg-black/[0.06]'
-                        )}
-                      >
-                        {f}
-                      </button>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowAddInput(!showAddInput)}
-                    className="text-[11px] text-black hover:opacity-75 flex items-center gap-1 cursor-pointer font-normal"
-                  >
-                    <Plus size={12} />
-                    <span>{showAddInput ? 'Cancel' : 'Quick Add'}</span>
-                  </button>
-                </div>
-
-                {/* Inline Quick Add Form */}
-                {showAddInput && (
-                  <form onSubmit={handleAddQuickTask} className="flex items-center gap-2 p-1.5 bg-[#fafafa] border border-black/[0.08] rounded-xl animate-in fade-in duration-150">
-                    <input
-                      type="text"
-                      autoFocus
-                      required
-                      placeholder="e.g. Schedule YouTube thumbnail A/B test"
-                      value={newTaskTitle}
-                      onChange={(e) => setNewTaskTitle(e.target.value)}
-                      className="flex-1 px-2.5 py-1 text-xs text-black bg-transparent outline-none font-light"
-                    />
+                {/* Tab Switcher - 5 Live Tabs */}
+                <div className="flex items-center bg-[#f4f4f5] p-1 rounded-xl border border-black/[0.04] text-[11px] overflow-x-auto">
+                  {[
+                    { id: 'tasks', label: 'Tasks' },
+                    { id: 'youtube', label: 'YouTube' },
+                    { id: 'instagram', label: 'Instagram' },
+                    { id: 'chatgpt', label: 'ChatGPT' },
+                    { id: 'meetings', label: 'Meetings' },
+                  ].map((t) => (
                     <button
-                      type="submit"
-                      className="px-3 py-1 bg-black text-white rounded-lg text-xs font-normal hover:bg-neutral-800 transition-colors shadow-2xs"
-                    >
-                      Add
-                    </button>
-                  </form>
-                )}
-
-                {/* Task Items List */}
-                <div className="space-y-1.5 min-h-[160px]">
-                  {filteredTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      onClick={() => toggleTask(task.id)}
+                      key={t.id}
+                      type="button"
+                      onClick={() => setActiveTab(t.id as any)}
                       className={cn(
-                        'group p-2.5 rounded-xl border transition-all duration-200 flex items-center justify-between cursor-pointer select-none',
-                        task.done
-                          ? 'bg-[#fafafa] border-black/[0.04] opacity-75'
-                          : 'bg-white border-black/[0.07] hover:border-black/[0.2] hover:shadow-2xs'
+                        'px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer whitespace-nowrap',
+                        activeTab === t.id
+                          ? 'bg-white text-black shadow-xs font-medium'
+                          : 'text-[#71717a] hover:text-black font-light'
                       )}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                        <div
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* TAB 1: INTERACTIVE TASKS WITH AMBIENT LIGHTING */}
+              {activeTab === 'tasks' && (
+                <div className="space-y-3 animate-in fade-in duration-200 relative">
+                  {/* Subtle emerald ambient halo */}
+                  <div className="absolute top-0 right-0 w-36 h-36 bg-emerald-500/10 blur-2xl pointer-events-none rounded-full" />
+
+                  {/* Sprint Velocity Header */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#71717a] font-light">
+                        Sprint Velocity: <strong className="text-black font-medium">{completedCount} of {demoTasks.length} shipped</strong>
+                      </span>
+                      <span className="text-[11px] font-mono text-emerald-700 font-medium">
+                        {progressPercent}% Complete
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-[#f4f4f5] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Filter Pills & Add Task Toggle */}
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center gap-1.5">
+                      {(['all', 'active', 'done'] as const).map((f) => (
+                        <button
+                          key={f}
+                          type="button"
+                          onClick={() => setTaskFilter(f)}
                           className={cn(
-                            'w-4 h-4 rounded-md flex items-center justify-center transition-all duration-200 shrink-0 text-[10px]',
-                            task.done
-                              ? 'bg-emerald-500 text-white shadow-2xs scale-100'
-                              : 'border border-black/[0.25] group-hover:border-black'
+                            'px-2 py-0.5 rounded-md text-[10px] capitalize transition-colors cursor-pointer',
+                            taskFilter === f
+                              ? 'bg-black text-white font-normal'
+                              : 'bg-black/[0.03] text-[#71717a] hover:text-black hover:bg-black/[0.06]'
                           )}
                         >
-                          {task.done && <Check size={11} strokeWidth={3} />}
+                          {f}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowAddInput(!showAddInput)}
+                      className="text-[11px] text-black hover:opacity-75 flex items-center gap-1 cursor-pointer font-normal"
+                    >
+                      <Plus size={12} />
+                      <span>{showAddInput ? 'Cancel' : 'Quick Add'}</span>
+                    </button>
+                  </div>
+
+                  {/* Inline Quick Add Form */}
+                  {showAddInput && (
+                    <form onSubmit={handleAddQuickTask} className="flex items-center gap-2 p-1.5 bg-[#fafafa] border border-black/[0.08] rounded-xl animate-in fade-in duration-150">
+                      <input
+                        type="text"
+                        autoFocus
+                        required
+                        placeholder="e.g. Test thumbnail variation B on YouTube"
+                        value={newTaskTitle}
+                        onChange={(e) => setNewTaskTitle(e.target.value)}
+                        className="flex-1 px-2.5 py-1 text-xs text-black bg-transparent outline-none font-light"
+                      />
+                      <button
+                        type="submit"
+                        className="px-3 py-1 bg-black text-white rounded-lg text-xs font-normal hover:bg-neutral-800 transition-colors shadow-2xs"
+                      >
+                        Add
+                      </button>
+                    </form>
+                  )}
+
+                  {/* Task Items List */}
+                  <div className="space-y-1.5 min-h-[160px]">
+                    {filteredTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        onClick={() => toggleTask(task.id)}
+                        className={cn(
+                          'group p-2.5 rounded-xl border transition-all duration-200 flex items-center justify-between cursor-pointer select-none relative overflow-hidden',
+                          task.done
+                            ? 'bg-[#fafafa] border-black/[0.04] opacity-75'
+                            : 'bg-white border-black/[0.07] hover:border-black/[0.2] hover:shadow-2xs'
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                          <div
+                            className={cn(
+                              'w-4 h-4 rounded-md flex items-center justify-center transition-all duration-200 shrink-0 text-[10px]',
+                              task.done
+                                ? 'bg-emerald-500 text-white shadow-2xs scale-100'
+                                : 'border border-black/[0.25] group-hover:border-black'
+                            )}
+                          >
+                            {task.done && <Check size={11} strokeWidth={3} />}
+                          </div>
+
+                          <span
+                            className={cn(
+                              'text-xs transition-all duration-200 truncate',
+                              task.done
+                                ? 'text-[#9ca3af] line-through font-light'
+                                : 'text-black font-normal'
+                            )}
+                          >
+                            {task.title}
+                          </span>
                         </div>
 
-                        <span
+                        <div className="flex items-center gap-1.5 shrink-0 text-[10px]">
+                          <span
+                            className={cn(
+                              'px-1.5 py-0.5 rounded font-mono text-[9px]',
+                              task.priority === 'P0' ? 'bg-red-50 text-red-700 font-medium' :
+                              task.priority === 'P1' ? 'bg-amber-50 text-amber-700' :
+                              'bg-black/[0.04] text-[#71717a]'
+                            )}
+                          >
+                            {task.priority}
+                          </span>
+                          <span className="text-[#8a8d95] hidden sm:inline">{task.due}</span>
+                        </div>
+                      </div>
+                    ))}
+                    {filteredTasks.length === 0 && (
+                      <div className="text-center py-8 text-xs text-[#9ca3af] font-light">
+                        No tasks in this view
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: INTERACTIVE YOUTUBE PIPELINE & METRICS TRACKER */}
+              {activeTab === 'youtube' && (
+                <div className="space-y-3 animate-in fade-in duration-200 min-h-[220px] relative">
+                  {/* Subtle red/ruby ambient halo */}
+                  <div className="absolute top-0 right-0 w-36 h-36 bg-red-500/10 blur-2xl pointer-events-none rounded-full" />
+
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-neutral-500 font-light">
+                      YouTube Studio Pipeline &amp; Retention
+                    </span>
+                    <span className="text-[10px] font-mono text-red-700 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
+                      Live Metric Sync
+                    </span>
+                  </div>
+
+                  {/* 3-Video Selector Grid */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {youtubeVideos.map((video, idx) => {
+                      const isSelected = selectedYoutubeVideo === idx
+                      return (
+                        <div
+                          key={video.id}
+                          onClick={() => setSelectedYoutubeVideo(idx)}
                           className={cn(
-                            'text-xs transition-all duration-200 truncate',
-                            task.done
-                              ? 'text-[#9ca3af] line-through font-light'
-                              : 'text-black font-normal'
+                            'p-2 rounded-xl border transition-all cursor-pointer text-left relative overflow-hidden group',
+                            isSelected 
+                              ? 'border-black bg-neutral-50 shadow-xs' 
+                              : 'border-black/[0.06] bg-white hover:border-black/[0.15]'
                           )}
                         >
-                          {task.title}
+                          <div className={cn('h-12 rounded-lg bg-gradient-to-br mb-2 flex items-end p-1.5 relative overflow-hidden', video.gradient)}>
+                            <div className="absolute inset-0 bg-black/15 group-hover:bg-transparent transition-colors" />
+                            <span className="text-[9px] font-mono text-white font-medium drop-shadow-sm relative z-10 flex items-center gap-1">
+                              <span>▶</span>
+                              <span>{video.format.split(' ')[0]}</span>
+                            </span>
+                          </div>
+                          <div className="text-[11px] font-medium text-black truncate">{video.title}</div>
+                          <div className="text-[9px] text-[#71717a] truncate">{video.views}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Selected Video Metrics & Retention Hook Card */}
+                  {youtubeVideos[selectedYoutubeVideo] && (
+                    <div className="p-3 bg-[#fafafa] border border-black/[0.07] rounded-xl space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-3.5 h-3.5 rounded bg-red-600 text-white flex items-center justify-center text-[7px] font-bold">
+                            ▶
+                          </div>
+                          <span className="text-xs font-medium text-black truncate max-w-[200px]">
+                            {youtubeVideos[selectedYoutubeVideo].title}
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
+                          {youtubeVideos[selectedYoutubeVideo].status}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0 text-[10px]">
-                        <span
-                          className={cn(
-                            'px-1.5 py-0.5 rounded font-mono text-[9px]',
-                            task.priority === 'P0' ? 'bg-red-50 text-red-700 font-medium' :
-                            task.priority === 'P1' ? 'bg-amber-50 text-amber-700' :
-                            'bg-black/[0.04] text-[#71717a]'
-                          )}
-                        >
-                          {task.priority}
-                        </span>
-                        <span className="text-[#8a8d95] hidden sm:inline">{task.due}</span>
+                      {/* 4-Metric Tile Strip */}
+                      <div className="grid grid-cols-4 gap-1.5 text-center">
+                        <div className="p-1.5 bg-white rounded-lg border border-black/[0.05]">
+                          <div className="text-[9px] text-neutral-400 font-mono">Views</div>
+                          <div className="text-[11px] font-semibold text-black">{youtubeVideos[selectedYoutubeVideo].views.split(' ')[0]}</div>
+                        </div>
+                        <div className="p-1.5 bg-white rounded-lg border border-black/[0.05]">
+                          <div className="text-[9px] text-neutral-400 font-mono">CTR</div>
+                          <div className="text-[11px] font-semibold text-emerald-600">{youtubeVideos[selectedYoutubeVideo].ctr.split(' ')[0]}</div>
+                        </div>
+                        <div className="p-1.5 bg-white rounded-lg border border-black/[0.05]">
+                          <div className="text-[9px] text-neutral-400 font-mono">RPM</div>
+                          <div className="text-[11px] font-semibold text-black">{youtubeVideos[selectedYoutubeVideo].rpm.split(' ')[0]}</div>
+                        </div>
+                        <div className="p-1.5 bg-white rounded-lg border border-black/[0.05]">
+                          <div className="text-[9px] text-neutral-400 font-mono">Retention</div>
+                          <div className="text-[11px] font-semibold text-purple-600">{youtubeVideos[selectedYoutubeVideo].retention.split(' ')[0]}</div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                  {filteredTasks.length === 0 && (
-                    <div className="text-center py-8 text-xs text-[#9ca3af] font-light">
-                      No tasks in this view
+
+                      {/* Hook preview */}
+                      <div className="p-2 bg-white border border-black/[0.05] rounded-lg space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] font-medium text-neutral-400 uppercase tracking-wider">3-Sec Hook:</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyHook(youtubeVideos[selectedYoutubeVideo].hook)}
+                            className="text-[10px] text-neutral-500 hover:text-black flex items-center gap-1 cursor-pointer font-light"
+                          >
+                            {captionCopied ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
+                            <span>{captionCopied ? 'Copied' : 'Copy Hook'}</span>
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-[#374151] font-light leading-snug italic truncate">
+                          &ldquo;{youtubeVideos[selectedYoutubeVideo].hook}&rdquo;
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* TAB 2: INTERACTIVE INSTAGRAM PLANNER & SOCIAL STRATEGY */}
-            {activeTab === 'instagram' && (
-              <div className="space-y-3 animate-in fade-in duration-200 min-h-[220px]">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-neutral-500 font-light">
-                    Visual Feed &amp; Hook Engine
-                  </span>
-                  <span className="text-[10px] font-mono text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
-                    Automated Posting Active
-                  </span>
-                </div>
+              {/* TAB 3: INTERACTIVE INSTAGRAM PLANNER */}
+              {activeTab === 'instagram' && (
+                <div className="space-y-3 animate-in fade-in duration-200 min-h-[220px] relative">
+                  {/* Subtle violet ambient halo */}
+                  <div className="absolute top-0 right-0 w-36 h-36 bg-purple-500/10 blur-2xl pointer-events-none rounded-full" />
 
-                {/* 3-Post Visual Staging Grid */}
-                <div className="grid grid-cols-3 gap-2">
-                  {instaPosts.map((post, idx) => {
-                    const isSelected = selectedInstaPost === idx
-                    return (
-                      <div
-                        key={post.id}
-                        onClick={() => setSelectedInstaPost(idx)}
-                        className={cn(
-                          'p-2 rounded-xl border transition-all cursor-pointer text-left relative overflow-hidden group',
-                          isSelected 
-                            ? 'border-black bg-neutral-50 shadow-xs' 
-                            : 'border-black/[0.06] bg-white hover:border-black/[0.15]'
-                        )}
-                      >
-                        <div className={cn('h-12 rounded-lg bg-gradient-to-br mb-2 flex items-end p-1.5 relative overflow-hidden', post.gradient)}>
-                          <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
-                          <span className="text-[9px] font-mono text-white font-medium drop-shadow-sm relative z-10">
-                            {post.format.split(' ')[0]}
-                          </span>
-                        </div>
-                        <div className="text-[11px] font-medium text-black truncate">{post.title}</div>
-                        <div className="text-[9px] text-[#71717a] truncate">{post.scheduled.split('•')[0]}</div>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {/* Post Strategy & Hook Card */}
-                {instaPosts[selectedInstaPost] && (
-                  <div className="p-3 bg-[#fafafa] border border-black/[0.07] rounded-xl space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <Camera size={13} className="text-purple-600" />
-                        <span className="text-xs font-medium text-black">{instaPosts[selectedInstaPost].title}</span>
-                      </div>
-                      <span className="text-[9px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
-                        {instaPosts[selectedInstaPost].scheduled}
-                      </span>
-                    </div>
-
-                    <div className="p-2.5 bg-white border border-black/[0.05] rounded-lg space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-medium text-neutral-400 uppercase tracking-wider">Hook Strategy:</span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopyHook(instaPosts[selectedInstaPost].hook)}
-                          className="text-[10px] text-neutral-500 hover:text-black flex items-center gap-1 cursor-pointer font-light"
-                        >
-                          {captionCopied ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
-                          <span>{captionCopied ? 'Copied' : 'Copy Hook'}</span>
-                        </button>
-                      </div>
-                      <p className="text-[11px] text-[#374151] font-light leading-snug italic">
-                        &ldquo;{instaPosts[selectedInstaPost].hook}&rdquo;
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between text-[10px] text-neutral-500 font-light pt-0.5">
-                      <span>{instaPosts[selectedInstaPost].tags}</span>
-                      <span className="font-mono text-emerald-600">{instaPosts[selectedInstaPost].saves}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* TAB 3: CHATGPT LIFE CONTEXT ENGINE */}
-            {activeTab === 'chatgpt' && (
-              <div className="space-y-3 animate-in fade-in duration-200 min-h-[220px]">
-                <div className="p-3 bg-gradient-to-br from-emerald-50/70 to-teal-50/50 border border-emerald-200/80 rounded-2xl space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-5 h-5 rounded-md bg-emerald-600 text-white flex items-center justify-center">
-                        <Sparkles size={12} />
-                      </div>
-                      <span className="text-xs font-semibold text-emerald-950">ChatGPT Life Context Sync</span>
-                    </div>
-                    <span className="text-[10px] font-mono bg-white text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
-                      OpenAPI Linked
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-neutral-500 font-light">
+                      Visual Feed &amp; Hook Engine
+                    </span>
+                    <span className="text-[10px] font-mono text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+                      Automated Posting Active
                     </span>
                   </div>
 
-                  <p className="text-[11px] text-emerald-900/80 font-light leading-relaxed">
-                    Connect your ChatGPT directly. Tell it your schedule, sponsor deadlines, and life goals — it auto-structures your boards and daily priorities.
-                  </p>
-
-                  <div className="p-2.5 bg-white/90 rounded-xl border border-emerald-100 text-[11px] space-y-1 font-mono text-neutral-700">
-                    <div className="text-[9px] text-neutral-400 uppercase">Context Sent to ChatGPT:</div>
-                    <div>&ldquo;I have 2 video shoots Tuesday, sponsor edit due Thursday, and launch Friday morning.&rdquo;</div>
+                  {/* 3-Post Visual Staging Grid */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {instaPosts.map((post, idx) => {
+                      const isSelected = selectedInstaPost === idx
+                      return (
+                        <div
+                          key={post.id}
+                          onClick={() => setSelectedInstaPost(idx)}
+                          className={cn(
+                            'p-2 rounded-xl border transition-all cursor-pointer text-left relative overflow-hidden group',
+                            isSelected 
+                              ? 'border-black bg-neutral-50 shadow-xs' 
+                              : 'border-black/[0.06] bg-white hover:border-black/[0.15]'
+                          )}
+                        >
+                          <div className={cn('h-12 rounded-lg bg-gradient-to-br mb-2 flex items-end p-1.5 relative overflow-hidden', post.gradient)}>
+                            <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
+                            <span className="text-[9px] font-mono text-white font-medium drop-shadow-sm relative z-10">
+                              {post.format.split(' ')[0]}
+                            </span>
+                          </div>
+                          <div className="text-[11px] font-medium text-black truncate">{post.title}</div>
+                          <div className="text-[9px] text-[#71717a] truncate">{post.scheduled.split('•')[0]}</div>
+                        </div>
+                      )
+                    })}
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handleSimulateChatGpt}
-                    disabled={gptPromptActive || chatGptSynced}
-                    className={cn(
-                      'w-full py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs',
-                      chatGptSynced
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-black text-white hover:bg-neutral-800'
-                    )}
-                  >
-                    {gptPromptActive ? (
-                      <>
-                        <RefreshCw size={12} className="animate-spin" />
-                        <span>ChatGPT Structuring Workspace...</span>
-                      </>
-                    ) : chatGptSynced ? (
-                      <>
-                        <Check size={12} />
-                        <span>Sprints &amp; Tasks Auto-Created!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Zap size={12} />
-                        <span>Simulate ChatGPT Life Context Sync →</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 4: INTERACTIVE PROJECTS */}
-            {activeTab === 'projects' && (
-              <div className="space-y-2.5 animate-in fade-in duration-200 min-h-[220px]">
-                <div className="text-[11px] text-[#71717a] font-light">
-                  Click a project to view active milestone details:
-                </div>
-                {demoProjects.map((proj, idx) => {
-                  const isSelected = selectedProject === idx
-                  return (
-                    <div
-                      key={proj.name}
-                      onClick={() => setSelectedProject(idx)}
-                      className={cn(
-                        'p-3 rounded-2xl border transition-all duration-200 cursor-pointer',
-                        isSelected
-                          ? 'bg-neutral-50/80 border-black shadow-xs'
-                          : 'bg-white border-black/[0.06] hover:border-black/[0.15]'
-                      )}
-                    >
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className={cn('w-2 h-2 rounded-full', proj.color)} />
-                          <span className="text-xs font-medium text-black">{proj.name}</span>
+                  {/* Post Strategy & Hook Card */}
+                  {instaPosts[selectedInstaPost] && (
+                    <div className="p-3 bg-[#fafafa] border border-black/[0.07] rounded-xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <Camera size={13} className="text-purple-600" />
+                          <span className="text-xs font-medium text-black">{instaPosts[selectedInstaPost].title}</span>
                         </div>
-                        <span className="text-[10px] font-mono text-[#71717a] bg-black/[0.03] px-2 py-0.5 rounded">
-                          {proj.status}
+                        <span className="text-[9px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
+                          {instaPosts[selectedInstaPost].scheduled}
                         </span>
                       </div>
 
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-[10px] text-[#71717a]">
-                          <span>{proj.initiatives} Initiatives</span>
-                          <span className="font-mono font-medium text-black">{proj.progress}%</span>
+                      <div className="p-2.5 bg-white border border-black/[0.05] rounded-lg space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-medium text-neutral-400 uppercase tracking-wider">Hook Strategy:</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyHook(instaPosts[selectedInstaPost].hook)}
+                            className="text-[10px] text-neutral-500 hover:text-black flex items-center gap-1 cursor-pointer font-light"
+                          >
+                            {captionCopied ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
+                            <span>{captionCopied ? 'Copied' : 'Copy Hook'}</span>
+                          </button>
                         </div>
-                        <div className="w-full h-1 bg-black/[0.06] rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-black rounded-full transition-all duration-300"
-                            style={{ width: `${proj.progress}%` }}
-                          />
-                        </div>
+                        <p className="text-[11px] text-[#374151] font-light leading-snug italic">
+                          &ldquo;{instaPosts[selectedInstaPost].hook}&rdquo;
+                        </p>
                       </div>
 
-                      {isSelected && (
-                        <div className="mt-2.5 pt-2 border-t border-black/[0.06] space-y-1 text-[11px] text-[#6b7280] font-light">
-                          {proj.milestones.map((m, mIdx) => (
-                            <div key={mIdx} className="flex items-center gap-1.5">
-                              <span className="text-[9px] text-emerald-600">●</span>
-                              <span>{m}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            {/* TAB 5: INTERACTIVE MEETINGS (FATHOM SYNC) */}
-            {activeTab === 'meetings' && (
-              <div className="space-y-3 animate-in fade-in duration-200 min-h-[220px]">
-                <div className="p-3.5 rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-lg bg-black text-white flex items-center justify-center">
-                        <Video size={12} />
+                      <div className="flex items-center justify-between text-[10px] text-neutral-500 font-light pt-0.5">
+                        <span>{instaPosts[selectedInstaPost].tags}</span>
+                        <span className="font-mono text-emerald-600">{instaPosts[selectedInstaPost].saves}</span>
                       </div>
-                      <span className="text-xs font-medium text-black">Sponsor Call: Sony Alpha Campaign</span>
                     </div>
-                    <span className="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
-                      32 mins • Fathom
-                    </span>
-                  </div>
-
-                  <div className="p-2.5 bg-white border border-black/[0.06] rounded-xl space-y-1.5 text-xs text-[#52525b]">
-                    <div className="text-[10px] font-medium text-[#71717a] uppercase">Key Decisions &amp; Next Steps:</div>
-                    <p className="text-[11px] font-light leading-relaxed">
-                      &bull; Sponsor approved 60s integration in Thursday YouTube video.<br />
-                      &bull; Need to deliver revised color grade before Thursday noon.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleConvertMeetingAction}
-                    disabled={actionAdded}
-                    className={cn(
-                      'w-full py-2 rounded-xl text-xs font-normal transition-all cursor-pointer flex items-center justify-center gap-1.5',
-                      actionAdded
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-black hover:bg-neutral-800 text-white shadow-2xs'
-                    )}
-                  >
-                    {actionAdded ? (
-                      <>
-                        <Check size={13} className="text-emerald-600" />
-                        <span>Takeaway Converted to Task!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Plus size={13} />
-                        <span>+ Convert Takeaway to Task</span>
-                      </>
-                    )}
-                  </button>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Bottom Live System Indicator Strip */}
-            <div className="pt-3 border-t border-black/[0.06] flex items-center justify-between text-[11px] text-[#71717a] font-light">
-              <div className="flex items-center gap-1.5">
-                <Camera size={12} className="text-black" />
-                <span>Instagram Pipeline Active</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Sparkles size={12} className="text-emerald-600" />
-                <span>ChatGPT Context Synced</span>
+              {/* TAB 4: CHATGPT LIFE CONTEXT ENGINE */}
+              {activeTab === 'chatgpt' && (
+                <div className="space-y-3 animate-in fade-in duration-200 min-h-[220px]">
+                  <div className="p-3 bg-gradient-to-br from-emerald-50/70 to-teal-50/50 border border-emerald-200/80 rounded-2xl space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-5 h-5 rounded-md bg-emerald-600 text-white flex items-center justify-center">
+                          <Sparkles size={12} />
+                        </div>
+                        <span className="text-xs font-semibold text-emerald-950">ChatGPT Life Context Sync</span>
+                      </div>
+                      <span className="text-[10px] font-mono bg-white text-emerald-700 px-2 py-0.5 rounded border border-emerald-200">
+                        OpenAPI Linked
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-emerald-900/80 font-light leading-relaxed">
+                      Connect your ChatGPT directly. Tell it your schedule, YouTube drops, and sponsor deadlines — it auto-structures your boards and daily priorities.
+                    </p>
+
+                    <div className="p-2.5 bg-white/90 rounded-xl border border-emerald-100 text-[11px] space-y-1 font-mono text-neutral-700">
+                      <div className="text-[9px] text-neutral-400 uppercase">Context Sent to ChatGPT:</div>
+                      <div>&ldquo;Shoot YouTube video Tuesday, sponsor cut due Thursday, launch Friday morning.&rdquo;</div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleSimulateChatGpt}
+                      disabled={gptPromptActive || chatGptSynced}
+                      className={cn(
+                        'w-full py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs',
+                        chatGptSynced
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-black text-white hover:bg-neutral-800'
+                      )}
+                    >
+                      {gptPromptActive ? (
+                        <>
+                          <RefreshCw size={12} className="animate-spin" />
+                          <span>ChatGPT Structuring Workspace...</span>
+                        </>
+                      ) : chatGptSynced ? (
+                        <>
+                          <Check size={12} />
+                          <span>Sprints &amp; Tasks Auto-Created!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Zap size={12} />
+                          <span>Simulate ChatGPT Life Context Sync →</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 5: INTERACTIVE MEETINGS (FATHOM SYNC) */}
+              {activeTab === 'meetings' && (
+                <div className="space-y-3 animate-in fade-in duration-200 min-h-[220px]">
+                  <div className="p-3.5 rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-black text-white flex items-center justify-center">
+                          <Video size={12} />
+                        </div>
+                        <span className="text-xs font-medium text-black">Sponsor Call: Sony Alpha Campaign</span>
+                      </div>
+                      <span className="text-[10px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
+                        32 mins • Fathom
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 bg-white border border-black/[0.06] rounded-xl space-y-1.5 text-xs text-[#52525b]">
+                      <div className="text-[10px] font-medium text-[#71717a] uppercase">Key Decisions &amp; Next Steps:</div>
+                      <p className="text-[11px] font-light leading-relaxed">
+                        &bull; Sponsor approved 60s integration in Thursday YouTube video.<br />
+                        &bull; Need to deliver revised color grade before Thursday noon.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleConvertMeetingAction}
+                      disabled={actionAdded}
+                      className={cn(
+                        'w-full py-2 rounded-xl text-xs font-normal transition-all cursor-pointer flex items-center justify-center gap-1.5',
+                        actionAdded
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-black hover:bg-neutral-800 text-white shadow-2xs'
+                      )}
+                    >
+                      {actionAdded ? (
+                        <>
+                          <Check size={13} className="text-emerald-600" />
+                          <span>Takeaway Converted to Task!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={13} />
+                          <span>+ Convert Takeaway to Task</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Bottom Live System Indicator Strip */}
+              <div className="pt-3 border-t border-black/[0.06] flex items-center justify-between text-[11px] text-[#71717a] font-light">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-red-500" />
+                  <span>YouTube &amp; Insta Synced</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Sparkles size={12} className="text-emerald-600" />
+                  <span>ChatGPT Context Active</span>
+                </div>
               </div>
             </div>
           </div>
@@ -889,6 +1008,130 @@ export default function LandingPage() {
                 <span>Fathom call takeaways converted to actionable tasks in 1 click, auto-synced with your calendar.</span>
               </li>
             </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION: YOUTUBE PRODUCTION & REAL-TIME RETENTION METRICS */}
+      <section id="youtube-pipeline" className="py-24 px-6 sm:px-10 max-w-6xl mx-auto border-t border-black/[0.06] relative">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div className="lg:col-span-5 space-y-5">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 border border-red-200/80 text-xs text-red-800 font-mono uppercase tracking-wider">
+              <span className="w-2 h-2 rounded-full bg-red-600" />
+              <span>YOUTUBE STUDIO &amp; METRICS ENGINE</span>
+            </div>
+
+            <h2 className="text-3xl sm:text-4xl font-light text-black tracking-tight leading-tight">
+              Long-form, Shorts, and real-time retention tracking.
+            </h2>
+
+            <p className="text-sm text-[#52525b] font-light leading-relaxed">
+              Stop guessing what thumbnails or hooks convert. Stage your long-form YouTube videos, organize Shorts (9:16) drops, monitor projected RPM and CTR metrics, and track sponsor integrations with zero tab-switching.
+            </p>
+
+            <div className="space-y-3 pt-2">
+              <div className="p-3.5 rounded-2xl bg-neutral-50 border border-black/[0.06] space-y-1">
+                <div className="text-xs font-medium text-black flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
+                  Thumbnail CTR &amp; Hook Testing
+                </div>
+                <p className="text-[11px] text-[#6b7280] font-light">
+                  A/B test thumbnail concepts and opening 3-second lines before hitting publish.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-neutral-50 border border-black/[0.06] space-y-1">
+                <div className="text-xs font-medium text-black flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
+                  Audience Retention Drop-Off Curves
+                </div>
+                <p className="text-[11px] text-[#6b7280] font-light">
+                  Keep average percentage viewed (APV) high by mapping pacing and b-roll changes.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-neutral-50 border border-black/[0.06] space-y-1">
+                <div className="text-xs font-medium text-black flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
+                  Sponsor Integration Cue-Points
+                </div>
+                <p className="text-[11px] text-[#6b7280] font-light">
+                  Track 60s mid-roll delivery dates, contract rates, and client approvals in one pipeline.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Visual Apple-like YouTube Dashboard Mockup */}
+          <div className="lg:col-span-7 p-6 rounded-3xl bg-[#fafafa] border border-black/[0.08] shadow-lg space-y-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-red-500/10 blur-3xl pointer-events-none rounded-full" />
+
+            <div className="flex items-center justify-between pb-3 border-b border-black/[0.06]">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-red-600 text-white flex items-center justify-center shadow-xs text-xs font-bold">
+                  ▶
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-black">YouTube Studio Hub</div>
+                  <div className="text-[10px] text-neutral-400">Long-form &amp; Shorts Analytics</div>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded border border-emerald-200">
+                Avg CTR: 11.4%
+              </span>
+            </div>
+
+            {/* Metrics Ribbon */}
+            <div className="grid grid-cols-4 gap-2">
+              <div className="p-3 bg-white rounded-2xl border border-black/[0.06] text-center shadow-2xs">
+                <div className="text-[10px] text-neutral-400 font-mono">Views</div>
+                <div className="text-sm font-semibold text-black mt-0.5">142.8k</div>
+                <div className="text-[9px] text-emerald-600 font-mono">+18% vs avg</div>
+              </div>
+              <div className="p-3 bg-white rounded-2xl border border-black/[0.06] text-center shadow-2xs">
+                <div className="text-[10px] text-neutral-400 font-mono">Click-Through</div>
+                <div className="text-sm font-semibold text-emerald-600 mt-0.5">11.4%</div>
+                <div className="text-[9px] text-emerald-600 font-mono">Top 5%</div>
+              </div>
+              <div className="p-3 bg-white rounded-2xl border border-black/[0.06] text-center shadow-2xs">
+                <div className="text-[10px] text-neutral-400 font-mono">Watch Time</div>
+                <div className="text-sm font-semibold text-black mt-0.5">4.8k hrs</div>
+                <div className="text-[9px] text-neutral-400 font-mono">Monetized</div>
+              </div>
+              <div className="p-3 bg-white rounded-2xl border border-black/[0.06] text-center shadow-2xs">
+                <div className="text-[10px] text-neutral-400 font-mono">Est. RPM</div>
+                <div className="text-sm font-semibold text-purple-700 mt-0.5">$8.40</div>
+                <div className="text-[9px] text-neutral-400 font-mono">Tech niche</div>
+              </div>
+            </div>
+
+            {/* Video Pipeline Item Card */}
+            <div className="p-4 bg-white rounded-2xl border border-black/[0.06] space-y-3 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 rounded font-mono text-[9px]">
+                    Long-Form Video
+                  </span>
+                  <span className="text-xs font-semibold text-black">
+                    How I Run a 1-Person Business (Full Stack)
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-neutral-400">18:42</span>
+              </div>
+
+              {/* Retention Curve Simulation */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-[10px] text-neutral-500 font-light">
+                  <span>Audience Retention Curve</span>
+                  <span className="font-mono text-emerald-600 font-medium">62% held at 5:00</span>
+                </div>
+                <div className="h-2 w-full bg-neutral-100 rounded-full overflow-hidden flex">
+                  <div className="h-full bg-emerald-500 rounded-l-full" style={{ width: '62%' }} />
+                  <div className="h-full bg-neutral-300" style={{ width: '18%' }} />
+                  <div className="h-full bg-neutral-200 rounded-r-full" style={{ width: '20%' }} />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1310,7 +1553,7 @@ export default function LandingPage() {
           <span>All systems operational</span>
         </div>
         <div className="text-[11px]">
-          &copy; {new Date().getFullYear()} Focus. Built for creators, studios, and agile teams who ship.
+          &copy; {new Date().getFullYear()} Focus by AHMV Systems. Built for solo entrepreneurs, creators, and lean teams who ship.
         </div>
       </footer>
 
@@ -1369,7 +1612,7 @@ export default function LandingPage() {
                     F
                   </div>
                   <h3 className="text-lg font-normal text-black">
-                    {mode === 'login' ? 'Sign in to Focus' : 'Create your free workspace'}
+                    {mode === 'login' ? 'Sign in to Focus by AHMV Systems' : 'Create your free workspace'}
                   </h3>
                   <p className="text-xs text-[#6b7280] font-light">
                     {mode === 'login' ? 'Access your projects, tasks, and notes.' : 'Takes less than 30 seconds. No credit card required.'}
