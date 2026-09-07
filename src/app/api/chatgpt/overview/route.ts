@@ -36,14 +36,35 @@ export async function GET(req: NextRequest) {
       .order('date', { ascending: false })
       .limit(3)
 
+    // 4. Fetch Recent Fathom Meetings
+    let recentMeetings: any[] = []
+    let totalMeetingsCount = 0
+    try {
+      const { fetchFathomMeetings } = await import('@/lib/fathom/client')
+      const allMeetings = await fetchFathomMeetings(10)
+      totalMeetingsCount = allMeetings.length
+      recentMeetings = allMeetings.slice(0, 5).map((m) => ({
+        id: m.recording_id || m.id,
+        title: m.title,
+        date: m.recorded_at,
+        duration_minutes: m.duration_minutes,
+        attendees: m.attendees.map((a) => a.name),
+        video_url: m.video_url || m.share_url,
+      }))
+    } catch {}
+
     // Compute Summaries
     const taskList = tasks || []
+    const shippedCount = taskList.filter((t) => t.status === 'shipped').length
+    const completionRate = taskList.length > 0 ? Math.round((shippedCount / taskList.length) * 100) : 0
+
     const summary = {
       total_tasks: taskList.length,
+      completion_rate_percentage: completionRate,
       todo: taskList.filter((t) => t.status === 'todo').length,
       in_progress: taskList.filter((t) => t.status === 'in_progress').length,
       blocked: taskList.filter((t) => t.status === 'blocked').length,
-      shipped: taskList.filter((t) => t.status === 'shipped').length,
+      shipped: shippedCount,
       killed: taskList.filter((t) => t.status === 'killed').length,
     }
 
@@ -62,6 +83,8 @@ export async function GET(req: NextRequest) {
       active_projects: (projects || []).filter((p) => p.status === 'active'),
       all_projects: projects || [],
       recent_daily_logs: dailyLogs || [],
+      recent_meetings: recentMeetings,
+      fathom_meetings_count: totalMeetingsCount,
     })
   } catch (error: any) {
     console.error('[API /api/chatgpt/overview] Error:', error)

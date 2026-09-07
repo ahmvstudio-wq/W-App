@@ -18,6 +18,10 @@ export async function GET(req: NextRequest) {
     const priority = searchParams.get('priority')
     const projectId = searchParams.get('project_id')
     const search = searchParams.get('search')
+    const date = searchParams.get('date') // YYYY-MM-DD for historical point-in-time status
+    const dateFrom = searchParams.get('date_from')
+    const dateTo = searchParams.get('date_to')
+    const formatType = searchParams.get('format') // 'json' or 'csv'
     const limit = parseInt(searchParams.get('limit') || '50', 10)
 
     let query = supabase
@@ -26,7 +30,7 @@ export async function GET(req: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(limit)
 
-    if (status) {
+    if (status && !date) {
       if (status === 'active') {
         query = query.in('status', ['todo', 'in_progress', 'blocked'])
       } else {
@@ -46,13 +50,86 @@ export async function GET(req: NextRequest) {
       query = query.ilike('title', `%${search}%`)
     }
 
-    const { data: tasks, error } = await query
+    if (dateFrom) {
+      query = query.gte('created_at', dateFrom)
+    }
+
+    if (dateTo) {
+      query = query.lte('created_at', dateTo)
+    }
+
+    const { data: rawTasks, error } = await query
     if (error) throw error
+
+    let tasks = rawTasks || []
+
+    // Historical Point-in-Time Projection if date is specified
+    if (date) {
+      const targetDate = new Date(date + 'T00:00:00')
+      const nextDay = new Date(targetDate.getTime() + 24 * 60 * 60 * 1000)
+
+      tasks = tasks.map((t: any) => {
+        const completedAt = t.completed_at ? new Date(t.completed_at) : null
+        const startedAt = t.started_at ? new Date(t.started_at) : null
+
+        let historicalStatus = t.status
+        if (completedAt && completedAt < nextDay) {
+          historicalStatus = 'shipped'
+        } else if (startedAt && startedAt < nextDay) {
+          historicalStatus = 'in_progress'
+        } else if (t.status === 'blocked') {
+          historicalStatus = 'blocked'
+        } else if (t.status === 'killed') {
+          historicalStatus = 'killed'
+        } else {
+          historicalStatus = 'todo'
+        }
+
+        return {
+          ...t,
+          status: historicalStatus,
+          _point_in_time_date: date,
+        }
+      })
+
+      // If status filter was requested alongside date, filter after point-in-time projection
+      if (status) {
+        if (status === 'active') {
+          tasks = tasks.filter((t: any) => ['todo', 'in_progress', 'blocked'].includes(t.status))
+        } else {
+          tasks = tasks.filter((t: any) => t.status === status)
+        }
+      }
+    }
+
+    // CSV format export support
+    if (formatType === 'csv') {
+      const headers = ['Task ID', 'Title', 'Status', 'Priority', 'Project', 'Timebox (Mins)', 'Deadline', 'Started At', 'Completed At']
+      const rows = tasks.map((t: any) => [
+        t.id,
+        `"${(t.title || '').replace(/"/g, '""')}"`,
+        t.status,
+        t.priority,
+        `"${(t.project?.name || 'General').replace(/"/g, '""')}"`,
+        t.time_box_minutes || '',
+        t.due_date || '',
+        t.started_at || '',
+        t.completed_at || '',
+      ].join(','))
+      const csv = '\uFEFF' + [headers.join(','), ...rows].join('\r\n')
+      return new NextResponse(csv, {
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': `attachment; filename="callmy-tasks-${new Date().toISOString().slice(0, 10)}.csv"`,
+        },
+      })
+    }
 
     return NextResponse.json({
       success: true,
-      count: tasks?.length || 0,
-      tasks: tasks || [],
+      count: tasks.length,
+      point_in_time_date: date || null,
+      tasks,
     })
   } catch (error: any) {
     console.error('[API /api/chatgpt/tasks GET] Error:', error)

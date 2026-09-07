@@ -82,6 +82,34 @@ export async function GET(req: NextRequest) {
               description: 'Search string to match against task title.',
             },
             {
+              name: 'date',
+              in: 'query',
+              required: false,
+              schema: { type: 'string' },
+              description: 'Filter tasks and calculate their point-in-time historical status on a specific date (YYYY-MM-DD).',
+            },
+            {
+              name: 'date_from',
+              in: 'query',
+              required: false,
+              schema: { type: 'string', format: 'date-time' },
+              description: 'Filter tasks created after this ISO date.',
+            },
+            {
+              name: 'date_to',
+              in: 'query',
+              required: false,
+              schema: { type: 'string', format: 'date-time' },
+              description: 'Filter tasks created before this ISO date.',
+            },
+            {
+              name: 'format',
+              in: 'query',
+              required: false,
+              schema: { type: 'string', enum: ['json', 'csv'] },
+              description: 'Format of response: "json" or "csv" for spreadsheet export.',
+            },
+            {
               name: 'limit',
               in: 'query',
               required: false,
@@ -497,6 +525,117 @@ export async function GET(req: NextRequest) {
           },
           responses: {
             '200': { description: 'Daily log saved successfully.' },
+          },
+        },
+      },
+      '/api/chatgpt/analytics': {
+        get: {
+          operationId: 'getWorkspaceAnalytics',
+          summary: 'Get workspace execution analytics & velocity',
+          description:
+            'Returns comprehensive sprint progress, completion rate percentage, total focus hours, 7-day velocity trend, priority breakdown, and project completion rates.',
+          responses: {
+            '200': { description: 'Analytics and sprint progress.' },
+          },
+        },
+      },
+      '/api/chatgpt/meetings': {
+        get: {
+          operationId: 'listMeetings',
+          summary: 'List and search Fathom video meetings',
+          description:
+            'Fetches historical Fathom AI meeting recordings with filtering by keyword search, specific date (YYYY-MM-DD), attendee name, or limit.',
+          parameters: [
+            {
+              name: 'search',
+              in: 'query',
+              required: false,
+              schema: { type: 'string' },
+              description: 'Search keyword matching meeting title, attendee, or summary.',
+            },
+            {
+              name: 'date',
+              in: 'query',
+              required: false,
+              schema: { type: 'string' },
+              description: 'Filter meetings on a specific date (YYYY-MM-DD).',
+            },
+            {
+              name: 'attendee',
+              in: 'query',
+              required: false,
+              schema: { type: 'string' },
+              description: 'Filter meetings containing a specific attendee name.',
+            },
+            {
+              name: 'limit',
+              in: 'query',
+              required: false,
+              schema: { type: 'integer', default: 25 },
+              description: 'Max number of meetings to return.',
+            },
+          ],
+          responses: {
+            '200': { description: 'List of meetings.' },
+          },
+        },
+      },
+      '/api/chatgpt/meetings/{id}': {
+        get: {
+          operationId: 'getMeetingDetail',
+          summary: 'Get Fathom meeting recording details & transcript',
+          description:
+            'Retrieves the direct Fathom AI markdown summary, action items with assignees, and verbatim timestamped transcript for a specific recording ID.',
+          parameters: [
+            {
+              name: 'id',
+              in: 'path',
+              required: true,
+              schema: { type: 'string' },
+              description: 'Fathom recording ID (numeric or string).',
+            },
+          ],
+          responses: {
+            '200': { description: 'Meeting recording details, summary, and transcript.' },
+          },
+        },
+      },
+      '/api/chatgpt/meetings/{id}/convert-action': {
+        post: {
+          operationId: 'convertMeetingActionToTask',
+          summary: 'Convert meeting action item into a task',
+          description:
+            'Converts an action item or discussion takeaway from a Fathom meeting into a real workspace task.',
+          parameters: [
+            {
+              name: 'id',
+              in: 'path',
+              required: true,
+              schema: { type: 'string' },
+              description: 'Fathom recording ID.',
+            },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['title'],
+                  properties: {
+                    title: { type: 'string', description: 'Title or description of the action item.' },
+                    assignee: { type: 'string', description: 'Assignee name from the meeting.' },
+                    priority: { type: 'string', enum: ['p0', 'p1', 'p2', 'p3'], default: 'p1' },
+                    project_id: { type: 'string', description: 'Optional project UUID to attach the task to.' },
+                    due_date: { type: 'string', format: 'date-time', description: 'Optional deadline.' },
+                    time_box_minutes: { type: 'integer', default: 45 },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '200': { description: 'Action item converted to task successfully.' },
           },
         },
       },

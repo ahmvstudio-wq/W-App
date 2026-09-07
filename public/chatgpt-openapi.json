@@ -2,21 +2,21 @@
   "openapi": "3.1.0",
   "info": {
     "title": "CallMy Mgmt AI Chief of Staff API",
-    "description": "Official API for ChatGPT Custom GPT Actions to read and manage tasks, projects, documents, blockers, and daily logs in CallMy Mgmt.",
-    "version": "1.0.0"
+    "description": "Official API for ChatGPT Custom GPT Actions to read and manage tasks, projects, documents, blockers, Fathom meetings, and execution analytics in CallMy Mgmt.",
+    "version": "2.0.0"
   },
   "servers": [
     {
       "url": "https://callmy-mgmt.vercel.app",
-      "description": "Focus OS Production Server"
+      "description": "Production Server"
     }
   ],
   "paths": {
     "/api/chatgpt/overview": {
       "get": {
         "operationId": "getWorkspaceOverview",
-        "summary": "Get workspace overview",
-        "description": "Fetches a comprehensive workspace snapshot including urgent P0/P1 tasks, active projects, current blockers, and recent daily logs.",
+        "summary": "Get workspace overview & sprint health",
+        "description": "Fetches a comprehensive workspace snapshot including urgent P0/P1 tasks, active projects, current blockers, recent daily logs, Fathom meetings summary, and sprint completion percentage.",
         "responses": {
           "200": {
             "description": "Workspace overview fetched successfully."
@@ -24,11 +24,23 @@
         }
       }
     },
+    "/api/chatgpt/analytics": {
+      "get": {
+        "operationId": "getWorkspaceAnalytics",
+        "summary": "Get workspace execution analytics & velocity",
+        "description": "Returns comprehensive sprint progress, completion rate percentage, total focus hours, 7-day velocity trend, priority breakdown, and project completion rates.",
+        "responses": {
+          "200": {
+            "description": "Analytics and sprint progress."
+          }
+        }
+      }
+    },
     "/api/chatgpt/tasks": {
       "get": {
         "operationId": "listTasks",
-        "summary": "List and search tasks",
-        "description": "Lists tasks with optional filtering by status, priority, project_id, or search keyword.",
+        "summary": "List and search tasks with point-in-time date filtering",
+        "description": "Lists tasks with optional filtering by status, priority, project_id, search keyword, or specific date (YYYY-MM-DD) for historical status.",
         "parameters": [
           {
             "name": "status",
@@ -36,9 +48,16 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": ["todo", "in_progress", "blocked", "shipped", "killed", "active"]
+              "enum": [
+                "todo",
+                "in_progress",
+                "blocked",
+                "shipped",
+                "killed",
+                "active"
+              ]
             },
-            "description": "Filter by task status. 'active' includes todo, in_progress, and blocked."
+            "description": "Filter by task status."
           },
           {
             "name": "priority",
@@ -46,9 +65,14 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": ["p0", "p1", "p2", "p3"]
+              "enum": [
+                "p0",
+                "p1",
+                "p2",
+                "p3"
+              ]
             },
-            "description": "Filter by priority level (p0 = critical/highest, p3 = low)."
+            "description": "Filter by priority level."
           },
           {
             "name": "project_id",
@@ -57,7 +81,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "Filter tasks belonging to a specific project ID."
+            "description": "Filter tasks belonging to project UUID."
           },
           {
             "name": "search",
@@ -66,7 +90,47 @@
             "schema": {
               "type": "string"
             },
-            "description": "Search string to match against task title."
+            "description": "Search keyword matching title."
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Point-in-time historical date (YYYY-MM-DD)."
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter tasks created after this ISO date."
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter tasks created before this ISO date."
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "json",
+                "csv"
+              ]
+            },
+            "description": "Format of output: json or csv."
           },
           {
             "name": "limit",
@@ -76,7 +140,7 @@
               "type": "integer",
               "default": 50
             },
-            "description": "Maximum number of tasks to return."
+            "description": "Max items."
           }
         ],
         "responses": {
@@ -88,56 +152,62 @@
       "post": {
         "operationId": "createTask",
         "summary": "Create a new task",
-        "description": "Creates a new task in Focus OS. Can specify project_id, priority (p0-p3), time box, and due date.",
+        "description": "Creates a new task in CallMy Mgmt.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["title"],
+                "required": [
+                  "title"
+                ],
                 "properties": {
                   "title": {
                     "type": "string",
-                    "description": "The title of the task."
+                    "description": "Task title."
                   },
                   "description": {
                     "type": "string",
-                    "description": "Detailed description or instructions for the task."
+                    "description": "Task description."
                   },
                   "priority": {
                     "type": "string",
-                    "enum": ["p0", "p1", "p2", "p3"],
-                    "default": "p2",
-                    "description": "Priority level: p0 (critical), p1 (high), p2 (medium), p3 (low)."
+                    "enum": [
+                      "p0",
+                      "p1",
+                      "p2",
+                      "p3"
+                    ],
+                    "default": "p2"
                   },
                   "status": {
                     "type": "string",
-                    "enum": ["todo", "in_progress", "blocked", "shipped", "killed"],
-                    "default": "todo",
-                    "description": "Initial status of the task."
+                    "enum": [
+                      "todo",
+                      "in_progress",
+                      "blocked",
+                      "shipped",
+                      "killed"
+                    ],
+                    "default": "todo"
                   },
                   "project_id": {
-                    "type": "string",
-                    "description": "Optional UUID of the project this task belongs to."
+                    "type": "string"
                   },
                   "due_date": {
                     "type": "string",
-                    "format": "date-time",
-                    "description": "ISO 8601 due date for the task."
+                    "format": "date-time"
                   },
                   "time_box_minutes": {
                     "type": "integer",
-                    "default": 60,
-                    "description": "Estimated focus time box in minutes."
+                    "default": 60
                   },
                   "output_description": {
-                    "type": "string",
-                    "description": "Clear definition of what output constitutes completion."
+                    "type": "string"
                   },
                   "blocked_reason": {
-                    "type": "string",
-                    "description": "If status is blocked, explain the blocker."
+                    "type": "string"
                   }
                 }
               }
@@ -153,29 +223,62 @@
       "patch": {
         "operationId": "updateTask",
         "summary": "Update a task",
-        "description": "Updates a task by providing the task ID in the request body.",
+        "description": "Updates a task by task ID in the request body.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["id"],
+                "required": [
+                  "id"
+                ],
                 "properties": {
                   "id": {
                     "type": "string",
-                    "description": "The UUID of the task to update."
+                    "description": "Task UUID."
                   },
-                  "title": { "type": "string" },
-                  "description": { "type": "string" },
-                  "priority": { "type": "string", "enum": ["p0", "p1", "p2", "p3"] },
-                  "status": { "type": "string", "enum": ["todo", "in_progress", "blocked", "shipped", "killed"] },
-                  "project_id": { "type": "string" },
-                  "due_date": { "type": "string", "format": "date-time" },
-                  "time_box_minutes": { "type": "integer" },
-                  "output_description": { "type": "string" },
-                  "blocked_reason": { "type": "string" },
-                  "completed_at": { "type": "string", "format": "date-time" }
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "priority": {
+                    "type": "string",
+                    "enum": [
+                      "p0",
+                      "p1",
+                      "p2",
+                      "p3"
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "todo",
+                      "in_progress",
+                      "blocked",
+                      "shipped",
+                      "killed"
+                    ]
+                  },
+                  "project_id": {
+                    "type": "string"
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "time_box_minutes": {
+                    "type": "integer"
+                  },
+                  "output_description": {
+                    "type": "string"
+                  },
+                  "blocked_reason": {
+                    "type": "string"
+                  }
                 }
               }
             }
@@ -197,12 +300,15 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
-            "description": "UUID of the task."
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "200": { "description": "Task details." }
+          "200": {
+            "description": "Task details."
+          }
         }
       },
       "patch": {
@@ -213,8 +319,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
-            "description": "UUID of the task."
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -224,22 +331,50 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "title": { "type": "string" },
-                  "description": { "type": "string" },
-                  "priority": { "type": "string", "enum": ["p0", "p1", "p2", "p3"] },
-                  "status": { "type": "string", "enum": ["todo", "in_progress", "blocked", "shipped", "killed"] },
-                  "project_id": { "type": "string" },
-                  "due_date": { "type": "string", "format": "date-time" },
-                  "time_box_minutes": { "type": "integer" },
-                  "output_description": { "type": "string" },
-                  "blocked_reason": { "type": "string" }
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "priority": {
+                    "type": "string",
+                    "enum": [
+                      "p0",
+                      "p1",
+                      "p2",
+                      "p3"
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "todo",
+                      "in_progress",
+                      "blocked",
+                      "shipped",
+                      "killed"
+                    ]
+                  },
+                  "project_id": {
+                    "type": "string"
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "time_box_minutes": {
+                    "type": "integer"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Task updated successfully." }
+          "200": {
+            "description": "Task updated."
+          }
         }
       },
       "delete": {
@@ -250,12 +385,15 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
-            "description": "UUID of the task to delete."
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "200": { "description": "Task deleted successfully." }
+          "200": {
+            "description": "Task deleted."
+          }
         }
       }
     },
@@ -263,7 +401,6 @@
       "get": {
         "operationId": "listProjects",
         "summary": "List projects",
-        "description": "Lists all projects with their task progress and status.",
         "parameters": [
           {
             "name": "status",
@@ -271,9 +408,13 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": ["active", "paused", "killed", "shipped"]
-            },
-            "description": "Filter by project status."
+              "enum": [
+                "active",
+                "paused",
+                "killed",
+                "shipped"
+              ]
+            }
           },
           {
             "name": "priority",
@@ -281,56 +422,87 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": ["p0", "p1", "p2", "p3"]
+              "enum": [
+                "p0",
+                "p1",
+                "p2",
+                "p3"
+              ]
             }
           },
           {
             "name": "search",
             "in": "query",
             "required": false,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "200": { "description": "List of projects." }
+          "200": {
+            "description": "List of projects."
+          }
         }
       },
       "post": {
         "operationId": "createProject",
-        "summary": "Create a new project",
-        "description": "Creates a new project in Focus OS.",
+        "summary": "Create project",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["name"],
+                "required": [
+                  "name"
+                ],
                 "properties": {
-                  "name": { "type": "string", "description": "Name of the project." },
-                  "description": { "type": "string", "description": "Description of the project." },
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
                   "status": {
                     "type": "string",
-                    "enum": ["active", "paused", "killed", "shipped"],
+                    "enum": [
+                      "active",
+                      "paused",
+                      "killed",
+                      "shipped"
+                    ],
                     "default": "active"
                   },
                   "priority": {
                     "type": "string",
-                    "enum": ["p0", "p1", "p2", "p3"],
+                    "enum": [
+                      "p0",
+                      "p1",
+                      "p2",
+                      "p3"
+                    ],
                     "default": "p1"
                   },
-                  "deadline": { "type": "string", "format": "date-time", "description": "Deadline ISO date." },
-                  "success_metric": { "type": "string", "description": "What defines success for this project?" },
-                  "kill_condition": { "type": "string", "description": "When should this project be killed/abandoned?" },
-                  "min_shippable_version": { "type": "string", "description": "Minimum viable shippable scope." },
-                  "color": { "type": "string", "default": "#c8f135" }
+                  "deadline": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "success_metric": {
+                    "type": "string"
+                  },
+                  "min_shippable_version": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Project created successfully." }
+          "200": {
+            "description": "Project created."
+          }
         }
       }
     },
@@ -343,11 +515,15 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "200": { "description": "Project details." }
+          "200": {
+            "description": "Project details."
+          }
         }
       },
       "patch": {
@@ -358,7 +534,9 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -368,37 +546,183 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "description": { "type": "string" },
-                  "status": { "type": "string", "enum": ["active", "paused", "killed", "shipped"] },
-                  "priority": { "type": "string", "enum": ["p0", "p1", "p2", "p3"] },
-                  "deadline": { "type": "string", "format": "date-time" },
-                  "success_metric": { "type": "string" },
-                  "kill_condition": { "type": "string" },
-                  "min_shippable_version": { "type": "string" },
-                  "color": { "type": "string" }
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "active",
+                      "paused",
+                      "killed",
+                      "shipped"
+                    ]
+                  },
+                  "priority": {
+                    "type": "string",
+                    "enum": [
+                      "p0",
+                      "p1",
+                      "p2",
+                      "p3"
+                    ]
+                  },
+                  "deadline": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Project updated successfully." }
+          "200": {
+            "description": "Project updated."
+          }
         }
-      },
-      "delete": {
-        "operationId": "deleteProjectById",
-        "summary": "Delete project by ID",
+      }
+    },
+    "/api/chatgpt/meetings": {
+      "get": {
+        "operationId": "listMeetings",
+        "summary": "List and search Fathom video meetings",
+        "description": "Fetches historical Fathom AI meeting recordings with filtering by keyword search, specific date (YYYY-MM-DD), attendee name, or limit.",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search keyword matching title, attendee, or summary."
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter meetings on a specific date (YYYY-MM-DD)."
+          },
+          {
+            "name": "attendee",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter meetings containing a specific attendee name."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 25
+            },
+            "description": "Max meetings to return."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of meetings."
+          }
+        }
+      }
+    },
+    "/api/chatgpt/meetings/{id}": {
+      "get": {
+        "operationId": "getMeetingDetail",
+        "summary": "Get Fathom meeting recording details & transcript",
+        "description": "Retrieves direct Fathom AI markdown summary, action items with assignees, and verbatim timestamped transcript for a recording ID.",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fathom recording ID."
           }
         ],
         "responses": {
-          "200": { "description": "Project deleted successfully." }
+          "200": {
+            "description": "Meeting recording details, summary, and transcript."
+          }
+        }
+      }
+    },
+    "/api/chatgpt/meetings/{id}/convert-action": {
+      "post": {
+        "operationId": "convertMeetingActionToTask",
+        "summary": "Convert meeting action item into a task",
+        "description": "Converts an action item or takeaway from a Fathom meeting into a real workspace task in CallMy Mgmt.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Fathom recording ID."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "title"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Action item title."
+                  },
+                  "assignee": {
+                    "type": "string"
+                  },
+                  "priority": {
+                    "type": "string",
+                    "enum": [
+                      "p0",
+                      "p1",
+                      "p2",
+                      "p3"
+                    ],
+                    "default": "p1"
+                  },
+                  "project_id": {
+                    "type": "string"
+                  },
+                  "due_date": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "time_box_minutes": {
+                    "type": "integer",
+                    "default": 45
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Action item converted to task."
+          }
         }
       }
     },
@@ -411,37 +735,46 @@
             "name": "project_id",
             "in": "query",
             "required": false,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "search",
             "in": "query",
             "required": false,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "200": { "description": "List of documents." }
+          "200": {
+            "description": "List of documents."
+          }
         }
       },
       "post": {
         "operationId": "createDocument",
-        "summary": "Create document or note",
+        "summary": "Create document",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["title"],
+                "required": [
+                  "title"
+                ],
                 "properties": {
-                  "title": { "type": "string", "description": "Title of the document." },
-                  "content": { "type": "string", "description": "Plain text or markdown content of the document." },
-                  "project_id": { "type": "string", "description": "Optional project ID link." },
-                  "status": {
-                    "type": "string",
-                    "enum": ["live", "reference", "archive", "delete"],
-                    "default": "live"
+                  "title": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "project_id": {
+                    "type": "string"
                   }
                 }
               }
@@ -449,7 +782,9 @@
           }
         },
         "responses": {
-          "200": { "description": "Document created successfully." }
+          "200": {
+            "description": "Document created."
+          }
         }
       }
     },
@@ -458,12 +793,14 @@
         "operationId": "listDailyLogs",
         "summary": "Get recent daily logs",
         "responses": {
-          "200": { "description": "Recent daily logs." }
+          "200": {
+            "description": "Recent daily logs."
+          }
         }
       },
       "post": {
         "operationId": "saveDailyLog",
-        "summary": "Save or update daily recap log",
+        "summary": "Save daily log",
         "requestBody": {
           "required": true,
           "content": {
@@ -471,25 +808,69 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "date": { "type": "string", "format": "date", "description": "YYYY-MM-DD date" },
-                  "notes": { "type": "string", "description": "Daily summary notes or morning brief." },
-                  "tomorrows_priority": { "type": "string", "description": "The top priority for tomorrow." },
-                  "tasks_shipped": { "type": "integer" },
-                  "tasks_created": { "type": "integer" },
-                  "blockers_resolved": { "type": "integer" }
+                  "date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "tomorrows_priority": {
+                    "type": "string"
+                  },
+                  "tasks_shipped": {
+                    "type": "integer"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Daily log saved successfully." }
+          "200": {
+            "description": "Daily log saved."
+          }
+        }
+      }
+    },
+    "/api/chatgpt/synthesize": {
+      "post": {
+        "operationId": "synthesizePlan",
+        "summary": "Synthesize raw brain dump into phased project/task plan",
+        "description": "Decomposes raw natural language brain dump or meeting notes into a phased project or task plan with optional auto-commit to database.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "text"
+                ],
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "Brain dump text or meeting notes."
+                  },
+                  "auto_commit": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, automatically creates the project and tasks in the database."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plan synthesized successfully."
+          }
         }
       }
     }
   },
   "components": {
-    "schemas": {},
     "securitySchemes": {
       "BearerAuth": {
         "type": "http",
