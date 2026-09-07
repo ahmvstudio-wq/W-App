@@ -41,9 +41,13 @@ export default function DashboardPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => fetchData(true))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => fetchData(true))
       .subscribe()
+
+    const handleWsChanged = () => fetchData(false)
+    window.addEventListener('workspace-changed', handleWsChanged)
       
     return () => {
       supabase.removeChannel(channel)
+      window.removeEventListener('workspace-changed', handleWsChanged)
     }
   }, [])
 
@@ -55,15 +59,24 @@ export default function DashboardPage() {
 
     setUserName(session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Founder')
 
-    const { data: tasksData } = await supabase
+    const activeWsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+    let tasksQuery = supabase
       .from('tasks')
       .select('*, owner:profiles(*), project:projects(*)')
       .order('created_at', { ascending: false })
-      
-    const { data: projectsData } = await supabase
+
+    let projectsQuery = supabase
       .from('projects')
       .select('*, owner:profiles(*), tasks(*)')
       .order('updated_at', { ascending: false })
+
+    if (activeWsId) {
+      tasksQuery = tasksQuery.eq('workspace_id', activeWsId)
+      projectsQuery = projectsQuery.eq('workspace_id', activeWsId)
+    }
+
+    const { data: tasksData } = await tasksQuery
+    const { data: projectsData } = await projectsQuery
 
     const activeTasks = tasksData || []
     const activeProjects = projectsData || []

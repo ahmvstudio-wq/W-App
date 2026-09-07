@@ -14,6 +14,8 @@ import CommandPalette from '@/components/CommandPalette'
 import FocusTimer from '@/components/FocusTimer'
 import CreateTaskModal from '@/components/CreateTaskModal'
 import NaturalLanguageInputModal from '@/components/NaturalLanguageInputModal'
+import { WorkspaceProvider } from '@/context/WorkspaceContext'
+import WorkspaceSwitcher from '@/components/WorkspaceSwitcher'
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -121,23 +123,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#fbfbfd] text-[#111827] font-sans selection:bg-black/10 flex flex-col relative">
-      <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
-      {isCreateTaskOpen && (
-        <CreateTaskModal onClose={() => setIsCreateTaskOpen(false)} onSuccess={() => {}} />
-      )}
-      <FocusTimer />
+    <WorkspaceProvider>
+      <div className="min-h-screen bg-[#fbfbfd] text-[#111827] font-sans selection:bg-black/10 flex flex-col relative">
+        <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
+        {isCreateTaskOpen && (
+          <CreateTaskModal onClose={() => setIsCreateTaskOpen(false)} onSuccess={() => {}} />
+        )}
+        <FocusTimer />
 
-      {/* Minimalist Top Navigation Bar */}
-      <header className="sticky top-0 z-40 h-16 bg-white/80 backdrop-blur-xl border-b border-black/[0.06] px-6 sm:px-10 flex items-center justify-between">
-        {/* Left: Brand Identity */}
-        <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="flex items-center group">
-            <span className="font-normal text-sm tracking-tight text-black group-hover:opacity-80 transition-opacity">
-              CallMy Mgmt
-            </span>
-          </Link>
-        </div>
+        {/* Minimalist Top Navigation Bar */}
+        <header className="sticky top-0 z-40 h-16 bg-white/80 backdrop-blur-xl border-b border-black/[0.06] px-6 sm:px-10 flex items-center justify-between">
+          {/* Left: Brand Identity & Workspace Switcher */}
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard" className="flex items-center group">
+              <span className="font-normal text-sm tracking-tight text-black group-hover:opacity-80 transition-opacity">
+                CallMy Mgmt
+              </span>
+            </Link>
+            <div className="h-4 w-px bg-black/[0.08]" />
+            <WorkspaceSwitcher />
+          </div>
 
         {/* Center: Minimalist Navigation Pills */}
         <nav className="hidden md:flex items-center gap-1 bg-[#f5f5f7] border border-black/[0.04] p-1 rounded-2xl font-body">
@@ -281,6 +286,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         isOpen={isSynthesizeOpen}
         onClose={() => setIsSynthesizeOpen(false)}
       />
-    </div>
+      </div>
+    </WorkspaceProvider>
   )
 }

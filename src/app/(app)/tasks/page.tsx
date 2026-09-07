@@ -39,10 +39,17 @@ export default function TasksPage() {
   async function fetchTasks(silent = false) {
     if (!silent) setLoading(true)
     try {
-      const { data, error } = await supabase
+      const activeWsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+      let query = supabase
         .from('tasks')
         .select('*, owner:profiles(*), project:projects(*)')
         .order('created_at', { ascending: false })
+
+      if (activeWsId) {
+        query = query.eq('workspace_id', activeWsId)
+      }
+      
+      const { data, error } = await query
       
       if (error) {
         toast.error(`Fetch failed: ${error.message}`)
@@ -68,9 +75,13 @@ export default function TasksPage() {
         fetchTasks(true)
       })
       .subscribe()
+
+    const handleWsChanged = () => fetchTasks(false)
+    window.addEventListener('workspace-changed', handleWsChanged)
       
     return () => {
       supabase.removeChannel(channel)
+      window.removeEventListener('workspace-changed', handleWsChanged)
     }
   }, [])
 

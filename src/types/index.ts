@@ -17,12 +17,46 @@ export interface User {
   }
 }
 
+export type WorkspaceRole = 'owner' | 'admin' | 'member' | 'viewer'
+
+export interface WorkspaceMember {
+  id: string
+  workspace_id: string
+  user_id: string
+  role: WorkspaceRole
+  invited_by?: string | null
+  created_at: string
+  profile?: {
+    id: string
+    name: string | null
+    avatar_url: string | null
+    email?: string | null
+  }
+}
+
+export interface WorkspaceInvite {
+  id: string
+  workspace_id: string
+  email: string
+  role: WorkspaceRole
+  token: string
+  invited_by?: string | null
+  accepted_at?: string | null
+  created_at: string
+  expires_at: string
+}
+
 export interface Workspace {
   id: string
   name: string
+  slug?: string
   owner_id: string
-  members: { user_id: string; role: 'owner' | 'admin' | 'member' }[]
+  settings?: Record<string, any>
   created_at: string
+  updated_at?: string
+  members?: WorkspaceMember[]
+  role?: WorkspaceRole
+  member_count?: number
 }
 
 export interface Project {

@@ -36,6 +36,30 @@ CREATE TABLE workspaces (
   updated_at timestamptz DEFAULT now()
 );
 
+-- WORKSPACE MEMBERS
+CREATE TABLE workspace_members (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  workspace_id uuid REFERENCES workspaces(id) ON DELETE CASCADE NOT NULL,
+  user_id uuid REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  role text DEFAULT 'member' CHECK (role IN ('owner', 'admin', 'member', 'viewer')) NOT NULL,
+  invited_by uuid REFERENCES profiles(id) ON DELETE SET NULL,
+  created_at timestamptz DEFAULT now() NOT NULL,
+  UNIQUE(workspace_id, user_id)
+);
+
+-- WORKSPACE INVITES
+CREATE TABLE workspace_invites (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  workspace_id uuid REFERENCES workspaces(id) ON DELETE CASCADE NOT NULL,
+  email text NOT NULL,
+  role text DEFAULT 'member' CHECK (role IN ('admin', 'member', 'viewer')) NOT NULL,
+  token text UNIQUE NOT NULL,
+  invited_by uuid REFERENCES profiles(id) ON DELETE SET NULL,
+  accepted_at timestamptz,
+  created_at timestamptz DEFAULT now() NOT NULL,
+  expires_at timestamptz DEFAULT (now() + interval '7 days') NOT NULL
+);
+
 -- PROJECTS
 CREATE TABLE projects (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -183,6 +207,48 @@ ALTER TABLE meetings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE daily_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE focus_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workspace_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workspace_invites ENABLE ROW LEVEL SECURITY;
+
+-- HELPER SECURITY DEFINER FUNCTIONS (Prevents RLS recursion)
+CREATE OR REPLACE FUNCTION public.is_workspace_member(ws_id uuid)
+RETURNS boolean AS $$
+BEGIN
+  IF ws_id IS NULL THEN
+    RETURN false;
+  END IF;
+
+  RETURN EXISTS (
+    SELECT 1 FROM public.workspace_members
+    WHERE workspace_id = ws_id AND user_id = auth.uid()
+  ) OR EXISTS (
+    SELECT 1 FROM public.workspaces
+    WHERE id = ws_id AND owner_id = auth.uid()
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+CREATE OR REPLACE FUNCTION public.get_workspace_user_role(ws_id uuid)
+RETURNS text AS $$
+DECLARE
+  v_role text;
+BEGIN
+  IF ws_id IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM public.workspaces WHERE id = ws_id AND owner_id = auth.uid()) THEN
+    RETURN 'owner';
+  END IF;
+
+  SELECT role INTO v_role
+  FROM public.workspace_members
+  WHERE workspace_id = ws_id AND user_id = auth.uid()
+  LIMIT 1;
+
+  RETURN v_role;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 
 -- CREATE RLS SECURITY POLICIES
 
@@ -195,28 +261,38 @@ CREATE POLICY "Allow user to insert own profile" ON profiles
   FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
 
 -- workspaces
-CREATE POLICY "Allow user to manage own workspaces" ON workspaces 
-  FOR ALL TO authenticated USING (auth.uid() = owner_id) WITH CHECK (auth.uid() = owner_id);
+CREATE POLICY "Members can view workspace" ON workspaces 
+  FOR SELECT TO authenticated USING (owner_id = auth.uid() OR public.is_workspace_member(id));
+CREATE POLICY "Owners and admins can update workspace" ON workspaces 
+  FOR UPDATE TO authenticated USING (owner_id = auth.uid() OR public.get_workspace_user_role(id) IN ('owner', 'admin')) WITH CHECK (owner_id = auth.uid() OR public.get_workspace_user_role(id) IN ('owner', 'admin'));
+CREATE POLICY "Authenticated users can create workspaces" ON workspaces 
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = owner_id);
+
+-- workspace_members
+CREATE POLICY "Members can view workspace membership" ON workspace_members
+  FOR SELECT TO authenticated USING (user_id = auth.uid() OR public.is_workspace_member(workspace_id));
+CREATE POLICY "Owners and admins can manage members" ON workspace_members
+  FOR ALL TO authenticated USING (public.get_workspace_user_role(workspace_id) IN ('owner', 'admin')) WITH CHECK (public.get_workspace_user_role(workspace_id) IN ('owner', 'admin'));
 
 -- projects
-CREATE POLICY "Allow user to manage own projects" ON projects 
-  FOR ALL TO authenticated USING (auth.uid() = owner_id) WITH CHECK (auth.uid() = owner_id);
+CREATE POLICY "Workspace members can access projects" ON projects 
+  FOR ALL TO authenticated USING (owner_id = auth.uid() OR public.is_workspace_member(workspace_id)) WITH CHECK (owner_id = auth.uid() OR public.is_workspace_member(workspace_id));
 
 -- tasks
-CREATE POLICY "Allow user to manage own tasks" ON tasks 
-  FOR ALL TO authenticated USING (auth.uid() = owner_id) WITH CHECK (auth.uid() = owner_id);
+CREATE POLICY "Workspace members can access tasks" ON tasks 
+  FOR ALL TO authenticated USING (owner_id = auth.uid() OR public.is_workspace_member(workspace_id)) WITH CHECK (owner_id = auth.uid() OR public.is_workspace_member(workspace_id));
 
 -- assets
-CREATE POLICY "Allow user to manage own assets" ON assets 
-  FOR ALL TO authenticated USING (auth.uid() = uploaded_by) WITH CHECK (auth.uid() = uploaded_by);
+CREATE POLICY "Workspace members can access assets" ON assets 
+  FOR ALL TO authenticated USING (uploaded_by = auth.uid() OR public.is_workspace_member(workspace_id)) WITH CHECK (uploaded_by = auth.uid() OR public.is_workspace_member(workspace_id));
 
 -- documents
-CREATE POLICY "Allow user to manage own documents" ON documents 
-  FOR ALL TO authenticated USING (auth.uid() = owner_id) WITH CHECK (auth.uid() = owner_id);
+CREATE POLICY "Workspace members can access documents" ON documents 
+  FOR ALL TO authenticated USING (owner_id = auth.uid() OR public.is_workspace_member(workspace_id)) WITH CHECK (owner_id = auth.uid() OR public.is_workspace_member(workspace_id));
 
 -- meetings
-CREATE POLICY "Allow user to manage own meetings" ON meetings 
-  FOR ALL TO authenticated USING (auth.uid() = owner_id) WITH CHECK (auth.uid() = owner_id);
+CREATE POLICY "Workspace members can access meetings" ON meetings 
+  FOR ALL TO authenticated USING (owner_id = auth.uid() OR public.is_workspace_member(workspace_id)) WITH CHECK (owner_id = auth.uid() OR public.is_workspace_member(workspace_id));
 
 -- daily_logs
 CREATE POLICY "Allow user to manage own daily_logs" ON daily_logs 

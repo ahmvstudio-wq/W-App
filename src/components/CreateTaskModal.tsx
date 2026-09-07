@@ -126,8 +126,11 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId, 
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
 
-      let { data: workspaces } = await supabase.from('workspaces').select('id').eq('owner_id', session.user.id).limit(1)
-      let workspaceId = workspaces?.[0]?.id
+      let workspaceId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+      if (!workspaceId) {
+        let { data: workspaces } = await supabase.from('workspaces').select('id').eq('owner_id', session.user.id).limit(1)
+        workspaceId = workspaces?.[0]?.id
+      }
 
       if (!workspaceId) {
         const { data: newWs } = await supabase.from('workspaces').insert({

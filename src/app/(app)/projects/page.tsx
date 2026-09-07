@@ -105,10 +105,17 @@ export default function ProjectsPage() {
 
   async function fetchProjects() {
     setLoading(true)
-    const { data } = await supabase
+    const activeWsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+    let query = supabase
       .from('projects')
       .select('*, tasks(*)')
       .order('updated_at', { ascending: false })
+
+    if (activeWsId) {
+      query = query.eq('workspace_id', activeWsId)
+    }
+    
+    const { data } = await query
     
     if (data) {
       // Ensure master_project defaults to "Tadbeer TT" if not set
@@ -141,6 +148,9 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     fetchProjects()
+    const handleWsChanged = () => fetchProjects()
+    window.addEventListener('workspace-changed', handleWsChanged)
+    return () => window.removeEventListener('workspace-changed', handleWsChanged)
   }, [])
 
   // All distinct Master Project names
@@ -897,8 +907,11 @@ function CreateProjectWizard({
       return
     }
 
-    let { data: workspaces } = await supabase.from('workspaces').select('id').eq('owner_id', session.user.id).limit(1)
-    let workspaceId = workspaces?.[0]?.id
+    let workspaceId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+    if (!workspaceId) {
+      let { data: workspaces } = await supabase.from('workspaces').select('id').eq('owner_id', session.user.id).limit(1)
+      workspaceId = workspaces?.[0]?.id
+    }
 
     if (!workspaceId) {
       const { data: newWs } = await supabase.from('workspaces').insert({
