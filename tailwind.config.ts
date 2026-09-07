@@ -54,15 +54,20 @@ const config: Config = {
           '0%, 100%': { opacity: '0.4', transform: 'scale(1)' },
           '50%': { opacity: '0.8', transform: 'scale(1.05)' },
         },
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-6px)' },
+        floatSlow: {
+          '0%, 100%': { transform: 'translate3d(0, 0px, 0)' },
+          '50%': { transform: 'translate3d(0, -14px, 0)' },
+        },
+        floatReverse: {
+          '0%, 100%': { transform: 'translate3d(0, 0px, 0)' },
+          '50%': { transform: 'translate3d(0, 14px, 0)' },
         },
       },
       animation: {
         radar: 'radar 8s linear infinite',
         pulseGlow: 'pulseGlow 3s ease-in-out infinite',
-        float: 'float 5s ease-in-out infinite',
+        'float-slow': 'floatSlow 4s ease-in-out infinite',
+        'float-reverse': 'floatReverse 4.5s ease-in-out infinite 0.5s',
       },
     },
   },

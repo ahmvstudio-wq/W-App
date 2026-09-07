@@ -145,13 +145,15 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-.animate-float {
-  animation: float-slow 5s ease-in-out infinite;
+.animate-float,
+.animate-float-slow {
+  animation: float-slow 4s ease-in-out infinite;
   will-change: transform;
 }
 
-.animate-float-delayed {
-  animation: float-delayed 6s ease-in-out infinite 1s;
+.animate-float-delayed,
+.animate-float-reverse {
+  animation: float-delayed 4.5s ease-in-out infinite 0.5s;
   will-change: transform;
 }
 
