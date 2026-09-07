@@ -42,6 +42,7 @@ export default function SettingsPage() {
   const [inviteRole, setInviteRole] = useState<'admin' | 'member' | 'viewer'>('member')
   const [inviting, setInviting] = useState(false)
   const [showSqlMigration, setShowSqlMigration] = useState(false)
+  const [showAdvancedOAuth, setShowAdvancedOAuth] = useState(false)
 
   const [fathomKey, setFathomKey] = useState('')
   const [savingFathomKey, setSavingFathomKey] = useState(false)
@@ -86,7 +87,8 @@ export default function SettingsPage() {
 
   const getCalendarFeedUrl = () => {
     if (typeof window === 'undefined') return '/api/calendar/feed.ics'
-    return `${window.location.origin}/api/calendar/feed.ics`
+    const wsParam = currentWorkspace?.id ? `?workspace_id=${currentWorkspace.id}` : ''
+    return `${window.location.origin}/api/calendar/feed.ics${wsParam}`
   }
 
   const copyFeedUrl = () => {
@@ -311,59 +313,97 @@ export default function SettingsPage() {
                   </div>
                 )}
 
-                {/* Option A: 1-Click Calendar Feed URL */}
-                <div className="p-4 rounded-xl bg-white border border-black/[0.06] space-y-2.5">
+                {/* Option A: Universal Live Calendar Feed (Zero Verification Required) */}
+                <div className="p-4 rounded-xl bg-white border border-black/[0.06] space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono text-black font-medium uppercase">
-                      1-Click Live Calendar Feed (Recommended)
+                    <span className="text-[11px] font-mono text-black font-medium uppercase flex items-center gap-1.5">
+                      <span>Universal Live Calendar Feed</span>
+                      <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-normal">
+                        Zero Verification Needed
+                      </span>
                     </span>
-                    <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                      Live iCal (.ics)
+                    <span className="text-[10px] font-mono text-[#8a8d95]">
+                      RFC 5545 iCal
                     </span>
                   </div>
                   <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-                    Subscribe from Google Calendar, Apple Calendar, or Outlook. Automatically pulls all scheduled tasks and deadlines.
+                    Syncs all workspace tasks, timeboxes, and deadlines live into Google Calendar, Apple Calendar (iPhone/Mac), or Outlook. Does not require any Google verification or OAuth approvals.
                   </p>
 
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
                     <input
                       type="text"
                       readOnly
                       value={getCalendarFeedUrl()}
-                      className="flex-1 px-3.5 py-2 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-xs font-mono text-black outline-none select-all"
+                      className="flex-1 min-w-[220px] px-3.5 py-2 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-xs font-mono text-black outline-none select-all"
                     />
                     <button
+                      type="button"
                       onClick={copyFeedUrl}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs"
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] rounded-xl text-xs font-normal transition-all cursor-pointer shadow-2xs whitespace-nowrap"
                     >
-                      {copiedFeed ? <Check size={13} /> : <Copy size={13} />}
+                      {copiedFeed ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
                       <span>{copiedFeed ? 'Copied' : 'Copy Feed URL'}</span>
                     </button>
+                    <a
+                      href={`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(getCalendarFeedUrl())}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                    >
+                      <Calendar size={13} />
+                      <span>Add to Google Calendar ↗</span>
+                    </a>
                   </div>
 
                   <div className="text-[11px] text-[#9ca3af] font-light pt-1">
-                    💡 In Google Calendar: Click <strong>&quot;Other calendars (+)&quot;</strong> ➔ <strong>&quot;From URL&quot;</strong> ➔ Paste this URL.
+                    💡 Clicking <strong>&quot;Add to Google Calendar ↗&quot;</strong> immediately opens Google Calendar with a 1-click subscription prompt.
                   </div>
                 </div>
 
-                {/* Option B: Direct OAuth & Push */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                  <a
-                    href="/api/auth/google"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#f5f5f7] border border-black/[0.1] rounded-xl text-xs font-normal text-black transition-all shadow-xs cursor-pointer"
-                  >
-                    <ExternalLink size={13} className="text-indigo-600" />
-                    <span>Authorize with Google Account</span>
-                  </a>
+                {/* Option B: Direct 2-Way OAuth (Developer / Advanced) */}
+                <div className="p-3.5 rounded-xl border border-black/[0.05] bg-black/[0.01] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvancedOAuth(!showAdvancedOAuth)}
+                      className="text-xs font-mono text-[#6b7280] hover:text-black flex items-center gap-2 cursor-pointer"
+                    >
+                      <span>{showAdvancedOAuth ? '▾ Hide' : '▸ Advanced:'} Direct Google Cloud OAuth (Two-Way Push)</span>
+                    </button>
+                    <span className="text-[10px] font-mono text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                      Requires Verified GCP App
+                    </span>
+                  </div>
 
-                  <button
-                    onClick={handleSyncToGoogle}
-                    disabled={syncingGoogle}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all shadow-xs cursor-pointer disabled:opacity-50"
-                  >
-                    <RefreshCw size={13} className={cn(syncingGoogle && 'animate-spin')} />
-                    <span>{syncingGoogle ? 'Syncing...' : 'Sync Tasks to Google Calendar'}</span>
-                  </button>
+                  {showAdvancedOAuth && (
+                    <div className="space-y-3 pt-2 border-t border-black/[0.05] animate-in fade-in duration-150">
+                      <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl text-xs text-amber-900 leading-relaxed font-light">
+                        <strong className="font-semibold block mb-0.5">Google Cloud Verification Notice:</strong>
+                        If your Google Cloud Console OAuth consent screen is unverified or in &quot;Testing&quot; mode, external users will see Google&apos;s <em>&quot;Google hasn&apos;t verified this app&quot;</em> warning screen or receive an <em>Error 403 access_denied</em> unless you add their email to the <strong>Test Users</strong> list in your Google Cloud Console. For friends and general users, the <strong>Universal Live Feed above is recommended</strong>.
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                        <a
+                          href="/api/auth/google"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#f5f5f7] border border-black/[0.1] rounded-xl text-xs font-normal text-black transition-all shadow-xs cursor-pointer"
+                        >
+                          <ExternalLink size={13} className="text-indigo-600" />
+                          <span>Authorize with Google Account</span>
+                        </a>
+
+                        <button
+                          type="button"
+                          onClick={handleSyncToGoogle}
+                          disabled={syncingGoogle}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                        >
+                          <RefreshCw size={13} className={cn(syncingGoogle && 'animate-spin')} />
+                          <span>{syncingGoogle ? 'Syncing...' : 'Sync Tasks to Google Calendar'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 

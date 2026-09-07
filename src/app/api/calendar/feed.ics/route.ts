@@ -14,10 +14,22 @@ function getSupabase() {
 export async function GET(req: NextRequest) {
   try {
     const supabase = getSupabase()
-    const { data: tasks, error } = await supabase
+    const { searchParams } = new URL(req.url)
+    const workspaceId = searchParams.get('workspace_id')
+    const userId = searchParams.get('user_id')
+
+    let query = supabase
       .from('tasks')
       .select('*, project:projects(id, name)')
       .order('created_at', { ascending: false })
+
+    if (workspaceId) {
+      query = query.eq('workspace_id', workspaceId)
+    } else if (userId) {
+      query = query.eq('owner_id', userId)
+    }
+
+    const { data: tasks, error } = await query
 
     if (error) {
       return new NextResponse(`Error fetching tasks: ${error.message}`, { status: 500 })
