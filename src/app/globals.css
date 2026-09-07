@@ -109,30 +109,30 @@ h1, h2, h3, h4, h5, h6 {
 /* Apple-grade Motion Graphics & Ambient Lighting */
 @keyframes float-slow {
   0%, 100% {
-    transform: translateY(0px) rotate(0deg);
+    transform: translate3d(0, 0px, 0);
   }
   50% {
-    transform: translateY(-8px) rotate(0.5deg);
+    transform: translate3d(0, -14px, 0);
   }
 }
 
 @keyframes float-delayed {
   0%, 100% {
-    transform: translateY(0px) rotate(0deg);
+    transform: translate3d(0, 0px, 0);
   }
   50% {
-    transform: translateY(8px) rotate(-0.5deg);
+    transform: translate3d(0, 12px, 0);
   }
 }
 
 @keyframes ambient-pulse {
   0%, 100% {
-    opacity: 0.45;
-    transform: scale(1);
+    opacity: 0.35;
+    transform: scale(0.98);
   }
   50% {
-    opacity: 0.85;
-    transform: scale(1.06);
+    opacity: 0.75;
+    transform: scale(1.05);
   }
 }
 
@@ -146,15 +146,18 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .animate-float {
-  animation: float-slow 7s ease-in-out infinite;
+  animation: float-slow 5s ease-in-out infinite;
+  will-change: transform;
 }
 
 .animate-float-delayed {
-  animation: float-delayed 8s ease-in-out infinite;
+  animation: float-delayed 6s ease-in-out infinite 1s;
+  will-change: transform;
 }
 
 .animate-ambient {
-  animation: ambient-pulse 9s ease-in-out infinite;
+  animation: ambient-pulse 8s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 .shimmer-effect {
@@ -178,4 +181,5 @@ h1, h2, h3, h4, h5, h6 {
   animation: shimmer-sweep 4s infinite cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
+
 
