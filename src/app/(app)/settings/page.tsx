@@ -5,8 +5,8 @@ export const runtime = 'edge'
 import { useState, useEffect } from 'react'
 import { 
   User, Settings as SettingsIcon, LogOut, Bell, Calendar, 
-  Video, Sparkles, Copy, Check, ExternalLink, RefreshCw, CheckCircle2, AlertCircle,
-  Building2, Users, UserPlus, Trash2, Shield, Key, Database
+  Video, Copy, Check, ExternalLink, RefreshCw, CheckCircle2, AlertCircle,
+  Building2, Users, UserPlus, Trash2, Shield, Key
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -41,7 +41,6 @@ export default function SettingsPage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<'admin' | 'member' | 'viewer'>('member')
   const [inviting, setInviting] = useState(false)
-  const [showSqlMigration, setShowSqlMigration] = useState(false)
   const [showAdvancedOAuth, setShowAdvancedOAuth] = useState(false)
 
   const [fathomKey, setFathomKey] = useState('')
@@ -274,60 +273,45 @@ export default function SettingsPage() {
           {activeTab === 'integrations' && (
             <div className="space-y-8">
               <div>
-                <h2 className="text-lg font-normal text-black">Connected Services &amp; Calendars</h2>
+                <h2 className="text-lg font-normal text-black">Calendar &amp; Meeting Sync</h2>
                 <p className="text-xs text-[#6b7280] font-light mt-0.5">
-                  Manage two-way sync with Google Calendar, Fathom Video AI, and LLM providers.
+                  Connect your calendar and meeting tools to keep tasks and notes updated automatically.
                 </p>
               </div>
 
-              {/* Google Calendar Box */}
+              {/* Calendar Sync Box */}
               <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-white border border-black/[0.08] flex items-center justify-center shadow-xs">
-                      <Calendar size={20} className="text-indigo-600" />
+                      <Calendar size={20} className="text-black" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-normal text-black">Google Calendar</h3>
+                      <h3 className="text-sm font-normal text-black">Calendar Subscription</h3>
                       <p className="text-xs text-[#6b7280] font-light">
-                        Two-way sync and live subscription for all your tasks &amp; deadlines.
+                        Subscribe from Google Calendar, Apple Calendar, or Outlook to see your task deadlines.
                       </p>
                     </div>
                   </div>
 
-                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-mono text-[10px] font-medium border border-emerald-200">
+                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-normal border border-emerald-200">
                     <CheckCircle2 size={12} />
-                    <span>Client ID Active</span>
+                    <span>Active</span>
                   </span>
                 </div>
 
-                {googleMissingSecret && (
-                  <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2.5">
-                    <AlertCircle size={15} className="text-amber-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold block">Client Secret Needed for OAuth</span>
-                      <span className="font-light">
-                        Add your `GOOGLE_CLIENT_SECRET` in `.env.local` to complete the full 2-way OAuth flow. Alternatively, use the 1-Click Live Feed below!
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Option A: Universal Live Calendar Feed (Zero Verification Required) */}
+                {/* 1-Click Calendar Subscription */}
                 <div className="p-4 rounded-xl bg-white border border-black/[0.06] space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono text-black font-medium uppercase flex items-center gap-1.5">
-                      <span>Universal Live Calendar Feed</span>
-                      <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-normal">
-                        Zero Verification Needed
-                      </span>
+                    <span className="text-xs font-medium text-black">
+                      Your Calendar Feed URL
                     </span>
-                    <span className="text-[10px] font-mono text-[#8a8d95]">
-                      RFC 5545 iCal
+                    <span className="text-[11px] text-[#8a8d95]">
+                      Works with any calendar app
                     </span>
                   </div>
                   <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-                    Syncs all workspace tasks, timeboxes, and deadlines live into Google Calendar, Apple Calendar (iPhone/Mac), or Outlook. Does not require any Google verification or OAuth approvals.
+                    Tasks with due dates and deadlines will automatically show up on your schedule.
                   </p>
 
                   <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -343,7 +327,7 @@ export default function SettingsPage() {
                       className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] rounded-xl text-xs font-normal transition-all cursor-pointer shadow-2xs whitespace-nowrap"
                     >
                       {copiedFeed ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
-                      <span>{copiedFeed ? 'Copied' : 'Copy Feed URL'}</span>
+                      <span>{copiedFeed ? 'Copied' : 'Copy Link'}</span>
                     </button>
                     <a
                       href={`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(getCalendarFeedUrl())}`}
@@ -355,41 +339,33 @@ export default function SettingsPage() {
                       <span>Add to Google Calendar ↗</span>
                     </a>
                   </div>
-
-                  <div className="text-[11px] text-[#9ca3af] font-light pt-1">
-                    💡 Clicking <strong>&quot;Add to Google Calendar ↗&quot;</strong> immediately opens Google Calendar with a 1-click subscription prompt.
-                  </div>
                 </div>
 
-                {/* Option B: Direct 2-Way OAuth (Developer / Advanced) */}
+                {/* Optional Direct Sync */}
                 <div className="p-3.5 rounded-xl border border-black/[0.05] bg-black/[0.01] space-y-3">
                   <div className="flex items-center justify-between">
                     <button
                       type="button"
                       onClick={() => setShowAdvancedOAuth(!showAdvancedOAuth)}
-                      className="text-xs font-mono text-[#6b7280] hover:text-black flex items-center gap-2 cursor-pointer"
+                      className="text-xs text-[#6b7280] hover:text-black flex items-center gap-2 cursor-pointer font-light"
                     >
-                      <span>{showAdvancedOAuth ? '▾ Hide' : '▸ Advanced:'} Direct Google Cloud OAuth (Two-Way Push)</span>
+                      <span>{showAdvancedOAuth ? '▾ Hide' : '▸ Optional:'} Direct Google Account Sync</span>
                     </button>
-                    <span className="text-[10px] font-mono text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                      Requires Verified GCP App
-                    </span>
                   </div>
 
                   {showAdvancedOAuth && (
                     <div className="space-y-3 pt-2 border-t border-black/[0.05] animate-in fade-in duration-150">
-                      <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl text-xs text-amber-900 leading-relaxed font-light">
-                        <strong className="font-semibold block mb-0.5">Google Cloud Verification Notice:</strong>
-                        If your Google Cloud Console OAuth consent screen is unverified or in &quot;Testing&quot; mode, external users will see Google&apos;s <em>&quot;Google hasn&apos;t verified this app&quot;</em> warning screen or receive an <em>Error 403 access_denied</em> unless you add their email to the <strong>Test Users</strong> list in your Google Cloud Console. For friends and general users, the <strong>Universal Live Feed above is recommended</strong>.
-                      </div>
+                      <p className="text-xs text-[#6b7280] font-light leading-relaxed">
+                        Authorize directly with your Google account to enable two-way event push. (The calendar feed above is already active and works with no setup required).
+                      </p>
 
-                      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                      <div className="flex flex-wrap items-center gap-3 pt-1">
                         <a
                           href="/api/auth/google"
                           className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#f5f5f7] border border-black/[0.1] rounded-xl text-xs font-normal text-black transition-all shadow-xs cursor-pointer"
                         >
-                          <ExternalLink size={13} className="text-indigo-600" />
-                          <span>Authorize with Google Account</span>
+                          <ExternalLink size={13} />
+                          <span>Connect Google Account</span>
                         </a>
 
                         <button
@@ -407,57 +383,57 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Fathom Video AI Integration */}
+              {/* Fathom Meeting Sync */}
               <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-white border border-black/[0.08] flex items-center justify-center shadow-xs">
-                      <Video size={20} className="text-purple-600" />
+                      <Video size={20} className="text-black" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-normal text-black">Fathom Video AI</h3>
+                      <h3 className="text-sm font-normal text-black">Fathom Meeting Notes</h3>
                       <p className="text-xs text-[#6b7280] font-light">
-                        Live meeting sync, action item synthesis, and transcript extraction for this workspace.
+                        Automatically import call recordings, transcripts, and action items.
                       </p>
                     </div>
                   </div>
 
                   <span className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[10px] font-medium border",
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-normal border",
                     currentWorkspace?.settings?.fathom_api_key
                       ? "bg-purple-50 text-purple-700 border-purple-200"
                       : "bg-emerald-50 text-emerald-700 border-emerald-200"
                   )}>
                     <CheckCircle2 size={12} />
-                    <span>{currentWorkspace?.settings?.fathom_api_key ? 'Workspace Key Active' : 'System Default Active'}</span>
+                    <span>{currentWorkspace?.settings?.fathom_api_key ? 'Workspace Key' : 'Connected'}</span>
                   </span>
                 </div>
 
                 {/* API Key Configuration Form */}
                 <form onSubmit={handleSaveFathomKey} className="p-4 rounded-xl bg-white border border-black/[0.06] space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-mono text-black font-medium uppercase">
-                      Workspace Fathom API Key
+                    <label className="text-xs font-medium text-black">
+                      Fathom API Key (Optional)
                     </label>
                     <a
                       href="https://fathom.video/settings/api"
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[10px] font-mono text-indigo-600 hover:underline flex items-center gap-1"
+                      className="text-xs text-[#6b7280] hover:text-black hover:underline flex items-center gap-1"
                     >
-                      <span>Get API Key from Fathom</span>
-                      <ExternalLink size={10} />
+                      <span>Find your key</span>
+                      <ExternalLink size={11} />
                     </a>
                   </div>
 
                   <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-                    Provide your Fathom API Key to isolate meeting recordings and transcripts strictly to this workspace.
+                    Add a dedicated API key if you want calls isolated strictly to this workspace.
                   </p>
 
                   <div className="flex items-center gap-2">
                     <input
                       type="password"
-                      placeholder="Paste your Fathom API key (starts with VB4...)"
+                      placeholder="Paste your Fathom API key"
                       value={fathomKey}
                       onChange={(e) => setFathomKey(e.target.value)}
                       className="flex-1 px-3.5 py-2 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-xs font-mono text-black outline-none focus:border-black"
@@ -466,16 +442,16 @@ export default function SettingsPage() {
                       type="button"
                       onClick={handleTestFathom}
                       disabled={testingFathom || !fathomKey.trim()}
-                      className="px-3 py-2 border border-black/[0.08] bg-white hover:bg-neutral-50 disabled:opacity-40 text-black rounded-xl text-xs font-normal transition-all cursor-pointer whitespace-nowrap shadow-2xs"
+                      className="px-3.5 py-2 border border-black/[0.08] bg-white hover:bg-neutral-50 disabled:opacity-40 text-black rounded-xl text-xs font-normal transition-all cursor-pointer whitespace-nowrap shadow-2xs"
                     >
-                      {testingFathom ? 'Testing...' : 'Test Key'}
+                      {testingFathom ? 'Testing...' : 'Test'}
                     </button>
                     <button
                       type="submit"
                       disabled={savingFathomKey}
                       className="px-4 py-2 bg-black hover:bg-neutral-800 disabled:opacity-40 text-white rounded-xl text-xs font-normal transition-all cursor-pointer whitespace-nowrap shadow-xs"
                     >
-                      {savingFathomKey ? 'Saving...' : 'Save Key'}
+                      {savingFathomKey ? 'Saving...' : 'Save'}
                     </button>
                   </div>
                 </form>
@@ -483,15 +459,15 @@ export default function SettingsPage() {
                 {/* Webhook Configuration */}
                 <div className="p-4 rounded-xl bg-white border border-black/[0.06] space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-mono text-black font-medium uppercase">
-                      Automated Meeting Webhook
+                    <span className="text-xs font-medium text-black">
+                      Automatic Call Import (Webhook)
                     </span>
-                    <span className="text-[10px] font-mono text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md">
+                    <span className="text-[10px] text-[#6b7280] bg-black/[0.04] px-2 py-0.5 rounded">
                       Instant Sync
                     </span>
                   </div>
                   <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-                    In your Fathom settings under <strong>Webhooks</strong>, add this URL. Fathom will automatically push newly recorded calls into your workspace.
+                    Paste this URL in your Fathom settings under <strong>Webhooks</strong> to import calls automatically as soon as they end.
                   </p>
 
                   <div className="flex items-center gap-2 pt-1">
@@ -511,26 +487,6 @@ export default function SettingsPage() {
                     </button>
                   </div>
                 </div>
-              </div>
-
-              {/* Groq AI Engine */}
-              <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.06] flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white border border-black/[0.08] flex items-center justify-center shadow-xs">
-                    <Sparkles size={20} className="text-amber-500" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-normal text-black">Groq AI Engine</h3>
-                    <p className="text-xs text-[#6b7280] font-light">
-                      Low-latency project synthesizer, task decomposition, and scope intelligence.
-                    </p>
-                  </div>
-                </div>
-
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-mono text-[10px] font-medium border border-emerald-200">
-                  <CheckCircle2 size={12} />
-                  <span>Active</span>
-                </span>
               </div>
             </div>
           )}
@@ -751,71 +707,53 @@ export default function SettingsPage() {
                 </form>
               </div>
 
-              {/* 4. Supabase Database Migration Helper */}
-              <div className="p-4 rounded-xl bg-white border border-black/[0.06] space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Database size={14} className="text-black" />
-                    <span className="text-[11px] font-mono text-black font-medium uppercase">
-                      Supabase Row-Level Security &amp; Schema Migration
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => setShowSqlMigration(!showSqlMigration)}
-                    className="text-xs font-mono text-black hover:underline cursor-pointer"
-                  >
-                    {showSqlMigration ? 'Hide SQL' : 'View Migration SQL'}
-                  </button>
-                </div>
-                <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-                  Run <code className="bg-black/[0.04] px-1 py-0.5 rounded text-[11px] font-mono">supabase_multitenancy_migration.sql</code> in your Supabase SQL Editor to enforce database-level team security across all tables.
-                </p>
-
-                {showSqlMigration && (
-                  <div className="mt-3 space-y-2 animate-in fade-in duration-150">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-[#8a8d95]">File: /supabase_multitenancy_migration.sql</span>
-                      <a
-                        href="https://supabase.com/dashboard/project/_/sql"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[10px] font-mono text-indigo-600 hover:underline flex items-center gap-1"
-                      >
-                        <span>Open Supabase SQL Editor</span>
-                        <ExternalLink size={10} />
-                      </a>
-                    </div>
-                    <pre className="p-3 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-[10px] font-mono text-[#374151] overflow-x-auto max-h-48">
-{`-- Run in Supabase SQL Editor:
-CREATE TABLE IF NOT EXISTS public.workspace_members (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  workspace_id uuid REFERENCES public.workspaces(id) ON DELETE CASCADE,
-  user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
-  role text DEFAULT 'member' CHECK (role IN ('owner', 'admin', 'member', 'viewer')),
-  created_at timestamptz DEFAULT now(),
-  UNIQUE(workspace_id, user_id)
-);
--- Backfill existing workspaces:
-INSERT INTO public.workspace_members (workspace_id, user_id, role)
-SELECT id, owner_id, 'owner' FROM public.workspaces WHERE owner_id IS NOT NULL
-ON CONFLICT DO NOTHING;`}
-                    </pre>
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
           {/* Preferences Tab */}
           {activeTab === 'preferences' && (
             <div className="space-y-6 max-w-md">
-              <h2 className="text-lg font-light text-black">System Preferences</h2>
               <div>
-                <label className="text-[11px] font-mono text-[#6b7280] block mb-1">AI OUTPUT STYLE</label>
-                <select className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] rounded-xl text-xs text-black outline-none font-light">
-                  <option value="direct">Direct &amp; High Output (Recommended)</option>
-                  <option value="detailed">Detailed &amp; Exploratory</option>
-                </select>
+                <h2 className="text-lg font-normal text-black">App Preferences</h2>
+                <p className="text-xs text-[#6b7280] font-light mt-0.5">
+                  Customize how your workspace looks and behaves.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-medium text-black block mb-1.5">Default Start Page</label>
+                  <select className="w-full px-3.5 py-2 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light cursor-pointer">
+                    <option value="dashboard">Dashboard (Overview)</option>
+                    <option value="tasks">Task Board</option>
+                    <option value="projects">Projects</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-black block mb-1.5">First Day of the Week</label>
+                  <select className="w-full px-3.5 py-2 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light cursor-pointer">
+                    <option value="monday">Monday</option>
+                    <option value="sunday">Sunday</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-black block mb-1.5">Email Notifications</label>
+                  <select className="w-full px-3.5 py-2 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light cursor-pointer">
+                    <option value="all">Task assignments &amp; deadline reminders</option>
+                    <option value="mentions">Only direct mentions</option>
+                    <option value="none">Mute all notifications</option>
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => toast.success('Preferences saved')}
+                  className="px-5 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs"
+                >
+                  Save Preferences
+                </button>
               </div>
             </div>
           )}

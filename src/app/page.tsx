@@ -7,10 +7,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { 
-  ArrowRight, ShieldCheck, Zap, Activity, Clock, CheckCircle2, 
-  Sparkles, X, ChevronRight, Lock, Mail, User, Layers, Calendar,
-  BarChart2, CheckSquare, Video, ExternalLink, Building2, 
-  FolderKanban, FileText, ChevronDown, Check, RefreshCw, HelpCircle
+  ArrowRight, Clock, CheckCircle2, 
+  X, ChevronRight, Mail, Calendar,
+  CheckSquare, Video, ExternalLink, Building2, 
+  FolderKanban, ChevronDown, Check, RefreshCw
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -24,7 +24,7 @@ export default function LandingPage() {
   const [error, setError] = useState<string | null>(null)
   const [confirmationSent, setConfirmationSent] = useState(false)
   const [activeFaq, setActiveFaq] = useState<number | null>(null)
-  const [selectedFocus, setSelectedFocus] = useState<string>('Engineering & Product Sprints')
+  const [selectedFocus, setSelectedFocus] = useState<string>('Product & Engineering')
   
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -103,47 +103,47 @@ export default function LandingPage() {
   }
 
   const focusAreas = [
-    { label: 'Engineering & Product Sprints', icon: '◈', desc: 'Manage releases, task boards, and tech debt with high velocity.' },
-    { label: 'Agency & Client Operations', icon: '⬡', desc: 'Isolate client workspaces, deliverable timelines, and team access.' },
-    { label: 'Executive Deep Work & Strategy', icon: '△', desc: 'Focus timer, strategic roadmaps, and daily founder logs.' },
-    { label: 'Growth, Marketing & Launch', icon: '◇', desc: 'Campaign initiatives, deliverables, and milestone tracking.' },
+    { label: 'Product & Engineering', icon: '◈', desc: 'Manage sprint boards, track releases, and squash bugs with high speed.' },
+    { label: 'Agencies & Freelancers', icon: '⬡', desc: 'Organize client deliverables, isolate client workspaces, and stay on schedule.' },
+    { label: 'Founders & Small Teams', icon: '△', desc: 'Prioritize daily high-impact tasks, track big goals, and keep everyone aligned.' },
+    { label: 'Marketing & Operations', icon: '◇', desc: 'Coordinate launches, run campaigns, and manage recurring workflows.' },
   ]
 
   const faqs = [
     {
-      q: 'How does multi-tenant workspace isolation work?',
-      a: 'Each workspace is completely separated in the database. When you invite team members or clients to a workspace, they only have access to tasks, projects, and documents inside that workspace. Users can belong to multiple workspaces and switch between them instantly.',
+      q: 'Is it free to use?',
+      a: 'Yes, you can sign up for free and start organizing projects and tasks immediately. No credit card is required.',
     },
     {
-      q: 'Do I or my team need Google Cloud verification to sync calendars?',
-      a: 'No! CallMy Mgmt provides a Universal Live Calendar Feed (.ics) that adheres to RFC 5545. You can subscribe with one click directly inside Google Calendar, Apple Calendar, or Outlook without needing any Google Cloud Console approvals or OAuth warnings.',
+      q: 'How does calendar sync work?',
+      a: 'Focus OS gives you a private calendar subscription link. With one click, your tasks and upcoming deadlines appear inside Google Calendar, Apple Calendar, or Outlook without needing complicated developer setups.',
     },
     {
-      q: 'How does the Fathom Video AI integration work?',
-      a: 'Each workspace can connect its own Fathom account via API Key or automated Webhook. Whenever a call finishes, your meeting recordings, verbatim transcripts, and AI takeaways are automatically synced into your workspace and can be converted into tasks with 1 click.',
+      q: 'Can I invite teammates and clients?',
+      a: 'Yes! You can create multiple workspaces and invite colleagues or clients. Each workspace is private, so members only see the projects and tasks within their assigned workspace.',
     },
     {
-      q: 'Can I export my tasks, progress graphs, and sprint data?',
-      a: 'Yes. You can export tasks to UTF-8 BOM CSV for Excel/Google Sheets, download high-resolution progress infographic PNGs, or query everything programmatically via our Custom GPT actions API.',
+      q: 'How does the Fathom meeting integration work?',
+      a: 'If you record calls with Fathom, you can link your Fathom key or webhook in Settings. Your call recordings, full transcripts, and takeaways will automatically appear inside your workspace so you can convert them to tasks.',
+    },
+    {
+      q: 'Can I export my tasks and reports?',
+      a: 'Yes. You can export your tasks to a CSV file for Excel or Google Sheets at any time, or generate a clean visual progress summary image to share with your team.',
     },
   ]
 
   return (
     <div className="min-h-screen bg-[#ffffff] text-[#0c0d0f] font-sans selection:bg-black/10 relative overflow-hidden">
-      {/* Top Floating Glass Navigation */}
+      {/* Top Floating Clean Navigation */}
       <nav className="fixed top-5 left-0 right-0 z-40 max-w-5xl mx-auto px-6">
-        <div className="bg-white/85 backdrop-blur-2xl border border-black/[0.08] shadow-sm rounded-full px-6 py-3 flex items-center justify-between">
+        <div className="bg-white/90 backdrop-blur-xl border border-black/[0.08] shadow-xs rounded-full px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="font-normal tracking-tight text-sm text-black">Focus OS</span>
-            <span className="text-[10px] font-mono text-[#8a8d95] bg-black/[0.04] px-2 py-0.5 rounded-md font-light">
-              v2.4
-            </span>
+            <span className="font-medium tracking-tight text-sm text-black">Focus OS</span>
           </div>
 
           <div className="hidden md:flex items-center gap-6 text-xs font-light text-[#6b7280]">
             <a href="#features" className="hover:text-black transition-colors">Features</a>
-            <a href="#initiatives" className="hover:text-black transition-colors">Portfolios</a>
-            <a href="#integrations" className="hover:text-black transition-colors">Integrations</a>
+            <a href="#how-it-works" className="hover:text-black transition-colors">How Teams Use It</a>
             <a href="#faq" className="hover:text-black transition-colors">FAQ</a>
           </div>
 
@@ -158,7 +158,7 @@ export default function LandingPage() {
               onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
               className="px-4 py-2 rounded-full bg-black hover:bg-neutral-800 text-white text-xs font-normal transition-all shadow-xs cursor-pointer"
             >
-              Launch Workspace ↗
+              Get Started Free
             </button>
           </div>
         </div>
@@ -169,20 +169,20 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Copy */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/[0.03] border border-black/[0.08] text-[11px] font-mono text-[#6b7280] uppercase">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Multi-Tenant Executive Operations</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-100 border border-black/[0.06] text-xs text-[#52525b]">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span>Simple, calm project management</span>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl font-light tracking-tight text-black leading-[1.14]">
-              One operating system for your <br />
-              <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-black via-neutral-800 to-neutral-500">
-                entire execution flow.
+            <h1 className="text-4xl sm:text-6xl font-light tracking-tight text-black leading-[1.15]">
+              Everything your team works on, <br />
+              <span className="font-semibold text-black">
+                all in one place.
               </span>
             </h1>
 
             <p className="text-sm sm:text-base text-[#6b7280] font-light leading-relaxed max-w-xl">
-              Engineered for high-output founders, agency directors, and engineering leads. Manage multi-master portfolios, sprint kanban, automated Fathom meeting transcripts, and live calendar feeds in one ultra-fast workspace.
+              Organize projects, plan daily tasks, review meeting notes, and sync your calendar — without bouncing between five different tabs.
             </p>
 
             <div className="flex flex-wrap items-center gap-3.5 pt-2">
@@ -197,58 +197,87 @@ export default function LandingPage() {
                 href="#features"
                 className="px-5 py-3 rounded-full bg-white hover:bg-neutral-50 border border-black/[0.1] text-black text-xs font-normal transition-all"
               >
-                Explore Features
+                See Features ↓
               </a>
             </div>
 
-            <div className="flex items-center gap-6 pt-4 text-xs font-mono text-[#8a8d95] font-light">
+            <div className="flex flex-wrap items-center gap-5 pt-3 text-xs text-[#71717a] font-light">
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={13} className="text-emerald-600" />
-                <span>Zero Credit Card Needed</span>
+                <CheckCircle2 size={14} className="text-emerald-600" />
+                <span>Free to use</span>
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 size={13} className="text-emerald-600" />
-                <span>Instant Workspace Provisioning</span>
+                <CheckCircle2 size={14} className="text-emerald-600" />
+                <span>No credit card required</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 size={14} className="text-emerald-600" />
+                <span>Ready in 30 seconds</span>
               </span>
             </div>
           </div>
 
-          {/* Right Floating Interactive HUD */}
-          <div className="lg:col-span-5 p-7 rounded-3xl bg-[#fafafa] border border-black/[0.08] shadow-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-black/[0.06] pb-3.5">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span className="text-xs font-mono text-[#6b7280]">SYSTEM_METRICS</span>
+          {/* Right Authentic Product Preview Card */}
+          <div className="lg:col-span-5 p-6 rounded-3xl bg-[#fafafa] border border-black/[0.08] shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-black/[0.06]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-black text-white flex items-center justify-center font-medium text-xs">
+                  AC
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-black">Acme Studio</div>
+                  <div className="text-[11px] text-[#8a8d95]">Workspace • Today</div>
+                </div>
               </div>
-              <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                EDGE LATENCY &lt;180ms
+              <span className="text-[11px] font-normal text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>In Sync</span>
               </span>
             </div>
 
-            {/* Radar Activity Sphere */}
-            <div className="w-24 h-24 rounded-full border border-black/[0.1] border-dashed mx-auto flex items-center justify-center relative">
-              <div className="w-14 h-14 rounded-full border border-black/[0.12] flex items-center justify-center">
-                <div className="w-2.5 h-2.5 rounded-full bg-black animate-ping" />
+            {/* Task List Preview */}
+            <div className="space-y-2">
+              <div className="text-[11px] font-medium text-[#6b7280] uppercase tracking-wider">
+                Today&apos;s Priorities
               </div>
-              <div className="absolute -top-1 -right-2 text-[9px] font-mono text-[#8a8d95]">[SYNC:OK]</div>
+              <div className="space-y-2">
+                <div className="p-3 bg-white border border-black/[0.06] rounded-xl flex items-center justify-between shadow-2xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-4 h-4 rounded-md bg-emerald-500 text-white flex items-center justify-center text-[10px]">
+                      ✓
+                    </div>
+                    <span className="text-xs text-[#6b7280] line-through font-light">Deliver client proposal deck</span>
+                  </div>
+                  <span className="text-[10px] bg-black/[0.04] text-[#6b7280] px-2 py-0.5 rounded font-mono">Done</span>
+                </div>
+
+                <div className="p-3 bg-white border border-black/[0.08] rounded-xl flex items-center justify-between shadow-2xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-4 h-4 rounded-md border border-black/[0.3] flex items-center justify-center" />
+                    <span className="text-xs text-black font-normal">Review user onboarding feedback</span>
+                  </div>
+                  <span className="text-[10px] bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded font-mono font-medium">P0 High</span>
+                </div>
+
+                <div className="p-3 bg-white border border-black/[0.06] rounded-xl flex items-center justify-between shadow-2xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-4 h-4 rounded-md border border-black/[0.3] flex items-center justify-center" />
+                    <span className="text-xs text-black font-light">Prep notes for tomorrow&apos;s team call</span>
+                  </div>
+                  <span className="text-[10px] text-[#6b7280]">Tomorrow</span>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-3 font-mono text-xs">
-              <div className="flex justify-between items-center py-1 border-b border-black/[0.04]">
-                <span className="text-[#6b7280]">MULTI_TENANCY</span>
-                <span className="font-medium text-black">Active (Role-Based)</span>
+            {/* Connected Tools Strip */}
+            <div className="pt-2 border-t border-black/[0.06] flex items-center justify-between text-xs text-[#6b7280] font-light">
+              <div className="flex items-center gap-1.5">
+                <Calendar size={13} className="text-black" />
+                <span>Google Calendar Synced</span>
               </div>
-              <div className="flex justify-between items-center py-1 border-b border-black/[0.04]">
-                <span className="text-[#6b7280]">FATHOM_CALLS_SYNCED</span>
-                <span className="font-medium text-black">111 Recordings</span>
-              </div>
-              <div className="flex justify-between items-center py-1 border-b border-black/[0.04]">
-                <span className="text-[#6b7280]">CALENDAR_FEED</span>
-                <span className="font-medium text-emerald-700">RFC 5545 iCal Live</span>
-              </div>
-              <div className="flex justify-between items-center py-1">
-                <span className="text-[#6b7280]">CUSTOM_GPT_ACTIONS</span>
-                <span className="font-medium text-black">OpenAPI 3.1.0</span>
+              <div className="flex items-center gap-1.5">
+                <Video size={13} className="text-black" />
+                <span>Fathom Notes Ready</span>
               </div>
             </div>
           </div>
@@ -259,92 +288,92 @@ export default function LandingPage() {
       <section id="features" className="py-20 px-6 sm:px-10 max-w-6xl mx-auto border-t border-black/[0.06]">
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-2">
           <div className="text-xs font-mono text-[#8a8d95] uppercase tracking-widest">
-            CORE CAPABILITIES • • •
+            FEATURES
           </div>
           <h2 className="text-3xl sm:text-4xl font-light text-black tracking-tight">
-            Built for velocity without the clutter.
+            Everything you need to get work done.
           </h2>
           <p className="text-xs sm:text-sm text-[#6b7280] font-light">
-            Every feature is purpose-built to eliminate context switching and keep your team shipping.
+            Simple, fast, and organized so you can focus on building and delivering.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1: Multi-Master Portfolios */}
+          {/* Card 1: Projects & Milestones */}
           <div className="p-6 rounded-3xl bg-[#fafafa] border border-black/[0.06] space-y-4 hover:border-black/[0.15] transition-all">
             <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center shadow-xs">
               <FolderKanban size={18} />
             </div>
-            <h3 className="text-base font-normal text-black">Multi-Master Portfolios</h3>
+            <h3 className="text-base font-normal text-black">Projects &amp; Milestones</h3>
             <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-              Organize complex organizations into strategic macro programs (like Tadbeer TT) with individual initiatives, deadline tracking, and kill conditions.
+              Group related tasks into clear projects, track progress towards deadlines, and know who is working on what.
             </p>
           </div>
 
-          {/* Card 2: Sprint Execution Kanban */}
+          {/* Card 2: Simple Task Boards */}
           <div className="p-6 rounded-3xl bg-[#fafafa] border border-black/[0.06] space-y-4 hover:border-black/[0.15] transition-all">
             <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center shadow-xs">
               <CheckSquare size={18} />
             </div>
-            <h3 className="text-base font-normal text-black">Sprint Kanban &amp; Timeboxes</h3>
+            <h3 className="text-base font-normal text-black">Simple Task Boards</h3>
             <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-              Rank tasks from P0 to P3 with timebox targets. Perform point-in-time historical reviews and export clean CSVs for spreadsheets in one click.
+              Drag-and-drop kanban boards and clean list views. Set priority tags from P0 to P3 so you always know what comes next.
             </p>
           </div>
 
-          {/* Card 3: Fathom Meeting Intelligence */}
+          {/* Card 3: Meeting Notes & Transcripts */}
           <div className="p-6 rounded-3xl bg-[#fafafa] border border-black/[0.06] space-y-4 hover:border-black/[0.15] transition-all">
             <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center shadow-xs">
               <Video size={18} />
             </div>
-            <h3 className="text-base font-normal text-black">Fathom Video AI Integration</h3>
+            <h3 className="text-base font-normal text-black">Meeting Notes &amp; Transcripts</h3>
             <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-              Connect your Fathom account to automatically index recordings, verbatim transcripts, and AI summaries. Convert takeaways into workspace tasks instantly.
+              Connect Fathom to automatically import call recordings, full transcripts, and key action items directly into your workspace.
             </p>
           </div>
 
-          {/* Card 4: Universal Live Calendar Feed */}
+          {/* Card 4: Calendar Sync */}
           <div className="p-6 rounded-3xl bg-[#fafafa] border border-black/[0.06] space-y-4 hover:border-black/[0.15] transition-all">
             <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center shadow-xs">
               <Calendar size={18} />
             </div>
-            <h3 className="text-base font-normal text-black">0-Verification Calendar Feed</h3>
+            <h3 className="text-base font-normal text-black">Live Calendar Sync</h3>
             <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-              One-click live subscription into Google Calendar, Apple Calendar (iOS/Mac), and Outlook. No developer credentials or OAuth warnings required.
+              Subscribe with one click in Google Calendar, Apple Calendar, or Outlook. Your tasks and deadlines appear automatically on your calendar.
             </p>
           </div>
 
-          {/* Card 5: Multi-Tenant Workspaces */}
+          {/* Card 5: Team & Client Workspaces */}
           <div className="p-6 rounded-3xl bg-[#fafafa] border border-black/[0.06] space-y-4 hover:border-black/[0.15] transition-all">
             <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center shadow-xs">
               <Building2 size={18} />
             </div>
-            <h3 className="text-base font-normal text-black">Workspace Switcher &amp; Roles</h3>
+            <h3 className="text-base font-normal text-black">Workspaces &amp; Team Roles</h3>
             <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-              Switch effortlessly between personal ventures and client hubs. Invite collaborators as Admins, Members, or Viewers with full data isolation.
+              Create separate workspaces for different companies or clients. Invite teammates with clear roles like Admin, Member, or Viewer.
             </p>
           </div>
 
-          {/* Card 6: ChatGPT Custom GPT API */}
+          {/* Card 6: Exports & Sharing */}
           <div className="p-6 rounded-3xl bg-[#fafafa] border border-black/[0.06] space-y-4 hover:border-black/[0.15] transition-all">
             <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center shadow-xs">
-              <Zap size={18} />
+              <ExternalLink size={18} />
             </div>
-            <h3 className="text-base font-normal text-black">ChatGPT Custom GPT Actions</h3>
+            <h3 className="text-base font-normal text-black">Exports &amp; Progress Sharing</h3>
             <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-              Full OpenAPI 3.1.0 support. Ask your ChatGPT Chief of Staff to query sprint health, summarize Fathom calls, or create tasks directly in your workspace.
+              Export your task lists to CSV for spreadsheets anytime, or download clean visual progress cards to share with stakeholders.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Focus Area Selection Section */}
-      <section id="initiatives" className="py-20 px-6 sm:px-10 max-w-4xl mx-auto text-center border-t border-black/[0.06]">
+      {/* Focus Area / How Teams Use It */}
+      <section id="how-it-works" className="py-20 px-6 sm:px-10 max-w-4xl mx-auto text-center border-t border-black/[0.06]">
         <div className="text-xs font-mono text-[#8a8d95] uppercase tracking-widest mb-2">
-          TAILORED ONBOARDING • • •
+          HOW TEAMS USE IT
         </div>
         <h2 className="text-3xl sm:text-4xl font-light text-black tracking-tight mb-8">
-          Choose your primary operating model.
+          Built for how modern teams work.
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto mb-8 text-left">
@@ -381,7 +410,7 @@ export default function LandingPage() {
           onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
           className="px-8 py-3 rounded-full bg-black text-white text-xs font-normal hover:bg-neutral-800 shadow-sm transition-all cursor-pointer"
         >
-          Initialize Workspace →
+          Open Your Workspace →
         </button>
       </section>
 
@@ -389,7 +418,7 @@ export default function LandingPage() {
       <section id="faq" className="py-20 px-6 sm:px-10 max-w-3xl mx-auto border-t border-black/[0.06]">
         <div className="text-center mb-12 space-y-2">
           <div className="text-xs font-mono text-[#8a8d95] uppercase tracking-widest">
-            FREQUENTLY ASKED QUESTIONS • • •
+            FREQUENTLY ASKED QUESTIONS
           </div>
           <h2 className="text-3xl font-light text-black tracking-tight">
             Common questions answered.
@@ -420,13 +449,13 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-black/[0.06] text-center space-y-4 font-mono text-xs text-[#8a8d95] font-light">
+      <footer className="py-12 px-6 border-t border-black/[0.06] text-center space-y-3 text-xs text-[#8a8d95] font-light">
         <div className="flex items-center justify-center gap-2 text-emerald-700">
           <span className="w-2 h-2 rounded-full bg-emerald-500" />
-          <span>All Systems Operational • Edge Multi-Tenant Engine</span>
+          <span>All systems running smoothly</span>
         </div>
         <div className="text-[11px]">
-          &copy; {new Date().getFullYear()} Focus OS / CallMy Mgmt. High-leverage execution infrastructure.
+          &copy; {new Date().getFullYear()} Focus OS. Simple, fast project management for modern teams.
         </div>
       </footer>
 
@@ -448,14 +477,14 @@ export default function LandingPage() {
                   <Mail size={22} />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-base font-normal text-black">Confirm your email</h3>
+                  <h3 className="text-base font-normal text-black">Check your email</h3>
                   <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-                    We sent a secure verification link to <strong className="text-black font-medium">{email}</strong>.
+                    We sent a sign-in link to <strong className="text-black font-medium">{email}</strong>.
                   </p>
                 </div>
 
                 <div className="p-3 bg-[#fafafa] border border-black/[0.06] rounded-xl text-xs text-[#6b7280] font-light">
-                  Click the link in your email to be signed in automatically to your new workspace.
+                  Click the link in your email to open your new workspace instantly.
                 </div>
 
                 <div className="pt-2 flex flex-col gap-2">
@@ -481,14 +510,14 @@ export default function LandingPage() {
               /* Login & Sign Up Form */
               <>
                 <div className="text-center mb-6 space-y-1">
-                  <div className="w-10 h-10 rounded-2xl bg-black text-white font-mono text-xs flex items-center justify-center mx-auto mb-3 shadow-xs">
-                    WS
+                  <div className="w-10 h-10 rounded-2xl bg-black text-white font-medium text-xs flex items-center justify-center mx-auto mb-3 shadow-xs">
+                    FO
                   </div>
                   <h3 className="text-lg font-normal text-black">
-                    {mode === 'login' ? 'Sign in to Focus OS' : 'Initialize your workspace'}
+                    {mode === 'login' ? 'Sign in to Focus OS' : 'Create your free workspace'}
                   </h3>
                   <p className="text-xs text-[#6b7280] font-light">
-                    {mode === 'login' ? 'Access your tasks, initiatives, and Fathom records.' : 'Create your isolated workspace in seconds.'}
+                    {mode === 'login' ? 'Access your projects, tasks, and notes.' : 'Takes less than 30 seconds.'}
                   </p>
                 </div>
 
@@ -501,36 +530,36 @@ export default function LandingPage() {
                 <form onSubmit={handleSubmit} className="space-y-3.5">
                   {mode === 'signup' && (
                     <div>
-                      <label className="text-[11px] font-mono text-[#6b7280] block mb-1 uppercase tracking-wider">
-                        Full Name
+                      <label className="text-xs font-medium text-[#4b5563] block mb-1">
+                        Your Name
                       </label>
                       <input
                         type="text"
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="e.g. Mohammed Rehan"
+                        placeholder="Alex Morgan"
                         className="w-full px-3.5 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
                       />
                     </div>
                   )}
 
                   <div>
-                    <label className="text-[11px] font-mono text-[#6b7280] block mb-1 uppercase tracking-wider">
-                      Work Email
+                    <label className="text-xs font-medium text-[#4b5563] block mb-1">
+                      Email Address
                     </label>
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="founder@company.com"
+                      placeholder="alex@company.com"
                       className="w-full px-3.5 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
                     />
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-mono text-[#6b7280] block mb-1 uppercase tracking-wider">
+                    <label className="text-xs font-medium text-[#4b5563] block mb-1">
                       Password
                     </label>
                     <input
@@ -549,7 +578,7 @@ export default function LandingPage() {
                     className="w-full py-2.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer mt-1 flex items-center justify-center gap-2"
                   >
                     {loading && <RefreshCw size={12} className="animate-spin" />}
-                    <span>{loading ? 'Processing...' : mode === 'login' ? 'Sign In →' : 'Create Workspace →'}</span>
+                    <span>{loading ? 'Processing...' : mode === 'login' ? 'Sign In →' : 'Create Free Workspace →'}</span>
                   </button>
                 </form>
 
