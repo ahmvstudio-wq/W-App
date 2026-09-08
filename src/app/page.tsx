@@ -175,7 +175,7 @@ export default function LandingPage() {
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-100 border border-neutral-200 text-xs text-neutral-700 font-light mx-auto">
             <span className="font-mono text-emerald-700 font-semibold">$0 Free</span>
             <span className="text-neutral-300">:</span>
-            <span>You don&apos;t need to pay, lil bro. Keep the bag for camera gear.</span>
+            <span>You don&apos;t need to pay, lil bro. It&apos;s on me.</span>
           </div>
 
           <div className="flex items-center justify-center gap-3 pt-2">
