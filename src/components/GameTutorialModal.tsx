@@ -10,7 +10,7 @@ interface GameTutorialModalProps {
   onCreateMaster?: () => void
 }
 
-export default function GameTutorialModal({ isOpen, onClose, onCreateMaster }: GameTutorialModalProps) {
+export function GameTutorialModal({ isOpen, onClose, onCreateMaster }: GameTutorialModalProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [taskDemoShipped, setTaskDemoShipped] = useState(false)
   const [demoProgress, setDemoProgress] = useState(60)
@@ -536,3 +536,5 @@ export default function GameTutorialModal({ isOpen, onClose, onCreateMaster }: G
     </div>
   )
 }
+
+export default GameTutorialModal

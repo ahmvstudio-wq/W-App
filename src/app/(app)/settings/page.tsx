@@ -5,7 +5,7 @@ export const runtime = 'edge'
 import { useState, useEffect } from 'react'
 import { 
   User, Settings as SettingsIcon, LogOut, Bell, Calendar, 
-  Video, Copy, Check, ExternalLink, RefreshCw, CheckCircle2, AlertCircle, Bot
+  Video, Copy, Check, ExternalLink, RefreshCw, CheckCircle2, AlertCircle, Bot, Target
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -582,13 +582,40 @@ export default function SettingsPage() {
                   </select>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => toast.success('Preferences saved')}
-                  className="px-5 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs"
-                >
-                  Save Preferences
-                </button>
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => toast.success('Preferences saved')}
+                    className="px-5 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs"
+                  >
+                    Save Preferences
+                  </button>
+                </div>
+
+                {/* Restart Tutorial / System Guide */}
+                <div className="p-4 rounded-2xl bg-[#fafafa] border border-black/[0.08] space-y-2.5 mt-4">
+                  <div className="flex items-center gap-2">
+                    <Target size={15} className="text-amber-500" />
+                    <span className="text-xs font-medium text-black">Interactive Game Tutorial</span>
+                  </div>
+                  <p className="text-[11px] text-[#6b7280] font-light leading-relaxed">
+                    Replay the 60-second video game guide explaining Master Campaigns, Missions, and how Tasks are assigned and shipped.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try {
+                        localStorage.removeItem('focus_game_tutorial_completed')
+                      } catch (e) {}
+                      window.dispatchEvent(new CustomEvent('open-game-tutorial'))
+                      toast.success('Tutorial launched!')
+                    }}
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs"
+                  >
+                    <Target size={13} className="text-amber-400" />
+                    <span>Restart Tutorial</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}

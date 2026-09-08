@@ -151,7 +151,7 @@ export default function LandingPage() {
   const faqs = [
     {
       q: 'How do the Claude and ChatGPT connectors work?',
-      a: 'Focus exposes a live, secure OpenAPI 3.1 endpoint (/api/chatgpt/openapi.json). You can connect it directly to Claude Projects or ChatGPT Custom GPT Actions. Your chatbots automatically inherit full real-time context of your active P0 tasks, current projects, daily blockers, and meeting takeaways without manual copy-pasting.',
+      a: 'Focus exposes a live, secure OpenAPI 3.1 endpoint (/api/chatgpt/openapi.json). You can connect it directly to Claude or ChatGPT Actions. Your chatbots automatically inherit full real-time context of your active P0 tasks, current projects, daily blockers, and meeting takeaways without manual copy-pasting.',
     },
     {
       q: 'What is the Pomodoro timer and streak tracking engine?',
@@ -297,211 +297,114 @@ export default function LandingPage() {
           </div>
 
           {/* macOS Minimal Preview Window */}
-          <div className="rounded-3xl border border-black/[0.1] bg-[#ffffff] shadow-2xl shadow-black/[0.06] overflow-hidden">
+          {/* macOS Minimal Preview Window */}
+          <div className="rounded-3xl border border-black/[0.08] bg-white shadow-2xl shadow-black/[0.04] overflow-hidden">
             {/* Window Titlebar */}
-            <div className="px-5 py-3.5 bg-neutral-50/80 border-b border-black/[0.06] flex items-center justify-between">
+            <div className="px-5 py-3.5 bg-neutral-50/80 border-b border-black/[0.05] flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-[#ff5f57] border border-black/[0.08]" />
-                <span className="w-3 h-3 rounded-full bg-[#febc2e] border border-black/[0.08]" />
-                <span className="w-3 h-3 rounded-full bg-[#28c840] border border-black/[0.08]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
               </div>
-              <div className="text-xs font-mono text-neutral-500 flex items-center gap-2">
-                <span>Focus : Operating Cockpit</span>
-                <span className="text-neutral-300">|</span>
-                <span className="text-emerald-600 font-medium">Sprint 24:18 (Deep Work)</span>
+              <div className="text-xs font-mono text-neutral-400 flex items-center gap-2">
+                <span>Focus Solo OS</span>
               </div>
-              <div className="w-16 text-right">
-                <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  Online
-                </span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-mono text-neutral-400">Live</span>
               </div>
             </div>
 
-            {/* Top Workspace System Navigation Bar */}
-            <div className="px-6 py-2.5 bg-white border-b border-black/[0.06] flex items-center gap-6 text-xs text-neutral-500 overflow-x-auto">
-              <span className="text-black font-semibold flex items-center gap-1.5 shrink-0">
-                <Activity size={13} />
-                <span>Dashboard</span>
-              </span>
-              <span className="hover:text-black transition-colors flex items-center gap-1.5 shrink-0">
-                <FolderKanban size={13} />
-                <span>Projects</span>
-              </span>
-              <span className="hover:text-black transition-colors flex items-center gap-1.5 shrink-0">
-                <Layers size={13} />
-                <span>Whiteboard</span>
-              </span>
-              <span className="hover:text-black transition-colors flex items-center gap-1.5 shrink-0">
-                <CheckSquare size={13} />
-                <span>Tasks</span>
-              </span>
-              <span className="hover:text-black transition-colors flex items-center gap-1.5 shrink-0">
-                <Video size={13} />
-                <span>Meetings</span>
-              </span>
-              <span className="hover:text-black transition-colors flex items-center gap-1.5 shrink-0">
-                <Bot size={13} />
-                <span>AI Connectors</span>
-              </span>
-              <span className="hover:text-black transition-colors flex items-center gap-1.5 shrink-0">
-                <Flame size={13} />
-                <span>Streaks</span>
-              </span>
-            </div>
-
-            {/* Cohesive 3-Column Systems Content Grid */}
-            <div className="p-6 grid grid-cols-1 md:grid-cols-12 gap-6 bg-white text-left">
-              {/* Column 1: Strategic Initiatives & Whiteboard Architecture */}
-              <div className="md:col-span-4 space-y-4">
-                <div className="flex items-center justify-between pb-1.5 border-b border-black/[0.06]">
-                  <span className="text-xs font-semibold text-black uppercase tracking-wider flex items-center gap-1.5">
-                    <FolderKanban size={13} />
-                    <span>Active Projects</span>
-                  </span>
-                  <span className="text-[10px] font-mono text-neutral-400">3 Total</span>
-                </div>
-
-                {/* Project Card */}
-                <div className="p-3.5 rounded-2xl bg-neutral-50 border border-black/[0.06] space-y-2">
+            {/* Clean Minimalist Cockpit Grid */}
+            <div className="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 bg-white text-left">
+              {/* Column 1: Active Campaign */}
+              <div className="p-5 rounded-2xl bg-[#fafafa] border border-black/[0.05] space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-black">Focus Core Architecture</span>
-                    <span className="text-[10px] font-mono text-emerald-700 font-semibold">84%</span>
-                  </div>
-                  <div className="w-full h-1 bg-neutral-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: '84%' }} />
-                  </div>
-                  <div className="text-[10px] text-neutral-500 font-mono">
-                    Milestone: Fathom Webhook Engine (Done)
-                  </div>
-                </div>
-
-                {/* Visual Whiteboard Snippet */}
-                <div className="p-3.5 rounded-2xl bg-neutral-50 border border-black/[0.06] space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-black flex items-center gap-1.5">
-                      <Layers size={13} />
-                      <span>Visual Whiteboard</span>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 font-medium">
+                      ACTIVE CAMPAIGN
                     </span>
-                    <span className="text-[9px] font-mono text-neutral-400">Canvas</span>
+                    <span className="text-[10px] font-mono text-emerald-600 font-semibold">84% Shipped</span>
                   </div>
-                  <div className="p-2.5 bg-white rounded-xl border border-black/[0.06] font-mono text-[10px] text-neutral-600 space-y-1">
-                    <div className="text-emerald-700">[Node: Client Call]</div>
-                    <div className="text-neutral-400 pl-2">&darr; Fathom Transcript</div>
-                    <div className="text-black pl-2 font-medium">[Node: Calendar P0 Task]</div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-black">YouTube Studio</h4>
+                    <p className="text-xs text-neutral-400 font-light mt-0.5">
+                      Weekly Long-form &amp; Sponsorships
+                    </p>
                   </div>
+
+                  <div className="w-full h-1 bg-black/[0.06] rounded-full overflow-hidden">
+                    <div className="h-full bg-black rounded-full" style={{ width: '84%' }} />
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-black/[0.04] text-[11px] font-mono text-neutral-500 flex items-center justify-between">
+                  <span>3 Active Missions</span>
+                  <span>14 Tasks Total</span>
                 </div>
               </div>
 
-              {/* Column 2: Execution Engine & Pomodoro Bar */}
-              <div className="md:col-span-4 space-y-4">
-                <div className="flex items-center justify-between pb-1.5 border-b border-black/[0.06]">
-                  <span className="text-xs font-semibold text-black uppercase tracking-wider flex items-center gap-1.5">
-                    <CheckSquare size={13} />
-                    <span>Execution Engine</span>
-                  </span>
-                  <span className="text-[10px] font-mono text-orange-600 font-medium">14 Day Streak</span>
-                </div>
-
-                <div className="space-y-2">
-                  {/* Active Pomodoro Task Card */}
-                  <div className="p-3 rounded-xl bg-neutral-900 text-white border border-neutral-800 shadow-sm space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <Timer size={12} className="text-emerald-400 animate-pulse" />
-                        <span className="text-[11px] font-mono text-emerald-400">Pomodoro Deep Work: 24:18</span>
-                      </div>
-                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-300">
-                        Sprint 1 of 4
-                      </span>
-                    </div>
-                    <div className="text-xs font-medium text-white truncate">
-                      Deliver Sony sponsor color grade
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-neutral-50 border border-black/[0.06] flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-md bg-emerald-500 text-white flex items-center justify-center text-[10px]">
-                        <Check size={11} strokeWidth={3} />
-                      </div>
-                      <span className="text-xs text-neutral-400 line-through font-light">
-                        Deploy calendar ICS feed
-                      </span>
-                    </div>
-                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-neutral-200/80 text-neutral-600">
-                      Done
+              {/* Column 2: Deep Work Sprint */}
+              <div className="p-5 rounded-2xl bg-[#fafafa] border border-black/[0.05] space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 font-medium">
+                      FOCUS SESSION
+                    </span>
+                    <span className="text-[10px] font-mono text-orange-600 font-medium flex items-center gap-1">
+                      <Flame size={11} /> 14-Day Streak
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-white border border-black/[0.1] shadow-2xs flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-md border border-black/[0.3]" />
-                      <span className="text-xs font-medium text-black">
-                        Upload YouTube 1-Person Business
-                      </span>
+                  <div className="p-3 rounded-xl bg-black text-white space-y-1">
+                    <div className="flex items-center justify-between text-[10px] font-mono text-emerald-400">
+                      <span>DEEP WORK</span>
+                      <span>24:18</span>
                     </div>
-                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">
-                      P1: 4:00 PM
-                    </span>
+                    <p className="text-xs font-normal text-neutral-100 truncate">
+                      Deliver sponsor video cut
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-neutral-600 px-1 font-light">
+                    <span className="truncate">Next: Publish Episode 4</span>
+                    <span className="text-[10px] font-mono text-neutral-400 shrink-0">4:00 PM</span>
                   </div>
                 </div>
 
-                {/* Velocity Indicator */}
-                <div className="p-2.5 bg-neutral-50 rounded-xl border border-black/[0.06] flex items-center justify-between text-[11px]">
-                  <span className="text-neutral-500">Monthly Velocity:</span>
-                  <span className="font-mono text-black font-semibold">142 Tasks Shipped</span>
+                <div className="pt-3 border-t border-black/[0.04] text-[11px] font-mono text-neutral-500 flex items-center justify-between">
+                  <span>Sprint 1 of 4</span>
+                  <span>Pomodoro Mode</span>
                 </div>
               </div>
 
-              {/* Column 3: AI Context & Meeting Sync */}
-              <div className="md:col-span-4 space-y-4">
-                <div className="flex items-center justify-between pb-1.5 border-b border-black/[0.06]">
-                  <span className="text-xs font-semibold text-black uppercase tracking-wider flex items-center gap-1.5">
-                    <Bot size={13} />
-                    <span>AI Context Hub</span>
-                  </span>
-                  <span className="text-[10px] font-mono text-emerald-600">OpenAPI 3.1</span>
-                </div>
-
-                {/* AI Chief of Staff Card */}
-                <div className="p-3.5 rounded-2xl bg-neutral-50 border border-black/[0.06] space-y-2">
+              {/* Column 3: AI Assistant & Sync */}
+              <div className="p-5 rounded-2xl bg-[#fafafa] border border-black/[0.05] space-y-4 flex flex-col justify-between">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-black flex items-center gap-1.5">
-                      <Sparkles size={12} className="text-indigo-600" />
-                      <span>Claude / GPT Context</span>
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 font-medium">
+                      INTELLIGENCE &amp; SYNC
                     </span>
-                    <span className="text-[9px] font-mono text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
-                      Live Hook
-                    </span>
+                    <span className="text-[10px] font-mono text-neutral-400">OpenAPI 3.1</span>
                   </div>
-                  <div className="p-2 bg-white rounded-xl border border-black/[0.06] text-[10px] text-neutral-600 space-y-1">
-                    <div className="font-mono text-[9px] text-neutral-400">&gt; Claude query received</div>
-                    <div className="text-neutral-800 leading-snug">
-                      &quot;3 P0 items prioritized for today. 1 meeting action item converted to calendar.&quot;
-                    </div>
+
+                  <div className="p-3 rounded-xl bg-white border border-black/[0.06] text-xs text-neutral-600 space-y-1 shadow-2xs">
+                    <div className="text-[10px] font-mono text-emerald-600 font-medium">Assistant Connected</div>
+                    <p className="text-[11px] text-neutral-700 leading-snug font-light">
+                      &quot;Today&apos;s priority tasks scheduled. Calendar and meetings synchronized.&quot;
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-neutral-500 px-1 font-light">
+                    <span>Google &amp; Apple Sync</span>
+                    <span className="text-[10px] font-mono text-emerald-600">Active</span>
                   </div>
                 </div>
 
-                {/* Fathom Call Card */}
-                <div className="p-3.5 rounded-2xl bg-neutral-50 border border-black/[0.06] space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-black">Fathom Meeting Synced</span>
-                    <span className="text-[9px] font-mono text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
-                      32 mins
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-neutral-600 font-light truncate">
-                    Takeaway converted to P0 calendar task.
-                  </div>
-                </div>
-
-                {/* Calendar Sync Status */}
-                <div className="p-3 rounded-2xl bg-neutral-50 border border-black/[0.06] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5">
-                    <Calendar size={13} className="text-neutral-500" />
-                    <span className="text-neutral-700 font-medium">Calendar Sync</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-emerald-700">Google &amp; Apple</span>
+                <div className="pt-3 border-t border-black/[0.04] text-[11px] font-mono text-neutral-500 flex items-center justify-between">
+                  <span>Context Engine</span>
+                  <span className="text-black font-medium">Real-time</span>
                 </div>
               </div>
             </div>
@@ -539,7 +442,7 @@ export default function LandingPage() {
                 )}
               >
                 <Sparkles size={13} className={activeAiTab === 'claude' ? "text-amber-600" : ""} />
-                <span>Claude 3.5 Sonnet</span>
+                <span>Claude</span>
               </button>
               <button
                 onClick={() => setActiveAiTab('chatgpt')}
@@ -551,7 +454,7 @@ export default function LandingPage() {
                 )}
               >
                 <Bot size={13} className={activeAiTab === 'chatgpt' ? "text-emerald-500" : ""} />
-                <span>ChatGPT Custom GPT</span>
+                <span>ChatGPT</span>
               </button>
               <button
                 onClick={() => setActiveAiTab('openapi')}
