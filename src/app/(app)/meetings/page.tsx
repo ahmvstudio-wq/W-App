@@ -86,12 +86,19 @@ export default function MeetingsPage() {
   const fetchAllData = useCallback(async (silent = false, forceRefresh = false) => {
     if (!silent) setLoading(true)
     try {
-      // 1. Fetch real tasks from Supabase
-      const { data: tasksData } = await supabase
+      // 1. Fetch real tasks from Supabase strictly scoped to active workspace
+      const activeWsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+      let tasksQuery = supabase
         .from('tasks')
         .select('*, project:projects(id, name)')
         .neq('status', 'killed')
         .order('created_at', { ascending: false })
+
+      if (activeWsId) {
+        tasksQuery = tasksQuery.eq('workspace_id', activeWsId)
+      }
+
+      const { data: tasksData } = await tasksQuery
 
       if (tasksData) setTasks(tasksData as Task[])
 

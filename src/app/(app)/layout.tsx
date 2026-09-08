@@ -114,8 +114,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen bg-[#fbfbfd] flex items-center justify-center font-sans">
         <div className="text-center space-y-1">
-          <div className="text-sm font-normal text-black tracking-tight">CallMy Mgmt</div>
-          <div className="text-[#8a8d95] text-xs font-mono tracking-wider uppercase font-light">Loading workspace...</div>
+          <div className="text-sm font-medium text-black tracking-tight">Focus</div>
+          <div className="text-[#8a8d95] text-[11px] font-mono tracking-wider uppercase font-light">Loading workspace...</div>
         </div>
       </div>
     )
@@ -134,9 +134,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-40 h-16 bg-white/80 backdrop-blur-xl border-b border-black/[0.06] px-6 sm:px-10 flex items-center justify-between">
           {/* Left: Brand Identity & Workspace Switcher */}
           <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="flex items-center group">
-              <span className="font-normal text-sm tracking-tight text-black group-hover:opacity-80 transition-opacity">
-                CallMy Mgmt
+            <Link href="/dashboard" className="flex items-center gap-2 group">
+              <div className="w-6 h-6 rounded-lg bg-black text-white flex items-center justify-center shadow-xs">
+                <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <circle cx="12" cy="12" r="4" />
+                  <line x1="12" y1="1" x2="12" y2="4" />
+                  <line x1="12" y1="20" x2="12" y2="23" />
+                  <line x1="1" y1="12" x2="4" y2="12" />
+                  <line x1="20" y1="12" x2="23" y2="12" />
+                </svg>
+              </div>
+              <span className="font-semibold text-sm tracking-tight text-black group-hover:opacity-80 transition-opacity">
+                Focus
               </span>
             </Link>
             <div className="h-4 w-px bg-black/[0.08]" />

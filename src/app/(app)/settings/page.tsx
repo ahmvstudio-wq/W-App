@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 import { 
   User, Settings as SettingsIcon, LogOut, Bell, Calendar, 
   Video, Copy, Check, ExternalLink, RefreshCw, CheckCircle2, AlertCircle,
-  Building2, Users, UserPlus, Trash2, Shield, Key
+  Building2, Users, UserPlus, Trash2, Shield, Key, Bot
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -47,6 +47,19 @@ export default function SettingsPage() {
   const [savingFathomKey, setSavingFathomKey] = useState(false)
   const [testingFathom, setTestingFathom] = useState(false)
   const [copiedWebhook, setCopiedWebhook] = useState(false)
+  const [copiedOpenApi, setCopiedOpenApi] = useState(false)
+
+  const getOpenApiUrl = () => {
+    if (typeof window === 'undefined') return '/api/chatgpt/openapi.json'
+    return `${window.location.origin}/api/chatgpt/openapi.json`
+  }
+
+  const copyOpenApiUrl = () => {
+    navigator.clipboard.writeText(getOpenApiUrl())
+    setCopiedOpenApi(true)
+    toast.success('OpenAPI 3.1 Spec URL copied to clipboard!')
+    setTimeout(() => setCopiedOpenApi(false), 2500)
+  }
 
   useEffect(() => {
     if (currentWorkspace?.name) {
@@ -485,6 +498,79 @@ export default function SettingsPage() {
                       {copiedWebhook ? <Check size={13} /> : <Copy size={13} />}
                       <span>{copiedWebhook ? 'Copied' : 'Copy Webhook'}</span>
                     </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Chief of Staff (ChatGPT & Claude Connectors) */}
+              <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-black/[0.08] flex items-center justify-center shadow-xs">
+                      <Bot size={20} className="text-black" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-normal text-black">AI Chief of Staff (ChatGPT &amp; Claude)</h3>
+                      <p className="text-xs text-[#6b7280] font-light">
+                        Connect ChatGPT Custom GPTs and Claude Projects to manage your entire workspace with live context.
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-normal border bg-emerald-50 text-emerald-700 border-emerald-200">
+                    <CheckCircle2 size={12} />
+                    <span>OpenAPI 3.1 Ready</span>
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-xl bg-white border border-black/[0.06] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-black">
+                      Live OpenAPI 3.1 Endpoint
+                    </span>
+                    <span className="text-[11px] text-[#8a8d95]">
+                      Direct ChatGPT Action &amp; Claude Schema
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#6b7280] font-light leading-relaxed">
+                    Import this URL directly into your ChatGPT Custom Action or Claude Project instructions. ChatGPT and Claude can query active P0 tasks, inspect projects, convert meeting takeaways, and log Pomodoro deep work sessions without manual copy-pasting.
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <input
+                      type="text"
+                      readOnly
+                      value={getOpenApiUrl()}
+                      className="flex-1 min-w-[220px] px-3.5 py-2 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-xs font-mono text-black outline-none select-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={copyOpenApiUrl}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                    >
+                      {copiedOpenApi ? <Check size={13} /> : <Copy size={13} />}
+                      <span>{copiedOpenApi ? 'Copied' : 'Copy Spec URL'}</span>
+                    </button>
+                    <a
+                      href="/api/chatgpt/openapi.json"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] rounded-xl text-xs font-normal transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+                    >
+                      <ExternalLink size={13} />
+                      <span>View Raw Spec</span>
+                    </a>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    <div className="p-3 rounded-xl bg-neutral-50 border border-black/[0.04] text-[11px] text-[#6b7280] space-y-1">
+                      <strong className="text-black font-medium block">ChatGPT Setup:</strong>
+                      <span>Create GPT &rarr; Configure &rarr; Actions &rarr; &quot;Import from URL&quot; &rarr; Paste your OpenAPI Spec URL.</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-neutral-50 border border-black/[0.04] text-[11px] text-[#6b7280] space-y-1">
+                      <strong className="text-black font-medium block">Claude Setup:</strong>
+                      <span>Claude Projects &rarr; Set instructions to query this endpoint for real-time task and project context.</span>
+                    </div>
                   </div>
                 </div>
               </div>

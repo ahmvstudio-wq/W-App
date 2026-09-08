@@ -20,9 +20,39 @@ export default function DocumentsPage() {
 
   async function fetchDocs() {
     setLoading(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      setDocs([])
+      setLoading(false)
+      return
+    }
+
+    let activeWsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+    if (!activeWsId) {
+      const { data: userWs } = await supabase
+        .from('workspaces')
+        .select('id')
+        .eq('owner_id', session.user.id)
+        .limit(1)
+
+      if (userWs && userWs.length > 0) {
+        activeWsId = userWs[0].id
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('focus_active_workspace_id', userWs[0].id)
+        }
+      }
+    }
+
+    if (!activeWsId) {
+      setDocs([])
+      setLoading(false)
+      return
+    }
+
     const { data, error } = await supabase
       .from('documents')
       .select('*')
+      .eq('workspace_id', activeWsId)
       .order('updated_at', { ascending: false })
     
     if (data) setDocs(data)

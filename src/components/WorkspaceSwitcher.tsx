@@ -210,7 +210,7 @@ export default function WorkspaceSwitcher() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Acme Agency, Personal Projects, Tadbeer TT"
+                  placeholder="e.g. Creator Studio, Personal Projects, Main Hub"
                   value={newWsName}
                   onChange={(e) => setNewWsName(e.target.value)}
                   className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"

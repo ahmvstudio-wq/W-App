@@ -87,18 +87,38 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       if (data.success && Array.isArray(data.workspaces) && data.workspaces.length > 0) {
         list = data.workspaces
       } else {
-        // Direct Supabase query fallback
-        const { data: fallbackWs } = await supabase
+        // Direct Supabase query fallback strictly scoped to current user
+        const { data: ownedWs } = await supabase
           .from('workspaces')
           .select('*')
+          .eq('owner_id', session.user.id)
           .order('created_at', { ascending: false })
 
-        if (fallbackWs && fallbackWs.length > 0) {
-          list = fallbackWs.map((ws) => ({
-            ...ws,
-            role: ws.owner_id === session.user.id ? 'owner' : 'member',
+        // Also check member workspaces
+        const { data: memberRows } = await supabase
+          .from('workspace_members')
+          .select('role, workspace:workspaces(*)')
+          .eq('user_id', session.user.id)
+
+        const ownedList = (ownedWs || []).map((ws) => ({
+          ...ws,
+          role: 'owner' as WorkspaceRole,
+        }))
+
+        const memberList = (memberRows || [])
+          .filter((r: any) => r.workspace)
+          .map((r: any) => ({
+            ...r.workspace,
+            role: r.role || 'member',
           }))
-        }
+
+        const wsMap = new Map<string, Workspace>()
+        ownedList.forEach((w) => wsMap.set(w.id, w))
+        memberList.forEach((w: any) => {
+          if (!wsMap.has(w.id)) wsMap.set(w.id, w)
+        })
+
+        list = Array.from(wsMap.values())
       }
 
       // If still empty, create default workspace on the fly
@@ -128,6 +148,11 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         setCurrentWorkspace(matched)
       } else if (list.length > 0) {
         setCurrentWorkspace(list[0])
+      } else {
+        setCurrentWorkspaceState(null)
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem(ACTIVE_WS_STORAGE_KEY)
+        }
       }
     } catch (err) {
       console.error('[WorkspaceContext] refreshWorkspaces error:', err)

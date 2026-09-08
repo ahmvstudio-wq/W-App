@@ -31,12 +31,11 @@ export async function GET(req: NextRequest) {
     const user = await getAuthUser(req)
 
     if (!user) {
-      // Fallback: If no direct session user header, query all workspaces
-      const { data: allWs } = await supabase.from('workspaces').select('*').order('created_at', { ascending: false })
       return NextResponse.json({
-        success: true,
-        workspaces: allWs || [],
-      })
+        success: false,
+        error: 'Authentication required to access workspaces.',
+        workspaces: [],
+      }, { status: 401 })
     }
 
     // Get user workspaces

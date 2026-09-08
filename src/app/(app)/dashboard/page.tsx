@@ -59,21 +59,40 @@ export default function DashboardPage() {
 
     setUserName(session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Founder')
 
-    const activeWsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+    let activeWsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+    if (!activeWsId) {
+      const { data: userWs } = await supabase
+        .from('workspaces')
+        .select('id')
+        .eq('owner_id', session.user.id)
+        .limit(1)
+
+      if (userWs && userWs.length > 0) {
+        activeWsId = userWs[0].id
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('focus_active_workspace_id', userWs[0].id)
+        }
+      }
+    }
+
+    if (!activeWsId) {
+      setTasks([])
+      setProjects([])
+      setLoading(false)
+      return
+    }
+
     let tasksQuery = supabase
       .from('tasks')
       .select('*, owner:profiles(*), project:projects(*)')
+      .eq('workspace_id', activeWsId)
       .order('created_at', { ascending: false })
 
     let projectsQuery = supabase
       .from('projects')
       .select('*, owner:profiles(*), tasks(*)')
+      .eq('workspace_id', activeWsId)
       .order('updated_at', { ascending: false })
-
-    if (activeWsId) {
-      tasksQuery = tasksQuery.eq('workspace_id', activeWsId)
-      projectsQuery = projectsQuery.eq('workspace_id', activeWsId)
-    }
 
     const { data: tasksData } = await tasksQuery
     const { data: projectsData } = await projectsQuery

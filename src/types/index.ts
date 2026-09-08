@@ -63,7 +63,7 @@ export interface Project {
   id: string
   workspace_id: string
   name: string
-  master_project?: string // e.g. "Tadbeer TT"
+  master_project?: string // e.g. "Primary Portfolio"
   description?: string
   status: ProjectStatus
   owner_id: string

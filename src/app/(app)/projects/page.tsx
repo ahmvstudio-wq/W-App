@@ -27,18 +27,11 @@ export interface MasterProjectInfo {
 
 const DEFAULT_MASTER_PROJECTS: MasterProjectInfo[] = [
   {
-    id: 'mp-tadbeer',
-    name: 'Tadbeer TT',
-    subtitle: 'Tadbeer Transformation Trading',
-    description: 'Centralized executive command hub grouping client CRM rollouts, commercial pricing packages, and e-commerce infrastructure.',
-    colorTheme: 'emerald'
-  },
-  {
-    id: 'mp-internal',
-    name: 'Internal Core',
-    subtitle: 'Platform Architecture & Tooling',
-    description: 'Internal infrastructure, core workflows, and development sprints for CallMy workspace.',
-    colorTheme: 'indigo'
+    id: 'mp-primary',
+    name: 'Primary Portfolio',
+    subtitle: 'Strategic Initiatives & Products',
+    description: 'Central master portfolio organizing all active projects and deliverables.',
+    colorTheme: 'purple'
   }
 ]
 
@@ -49,7 +42,7 @@ export default function ProjectsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isCreateMasterModalOpen, setIsCreateMasterModalOpen] = useState(false)
   const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
-  const [createInitialMasterProject, setCreateInitialMasterProject] = useState<string>('Tadbeer TT')
+  const [createInitialMasterProject, setCreateInitialMasterProject] = useState<string>('Primary Portfolio')
   
   // Data States
   const [projects, setProjects] = useState<Project[]>([])
@@ -58,13 +51,13 @@ export default function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   
   // Selected Master Project for the Command Hub Banner & Filter
-  const [activeMasterProjectName, setActiveMasterProjectName] = useState<string>('Tadbeer TT')
+  const [activeMasterProjectName, setActiveMasterProjectName] = useState<string>('Primary Portfolio')
   const [selectedMasterFilter, setSelectedMasterFilter] = useState<string>('all')
 
   // Load custom master projects from localStorage
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('callmy_master_projects')
+      const saved = localStorage.getItem('focus_master_projects')
       if (saved) {
         const parsed = JSON.parse(saved)
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -86,7 +79,7 @@ export default function ProjectsPage() {
   function saveMasterProjects(newList: MasterProjectInfo[]) {
     setMasterProjects(newList)
     try {
-      localStorage.setItem('callmy_master_projects', JSON.stringify(newList))
+      localStorage.setItem('focus_master_projects', JSON.stringify(newList))
     } catch (e) {
       console.warn('Failed to save master projects:', e)
     }
@@ -105,28 +98,53 @@ export default function ProjectsPage() {
 
   async function fetchProjects() {
     setLoading(true)
-    const activeWsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      setProjects([])
+      setLoading(false)
+      return
+    }
+
+    let activeWsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+    if (!activeWsId) {
+      const { data: userWs } = await supabase
+        .from('workspaces')
+        .select('id')
+        .eq('owner_id', session.user.id)
+        .limit(1)
+
+      if (userWs && userWs.length > 0) {
+        activeWsId = userWs[0].id
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('focus_active_workspace_id', userWs[0].id)
+        }
+      }
+    }
+
+    if (!activeWsId) {
+      setProjects([])
+      setLoading(false)
+      return
+    }
+
     let query = supabase
       .from('projects')
       .select('*, tasks(*)')
+      .eq('workspace_id', activeWsId)
       .order('updated_at', { ascending: false })
-
-    if (activeWsId) {
-      query = query.eq('workspace_id', activeWsId)
-    }
     
     const { data } = await query
     
     if (data) {
-      // Ensure master_project defaults to "Tadbeer TT" if not set
+      // Ensure master_project defaults to "General" if not set
       const enriched: Project[] = data.map((p: any) => ({
         ...p,
-        master_project: p.master_project || 'Tadbeer TT'
+        master_project: p.master_project || 'General'
       }))
       setProjects(enriched)
 
       // Auto-register any new master_project names found in database
-      const foundNames = Array.from(new Set(enriched.map(p => p.master_project || 'Tadbeer TT')))
+      const foundNames = Array.from(new Set(enriched.map(p => p.master_project || 'General')))
       setMasterProjects(prev => {
         const updated = [...prev]
         foundNames.forEach(name => {
@@ -176,7 +194,7 @@ export default function ProjectsPage() {
 
   // Initiatives for Active Master Project
   const activeMasterProjects = useMemo(() => {
-    return projects.filter(p => (p.master_project || 'Tadbeer TT').toLowerCase() === activeMasterProjectName.toLowerCase())
+    return projects.filter(p => (p.master_project || 'General').toLowerCase() === activeMasterProjectName.toLowerCase())
   }, [projects, activeMasterProjectName])
 
   const activeMasterTasks = activeMasterProjects.flatMap(p => p.tasks || [])
@@ -188,7 +206,7 @@ export default function ProjectsPage() {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()))
     
-    const projectMaster = p.master_project || 'Tadbeer TT'
+    const projectMaster = p.master_project || 'General'
     const matchesMaster = selectedMasterFilter === 'all' || projectMaster.toLowerCase() === selectedMasterFilter.toLowerCase()
 
     return matchesSearch && matchesMaster
@@ -198,7 +216,7 @@ export default function ProjectsPage() {
   const isAllFilter = selectedMasterFilter === 'all'
   const scopedProjects = useMemo(() => {
     if (isAllFilter) return projects
-    return projects.filter(p => (p.master_project || 'Tadbeer TT').toLowerCase() === selectedMasterFilter.toLowerCase())
+    return projects.filter(p => (p.master_project || 'General').toLowerCase() === selectedMasterFilter.toLowerCase())
   }, [projects, isAllFilter, selectedMasterFilter])
 
   const scopedMasterName = isAllFilter ? 'Portfolio' : selectedMasterFilter
@@ -271,7 +289,7 @@ export default function ProjectsPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* MASTER PROGRAM SWITCHER CAROUSEL (TADBEER TT, INTERNAL CORE, + CREATE)    */}
+      {/* MASTER PROGRAM SWITCHER CAROUSEL (PRIMARY PORTFOLIO, INTERNAL, + CREATE)  */}
       {/* ========================================================================= */}
       <div className="space-y-3 font-body">
         <div className="flex items-center justify-between">
@@ -291,7 +309,7 @@ export default function ProjectsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {allMasterNames.map((mName) => {
             const isSelected = activeMasterProjectName.toLowerCase() === mName.toLowerCase()
-            const mProjects = projects.filter(p => (p.master_project || 'Tadbeer TT').toLowerCase() === mName.toLowerCase())
+            const mProjects = projects.filter(p => (p.master_project || 'General').toLowerCase() === mName.toLowerCase())
             const mTasks = mProjects.flatMap(p => p.tasks || [])
             const mShipped = mTasks.filter((t: any) => t.status === 'shipped').length
             const mProgress = mTasks.length > 0 ? Math.round((mShipped / mTasks.length) * 100) : 0
@@ -585,7 +603,7 @@ export default function ProjectsPage() {
           </button>
 
           {allMasterNames.map((mName) => {
-            const count = projects.filter(p => (p.master_project || 'Tadbeer TT').toLowerCase() === mName.toLowerCase()).length
+            const count = projects.filter(p => (p.master_project || 'General').toLowerCase() === mName.toLowerCase()).length
             return (
               <button
                 key={mName}
@@ -641,7 +659,7 @@ export default function ProjectsPage() {
             const pShipped = pTasks.filter((t: any) => t.status === 'shipped').length
             const pProgress = pTotal === 0 ? 0 : Math.round((pShipped / pTotal) * 100)
             const daysLeft = project.deadline ? daysUntil(project.deadline) : null
-            const masterName = project.master_project || 'Tadbeer TT'
+            const masterName = project.master_project || 'General'
 
             return (
               <Link
@@ -801,7 +819,7 @@ function CreateMasterProjectModal({
             <input
               type="text"
               required
-              placeholder="e.g. Tadbeer TT, Apex Logistics, Global Retail"
+              placeholder="e.g. Creator Pipeline, Web Platform, Client Work"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full px-4 py-2.5 bg-white border border-black/[0.1] focus:border-black rounded-xl text-xs text-black outline-none font-light shadow-xs"
@@ -815,7 +833,7 @@ function CreateMasterProjectModal({
             </label>
             <input
               type="text"
-              placeholder="e.g. Tadbeer Transformation Trading"
+              placeholder="e.g. Primary Portfolio & Initiatives"
               value={subtitle}
               onChange={(e) => setSubtitle(e.target.value)}
               className="w-full px-4 py-2.5 bg-white border border-black/[0.1] focus:border-black rounded-xl text-xs text-black outline-none font-light shadow-xs"
@@ -858,8 +876,8 @@ function CreateMasterProjectModal({
 }
 
 function CreateProjectWizard({ 
-  initialMasterProject = 'Tadbeer TT',
-  availableMasterProjects = ['Tadbeer TT'],
+  initialMasterProject = 'Primary Portfolio',
+  availableMasterProjects = ['Primary Portfolio'],
   onOpenCreateMaster,
   onClose, 
   onSuccess 
@@ -922,7 +940,7 @@ function CreateProjectWizard({
     }
 
     if (workspaceId) {
-      const chosenMaster = isTypingCustomMaster && customMasterInput.trim() ? customMasterInput.trim() : (formData.master_project || 'Tadbeer TT')
+      const chosenMaster = isTypingCustomMaster && customMasterInput.trim() ? customMasterInput.trim() : (formData.master_project || 'General')
 
       const { data, error } = await supabase.from('projects').insert({
         workspace_id: workspaceId,
@@ -971,7 +989,7 @@ function CreateProjectWizard({
                 STEP {step} OF 6
               </span>
               <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[10px] font-mono font-medium">
-                {isTypingCustomMaster && customMasterInput ? customMasterInput : (formData.master_project || 'Tadbeer TT')}
+                {isTypingCustomMaster && customMasterInput ? customMasterInput : (formData.master_project || 'General')}
               </span>
             </div>
             <h2 className="text-lg font-normal text-black tracking-tight">
@@ -1095,7 +1113,7 @@ function CreateProjectWizard({
               </label>
               <textarea
                 rows={4}
-                placeholder="e.g. Production demo is deployed on Tadbeer domain and passes live invoice test with client."
+                placeholder="e.g. Core milestone is deployed and verified in production."
                 value={formData.success_metric}
                 onChange={(e) => setFormData({ ...formData, success_metric: e.target.value })}
                 className="w-full px-4 py-3 bg-white border border-black/[0.1] focus:border-black rounded-2xl text-sm text-black outline-none font-light shadow-sm resize-none"

@@ -133,7 +133,7 @@ export default function SingleProjectPage() {
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded-md text-[10px] font-mono uppercase bg-emerald-50 text-emerald-800 border border-emerald-200 inline-flex items-center gap-1 font-medium">
                 <Building2 size={11} className="text-emerald-600" />
-                {project.master_project || 'Tadbeer TT'}
+                {project.master_project || 'General'}
               </span>
               <span className="text-xs text-[#9ca3af] font-mono">/</span>
               <h1 className="text-base font-normal text-black tracking-tight">{project.name}</h1>

@@ -39,15 +39,40 @@ export default function TasksPage() {
   async function fetchTasks(silent = false) {
     if (!silent) setLoading(true)
     try {
-      const activeWsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setTasks([])
+        setLoading(false)
+        return
+      }
+
+      let activeWsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+      if (!activeWsId) {
+        const { data: userWs } = await supabase
+          .from('workspaces')
+          .select('id')
+          .eq('owner_id', session.user.id)
+          .limit(1)
+
+        if (userWs && userWs.length > 0) {
+          activeWsId = userWs[0].id
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('focus_active_workspace_id', userWs[0].id)
+          }
+        }
+      }
+
+      if (!activeWsId) {
+        setTasks([])
+        setLoading(false)
+        return
+      }
+
       let query = supabase
         .from('tasks')
         .select('*, owner:profiles(*), project:projects(*)')
+        .eq('workspace_id', activeWsId)
         .order('created_at', { ascending: false })
-
-      if (activeWsId) {
-        query = query.eq('workspace_id', activeWsId)
-      }
       
       const { data, error } = await query
       
