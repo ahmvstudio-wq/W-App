@@ -592,15 +592,14 @@ export default function SettingsPage() {
                   </button>
                 </div>
 
-                {/* Restart Tutorial / System Guide */}
-                <div className="p-4 rounded-2xl bg-[#fafafa] border border-black/[0.08] space-y-2.5 mt-4">
-                  <div className="flex items-center gap-2">
-                    <Target size={15} className="text-amber-500" />
-                    <span className="text-xs font-medium text-black">Interactive Game Tutorial</span>
+                {/* System Operating Manual */}
+                <div className="p-4 rounded-2xl bg-[#fafafa] border border-black/[0.08] space-y-2 mt-4">
+                  <div>
+                    <span className="text-xs font-medium text-black block">System Operating Manual</span>
+                    <p className="text-[11px] text-[#6b7280] font-light leading-relaxed mt-0.5">
+                      Open the architectural guide covering Master Projects, deliverable scopes, and execution workflows.
+                    </p>
                   </div>
-                  <p className="text-[11px] text-[#6b7280] font-light leading-relaxed">
-                    Replay the 60-second video game guide explaining Master Campaigns, Missions, and how Tasks are assigned and shipped.
-                  </p>
                   <button
                     type="button"
                     onClick={() => {
@@ -608,12 +607,11 @@ export default function SettingsPage() {
                         localStorage.removeItem('focus_game_tutorial_completed')
                       } catch (e) {}
                       window.dispatchEvent(new CustomEvent('open-game-tutorial'))
-                      toast.success('Tutorial launched!')
+                      toast.success('Operating Manual opened')
                     }}
-                    className="flex items-center gap-1.5 px-3.5 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs"
+                    className="px-3.5 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-2xs"
                   >
-                    <Target size={13} className="text-amber-400" />
-                    <span>Restart Tutorial</span>
+                    Open Operating Manual
                   </button>
                 </div>
               </div>

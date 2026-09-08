@@ -373,142 +373,121 @@ export default function ProjectsPage() {
         /* ========================================================================= */
         /* VIDEO GAME TUTORIAL & SYSTEM BRIEFING FOR NEW USERS (CLEAN EMPTY STATE)   */
         /* ========================================================================= */
-        <div className="space-y-8 animate-fadeIn font-body">
+        <div className="space-y-6 animate-fadeIn font-body">
           {/* Main Briefing Card */}
-          <div className="p-6 sm:p-10 rounded-3xl bg-white border border-black/[0.1] shadow-xl relative overflow-hidden">
-            {/* Ambient subtle glow */}
-            <div className="absolute right-0 top-0 w-96 h-96 bg-amber-100/40 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute left-1/4 bottom-0 w-80 h-80 bg-emerald-100/30 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="relative z-10 space-y-8">
+          <div className="p-6 sm:p-8 rounded-3xl bg-white border border-black/[0.08] shadow-xs relative overflow-hidden">
+            <div className="space-y-6">
               {/* Header Badge & Title */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full bg-black text-white text-[10px] font-mono uppercase tracking-widest font-semibold flex items-center gap-1.5">
-                    <Target size={12} className="text-amber-400" />
-                    SYSTEM BRIEFING
-                  </span>
-                  <span className="text-[#9ca3af] text-xs font-mono">•</span>
-                  <span className="text-xs font-mono text-[#6b7280]">SOLO CREATOR &amp; ENTREPRENEUR OS</span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-light tracking-tight text-black">
-                  How Focus works in <span className="font-semibold">3 simple levels</span>.
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400">
+                  Workspace Structure
+                </span>
+                <h2 className="text-2xl font-light tracking-tight text-black">
+                  Projects &amp; Master Portfolios
                 </h2>
-                <p className="text-xs sm:text-sm text-[#4b5563] font-light max-w-2xl leading-relaxed">
-                  No confusing enterprise jargon. Everything you build is organized into <strong>Campaigns</strong>, <strong>Missions</strong>, and <strong>Action Steps</strong>.
+                <p className="text-xs sm:text-sm text-neutral-500 font-light max-w-2xl leading-relaxed">
+                  Focus separates high-level ventures from finite deliverables. Organize operations into distinct master portfolios, track milestone velocity, and execute tasks without cross-business clutter.
                 </p>
               </div>
 
               {/* 3 Level Hierarchy Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* Level 1 */}
-                <div className="p-5 rounded-2xl bg-[#fafafa] border border-black/[0.08] hover:border-black/[0.2] transition-all space-y-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md font-semibold">
-                        LEVEL 1: THE UMBRELLA
-                      </span>
-                      <Building2 size={16} className="text-amber-600" />
-                    </div>
-                    <h3 className="text-base font-semibold text-black">
-                      1. Master Campaign
+                <div className="p-4 rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-2 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-mono text-neutral-400">
+                      01 &bull; Master Portfolio
+                    </span>
+                    <h3 className="text-sm font-medium text-black">
+                      Master Project
                     </h3>
-                    <p className="text-xs text-[#4b5563] font-light leading-relaxed">
-                      Your <strong>umbrella business or brand</strong>. For example: <em>YouTube Channel</em>, <em>Clothing Brand</em>, or <em>Agency</em>. Everything related to that brand lives here.
+                    <p className="text-xs text-neutral-500 font-light leading-relaxed">
+                      The overarching entity or brand (e.g., your media channel, product company, or advisory firm). All deliverables remain isolated within their parent portfolio.
                     </p>
                   </div>
-                  <div className="pt-2 border-t border-black/[0.05] text-[11px] font-mono text-[#6b7280]">
-                    Keeps distinct brands completely separated.
+                  <div className="pt-2 border-t border-black/[0.05] text-[11px] font-mono text-neutral-400">
+                    Isolates distinct business lines.
                   </div>
                 </div>
 
                 {/* Level 2 */}
-                <div className="p-5 rounded-2xl bg-[#fafafa] border border-black/[0.08] hover:border-black/[0.2] transition-all space-y-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md font-semibold">
-                        LEVEL 2: THE MISSIONS
-                      </span>
-                      <FolderKanban size={16} className="text-blue-600" />
-                    </div>
-                    <h3 className="text-base font-semibold text-black">
-                      2. Projects (Missions)
+                <div className="p-4 rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-2 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-mono text-neutral-400">
+                      02 &bull; Milestone Scope
+                    </span>
+                    <h3 className="text-sm font-medium text-black">
+                      Deliverable Project
                     </h3>
-                    <p className="text-xs text-[#4b5563] font-light leading-relaxed">
-                      A <strong>concrete mission or launch</strong> under that campaign. For example: <em>Launch Spring Collection</em> or <em>Film 5 Video Series</em>.
+                    <p className="text-xs text-neutral-500 font-light leading-relaxed">
+                      A concrete deliverable with a deadline, progress metrics, and linked whiteboard specs (e.g., Q3 sponsor drop, collection launch, or redesign).
                     </p>
                   </div>
-                  <div className="pt-2 border-t border-black/[0.05] text-[11px] font-mono text-[#6b7280]">
-                    Has a deadline, live health check, and task list.
+                  <div className="pt-2 border-t border-black/[0.05] text-[11px] font-mono text-neutral-400">
+                    Defines completion percentage.
                   </div>
                 </div>
 
                 {/* Level 3 */}
-                <div className="p-5 rounded-2xl bg-[#fafafa] border border-black/[0.08] hover:border-black/[0.2] transition-all space-y-3 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-semibold">
-                        LEVEL 3: ACTION STEPS
-                      </span>
-                      <ListTodo size={16} className="text-emerald-600" />
-                    </div>
-                    <h3 className="text-base font-semibold text-black">
-                      3. Tasks (Objectives)
+                <div className="p-4 rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-2 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-mono text-neutral-400">
+                      03 &bull; Action Units
+                    </span>
+                    <h3 className="text-sm font-medium text-black">
+                      Execution Tasks
                     </h3>
-                    <p className="text-xs text-[#4b5563] font-light leading-relaxed">
-                      Your <strong>step-by-step checklist</strong>. Assign each task to a project, set how urgent it is (P0 to P3), and mark it shipped. Progress fills up automatically.
+                    <p className="text-xs text-neutral-500 font-light leading-relaxed">
+                      Individual, ranked tasks (P0 critical to P3 normal). Shipping tasks automatically updates project velocity and increments your daily execution streak.
                     </p>
                   </div>
-                  <div className="pt-2 border-t border-black/[0.05] text-[11px] font-mono text-[#6b7280]">
-                    Complete tasks to level up your mission progress.
+                  <div className="pt-2 border-t border-black/[0.05] text-[11px] font-mono text-neutral-400">
+                    Powers the Pomodoro timer.
                   </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
                 <button
                   onClick={() => setIsCreateMasterModalOpen(true)}
-                  className="flex items-center justify-center gap-2 px-6 py-3 bg-black hover:bg-neutral-800 text-white font-medium text-xs rounded-xl shadow-md transition-all cursor-pointer"
+                  className="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer text-center"
                 >
-                  <Plus size={15} />
-                  <span>Start Your First Master Campaign</span>
+                  Create Master Project
                 </button>
 
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent('open-game-tutorial'))}
-                  className="flex items-center justify-center gap-2 px-5 py-3 bg-white hover:bg-neutral-50 text-black border border-black/[0.12] font-medium text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+                  className="px-4 py-2.5 bg-white hover:bg-neutral-50 text-neutral-700 border border-black/[0.08] font-normal text-xs rounded-xl transition-all cursor-pointer text-center"
                 >
-                  <Play size={14} className="text-amber-500 fill-amber-500" />
-                  <span>Watch Interactive Game Walkthrough (Zoom-Ins)</span>
+                  Open Operating Manual
                 </button>
               </div>
 
-              {/* One-Click Starter Presets */}
+              {/* One-Click Quick Initializers */}
               <div className="pt-4 border-t border-black/[0.06] space-y-2">
-                <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block">
-                  OR CLICK A POPULAR PRESET TO INSTANTLY INITIALIZE:
+                <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider block">
+                  Quick Initialize Preset:
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { name: 'YouTube Studio', icon: '🎙️', desc: 'Main channel, weekly uploads, and content production.' },
-                    { name: 'Clothing Brand', icon: '👕', desc: 'Apparel drops, e-commerce supply, and marketing.' },
-                    { name: 'Client Studio', icon: '💼', desc: 'Freelance deliverables, consulting, and client sprints.' },
-                    { name: 'SaaS Product', icon: '💻', desc: 'Software product development, roadmap, and growth.' },
+                    { name: 'Studio & Media', desc: 'Main channel, weekly uploads, and content production.' },
+                    { name: 'Apparel Brand', desc: 'Apparel drops, supply, and e-commerce.' },
+                    { name: 'Advisory Studio', desc: 'Deliverables, consulting, and client sprints.' },
+                    { name: 'Software Product', desc: 'Product development, roadmap, and growth.' },
                   ].map((preset) => (
                     <button
                       key={preset.name}
                       type="button"
                       onClick={() => handleCreateNewMasterProject({
                         name: preset.name,
-                        subtitle: `${preset.icon} Active Brand`,
+                        subtitle: 'Master Portfolio',
                         description: preset.desc,
                         colorTheme: 'emerald'
                       })}
-                      className="px-3 py-1.5 rounded-xl bg-white hover:bg-black hover:text-white border border-black/[0.08] text-xs font-mono transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl bg-neutral-50 hover:bg-black hover:text-white border border-black/[0.06] text-xs font-mono transition-all cursor-pointer"
                     >
-                      <span>{preset.icon}</span>
-                      <span>+ {preset.name}</span>
+                      + {preset.name}
                     </button>
                   ))}
                 </div>
