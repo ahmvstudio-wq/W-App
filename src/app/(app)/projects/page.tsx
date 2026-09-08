@@ -76,12 +76,35 @@ export default function ProjectsPage() {
     }
   }, [])
 
-  function saveMasterProjects(newList: MasterProjectInfo[]) {
+  async function saveMasterProjects(newList: MasterProjectInfo[]) {
     setMasterProjects(newList)
     try {
       localStorage.setItem('focus_master_projects', JSON.stringify(newList))
     } catch (e) {
-      console.warn('Failed to save master projects:', e)
+      console.warn('Failed to save master projects to localStorage:', e)
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      let activeWsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+      if (!activeWsId) {
+        const { data: userWs } = await supabase.from('workspaces').select('id').eq('owner_id', session.user.id).limit(1)
+        activeWsId = userWs?.[0]?.id
+      }
+      if (activeWsId) {
+        const { data: wsRow } = await supabase.from('workspaces').select('settings').eq('id', activeWsId).single()
+        const currentSettings = wsRow?.settings || {}
+        await supabase.from('workspaces').update({
+          settings: {
+            ...currentSettings,
+            master_projects: newList
+          }
+        }).eq('id', activeWsId)
+      }
+    } catch (err) {
+      console.warn('Failed to sync master projects to workspace settings:', err)
     }
   }
 
@@ -127,6 +150,47 @@ export default function ProjectsPage() {
       return
     }
 
+    // Fetch workspace row to resolve workspace-specific settings & master programs
+    const { data: wsData } = await supabase
+      .from('workspaces')
+      .select('id, name, owner_id, settings')
+      .eq('id', activeWsId)
+      .single()
+
+    const isTaufiq = session.user.email?.toLowerCase().includes('taufiq') || wsData?.owner_id === '89f0a1d6-3c0e-4bb9-8df9-cfe1e8de4128'
+
+    const defaultMastersForWorkspace: MasterProjectInfo[] = isTaufiq ? [
+      {
+        id: 'mp-tadbeer',
+        name: 'Tadbeer TT',
+        subtitle: 'Primary Business Architecture',
+        description: 'Core commercial trading, client CRM, e-commerce products, and operations.',
+        colorTheme: 'emerald'
+      },
+      {
+        id: 'mp-internal',
+        name: 'Internal Core',
+        subtitle: 'Platform & Infrastructure',
+        description: 'Underlying infrastructure, hosting, and systems architecture.',
+        colorTheme: 'blue'
+      }
+    ] : [
+      {
+        id: 'mp-primary',
+        name: 'Primary Portfolio',
+        subtitle: 'Strategic Initiatives & Products',
+        description: 'Central master portfolio organizing all active projects and deliverables.',
+        colorTheme: 'purple'
+      }
+    ]
+
+    const wsSettings = wsData?.settings || {}
+    const savedMasterProjects: MasterProjectInfo[] = Array.isArray(wsSettings.master_projects) && wsSettings.master_projects.length > 0
+      ? wsSettings.master_projects
+      : defaultMastersForWorkspace
+
+    const projectMasterMap: Record<string, string> = wsSettings.project_master_map || {}
+
     let query = supabase
       .from('projects')
       .select('*, tasks(*)')
@@ -136,30 +200,33 @@ export default function ProjectsPage() {
     const { data } = await query
     
     if (data) {
-      // Ensure master_project defaults to "General" if not set
+      const fallbackMaster = savedMasterProjects[0]?.name || (isTaufiq ? 'Tadbeer TT' : 'Primary Portfolio')
       const enriched: Project[] = data.map((p: any) => ({
         ...p,
-        master_project: p.master_project || 'General'
+        master_project: projectMasterMap[p.id] || p.master_project || fallbackMaster
       }))
       setProjects(enriched)
 
-      // Auto-register any new master_project names found in database
-      const foundNames = Array.from(new Set(enriched.map(p => p.master_project || 'General')))
-      setMasterProjects(prev => {
-        const updated = [...prev]
-        foundNames.forEach(name => {
-          if (!updated.some(m => m.name.toLowerCase() === name.toLowerCase())) {
-            updated.push({
-              id: `mp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-              name,
-              subtitle: 'Client Program & Portfolio',
-              description: `Master initiative hub for ${name}.`,
-              colorTheme: 'purple'
-            })
-          }
-        })
-        return updated
+      // Auto-register any new master_project names found
+      const foundNames = Array.from(new Set(enriched.map(p => p.master_project || fallbackMaster)))
+      const mergedMasters = [...savedMasterProjects]
+      foundNames.forEach(name => {
+        if (!mergedMasters.some(m => m.name.toLowerCase() === name.toLowerCase())) {
+          mergedMasters.push({
+            id: `mp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+            name,
+            subtitle: 'Client Program & Portfolio',
+            description: `Master initiative hub for ${name}.`,
+            colorTheme: 'purple'
+          })
+        }
       })
+      setMasterProjects(mergedMasters)
+
+      if (!activeMasterProjectName || !mergedMasters.some(m => m.name.toLowerCase() === activeMasterProjectName.toLowerCase())) {
+        setActiveMasterProjectName(fallbackMaster)
+      }
+      setCreateInitialMasterProject(fallbackMaster)
     }
     setLoading(false)
   }
@@ -956,6 +1023,36 @@ function CreateProjectWizard({
       }).select().single()
       
       if (!error && data) {
+        try {
+          const { data: wsRow } = await supabase.from('workspaces').select('settings').eq('id', workspaceId).single()
+          const currentSettings = wsRow?.settings || {}
+          const currentMap = currentSettings.project_master_map || {}
+          const currentMasters: MasterProjectInfo[] = currentSettings.master_projects || []
+
+          if (!currentMasters.some((m: any) => m.name.toLowerCase() === chosenMaster.toLowerCase())) {
+            currentMasters.push({
+              id: `mp-${Date.now()}`,
+              name: chosenMaster,
+              subtitle: 'Client Program & Portfolio',
+              description: `Initiatives under ${chosenMaster}.`,
+              colorTheme: 'purple'
+            })
+          }
+
+          await supabase.from('workspaces').update({
+            settings: {
+              ...currentSettings,
+              master_projects: currentMasters,
+              project_master_map: {
+                ...currentMap,
+                [data.id]: chosenMaster
+              }
+            }
+          }).eq('id', workspaceId)
+        } catch (err) {
+          console.warn('Failed to sync project to workspace master map:', err)
+        }
+
         toast.success(`Initiative created under ${chosenMaster}!`)
         onSuccess()
         onClose()

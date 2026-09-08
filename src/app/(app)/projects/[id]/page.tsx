@@ -76,7 +76,14 @@ export default function SingleProjectPage() {
         return (priorityOrder[a.priority as keyof typeof priorityOrder] || 0) - (priorityOrder[b.priority as keyof typeof priorityOrder] || 0)
       }) : []
       
-      setProject({ ...data, owner: ownerData, tasks: sortedTasks })
+      let masterName = data.master_project
+      if (data.workspace_id) {
+        const { data: wsRow } = await supabase.from('workspaces').select('settings, owner_id').eq('id', data.workspace_id).single()
+        const isTaufiq = wsRow?.owner_id === '89f0a1d6-3c0e-4bb9-8df9-cfe1e8de4128'
+        masterName = wsRow?.settings?.project_master_map?.[data.id] || masterName || (isTaufiq ? 'Tadbeer TT' : 'Primary Portfolio')
+      }
+      
+      setProject({ ...data, master_project: masterName, owner: ownerData, tasks: sortedTasks })
     }
     setLoading(false)
   }

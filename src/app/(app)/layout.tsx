@@ -15,7 +15,6 @@ import FocusTimer from '@/components/FocusTimer'
 import CreateTaskModal from '@/components/CreateTaskModal'
 import NaturalLanguageInputModal from '@/components/NaturalLanguageInputModal'
 import { WorkspaceProvider } from '@/context/WorkspaceContext'
-import WorkspaceSwitcher from '@/components/WorkspaceSwitcher'
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -149,8 +148,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 Focus
               </span>
             </Link>
-            <div className="h-4 w-px bg-black/[0.08]" />
-            <WorkspaceSwitcher />
           </div>
 
         {/* Center: Minimalist Navigation Pills */}

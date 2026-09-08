@@ -5,8 +5,7 @@ export const runtime = 'edge'
 import { useState, useEffect } from 'react'
 import { 
   User, Settings as SettingsIcon, LogOut, Bell, Calendar, 
-  Video, Copy, Check, ExternalLink, RefreshCw, CheckCircle2, AlertCircle,
-  Building2, Users, UserPlus, Trash2, Shield, Key, Bot
+  Video, Copy, Check, ExternalLink, RefreshCw, CheckCircle2, AlertCircle, Bot
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -20,27 +19,16 @@ export default function SettingsPage() {
 
   const {
     currentWorkspace,
-    members,
-    userRole,
-    inviteMember,
-    updateMemberRole,
-    removeMember,
     refreshWorkspaces,
   } = useWorkspace()
 
   const initialTab = (searchParams.get('tab') as any) || 'integrations'
-  const [activeTab, setActiveTab] = useState<'profile' | 'workspace' | 'integrations' | 'preferences'>(
-    ['profile', 'workspace', 'integrations', 'preferences'].includes(initialTab) ? initialTab : 'integrations'
+  const [activeTab, setActiveTab] = useState<'profile' | 'integrations' | 'preferences'>(
+    ['profile', 'integrations', 'preferences'].includes(initialTab) ? initialTab : 'integrations'
   )
 
   const [copiedFeed, setCopiedFeed] = useState(false)
-  const [copiedWsId, setCopiedWsId] = useState(false)
   const [syncingGoogle, setSyncingGoogle] = useState(false)
-  const [wsName, setWsName] = useState('')
-  const [savingWsName, setSavingWsName] = useState(false)
-  const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState<'admin' | 'member' | 'viewer'>('member')
-  const [inviting, setInviting] = useState(false)
   const [showAdvancedOAuth, setShowAdvancedOAuth] = useState(false)
 
   const [fathomKey, setFathomKey] = useState('')
@@ -62,15 +50,12 @@ export default function SettingsPage() {
   }
 
   useEffect(() => {
-    if (currentWorkspace?.name) {
-      setWsName(currentWorkspace.name)
-    }
     if (currentWorkspace?.settings?.fathom_api_key) {
       setFathomKey(currentWorkspace.settings.fathom_api_key)
     } else {
       setFathomKey('')
     }
-  }, [currentWorkspace?.name, currentWorkspace?.settings?.fathom_api_key])
+  }, [currentWorkspace?.settings?.fathom_api_key])
 
   const googleConnected = searchParams.get('google_connected') === 'true'
   const googleError = searchParams.get('google_error')
@@ -78,7 +63,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const tabParam = searchParams.get('tab')
-    if (tabParam && ['profile', 'workspace', 'integrations', 'preferences'].includes(tabParam)) {
+    if (tabParam && ['profile', 'integrations', 'preferences'].includes(tabParam)) {
       setActiveTab(tabParam as any)
     }
   }, [searchParams])
@@ -126,52 +111,6 @@ export default function SettingsPage() {
     } finally {
       setSyncingGoogle(false)
     }
-  }
-
-  const handleSaveWorkspaceName = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!currentWorkspace?.id || !wsName.trim() || savingWsName) return
-    setSavingWsName(true)
-    try {
-      const res = await fetch(`/api/workspaces/${currentWorkspace.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: wsName.trim() }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        toast.success('Workspace name updated!')
-        await refreshWorkspaces()
-      } else {
-        toast.error(data.error || 'Failed to update workspace name')
-      }
-    } catch {
-      toast.error('Error updating workspace')
-    } finally {
-      setSavingWsName(false)
-    }
-  }
-
-  const handleInviteMember = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!inviteEmail.trim() || inviting) return
-    setInviting(true)
-    try {
-      const ok = await inviteMember(inviteEmail.trim(), inviteRole)
-      if (ok) {
-        setInviteEmail('')
-      }
-    } finally {
-      setInviting(false)
-    }
-  }
-
-  const copyWsId = () => {
-    if (!currentWorkspace?.id) return
-    navigator.clipboard.writeText(currentWorkspace.id)
-    setCopiedWsId(true)
-    toast.success('Workspace ID copied!')
-    setTimeout(() => setCopiedWsId(false), 2000)
   }
 
   const handleSaveFathomKey = async (e: React.FormEvent) => {
@@ -240,7 +179,7 @@ export default function SettingsPage() {
     <div className="max-w-4xl mx-auto space-y-8 pb-16 font-sans">
       <header>
         <div className="text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
-          CALLMY • SYSTEM
+          FOCUS • SOLO OS
         </div>
         <h1 className="text-3xl font-light tracking-tight text-black">Settings &amp; Integrations</h1>
       </header>
@@ -249,9 +188,8 @@ export default function SettingsPage() {
         {/* Settings Navigation */}
         <div className="md:col-span-4 space-y-1">
           {[
-            { id: 'integrations', label: 'Integrations & Calendar', icon: Calendar },
-            { id: 'profile', label: 'Profile', icon: User },
-            { id: 'workspace', label: 'Workspace & Team', icon: Building2 },
+            { id: 'integrations', label: 'Integrations & AI', icon: Calendar },
+            { id: 'profile', label: 'Personal Profile', icon: User },
             { id: 'preferences', label: 'Preferences', icon: Bell },
           ].map((tab) => (
             <button
@@ -604,195 +542,6 @@ export default function SettingsPage() {
               >
                 Save Changes
               </button>
-            </div>
-          )}
-
-          {/* Workspace & Team Tab */}
-          {activeTab === 'workspace' && (
-            <div className="space-y-8">
-              {/* Workspace Header */}
-              <div>
-                <h2 className="text-lg font-normal text-black">Workspace &amp; Team Management</h2>
-                <p className="text-xs text-[#6b7280] font-light mt-0.5">
-                  Manage workspace identity, team member roles, and multi-tenant security.
-                </p>
-              </div>
-
-              {/* 1. Workspace Identity */}
-              <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center font-mono text-xs shadow-xs">
-                      {currentWorkspace?.name ? currentWorkspace.name.substring(0, 2).toUpperCase() : 'WS'}
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-normal text-black">{currentWorkspace?.name || 'My Workspace'}</h3>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] font-mono uppercase bg-black text-white px-2 py-0.5 rounded-full">
-                          Your Role: {userRole?.toUpperCase() || 'MEMBER'}
-                        </span>
-                        <span className="text-[10px] font-mono text-[#8a8d95]">
-                          Created {currentWorkspace?.created_at ? new Date(currentWorkspace.created_at).toLocaleDateString() : 'Recently'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={copyWsId}
-                      className="px-3 py-1.5 rounded-xl border border-black/[0.08] bg-white hover:bg-black/[0.02] text-xs font-mono text-[#6b7280] hover:text-black flex items-center gap-1.5 transition-colors cursor-pointer"
-                      title="Copy Workspace ID"
-                    >
-                      {copiedWsId ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
-                      <span>{copiedWsId ? 'Copied' : 'Copy ID'}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Rename Workspace Form */}
-                <form onSubmit={handleSaveWorkspaceName} className="space-y-3 pt-3 border-t border-black/[0.05]">
-                  <label className="text-[11px] font-mono text-[#6b7280] block uppercase tracking-wider">
-                    Rename Workspace
-                  </label>
-                  <div className="flex items-center gap-2.5">
-                    <input
-                      type="text"
-                      value={wsName}
-                      onChange={(e) => setWsName(e.target.value)}
-                      placeholder="Workspace name..."
-                      className="flex-1 px-4 py-2.5 bg-white border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
-                    />
-                    <button
-                      type="submit"
-                      disabled={savingWsName || !wsName.trim() || wsName === currentWorkspace?.name}
-                      className="px-4 py-2.5 bg-black hover:bg-neutral-800 disabled:opacity-40 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs whitespace-nowrap"
-                    >
-                      {savingWsName ? 'Saving...' : 'Update Name'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-
-              {/* 2. Team Members List */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-normal text-black flex items-center gap-2">
-                      <Users size={15} />
-                      <span>Workspace Members ({members.length})</span>
-                    </h3>
-                    <p className="text-xs text-[#6b7280] font-light mt-0.5">
-                      Collaborators with access to projects, tasks, and documents in this workspace.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="border border-black/[0.06] rounded-2xl overflow-hidden divide-y divide-black/[0.04] bg-white">
-                  {members.map((m) => {
-                    const profile = m.profile
-                    const displayName = profile?.name || 'Team Member'
-                    const isOwner = m.role === 'owner' || m.user_id === currentWorkspace?.owner_id
-                    const canManage = (userRole === 'owner' || userRole === 'admin') && !isOwner
-
-                    return (
-                      <div key={m.id || m.user_id} className="p-3.5 sm:p-4 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-8 h-8 rounded-full bg-black/[0.06] flex items-center justify-center text-xs font-mono text-black shrink-0 font-medium">
-                            {displayName.substring(0, 2).toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-xs font-normal text-black truncate flex items-center gap-2">
-                              <span>{displayName}</span>
-                              {isOwner && (
-                                <span className="text-[9px] font-mono text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
-                                  Owner
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[10px] font-mono text-[#8a8d95] truncate">
-                              Joined {new Date(m.created_at).toLocaleDateString()}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 shrink-0">
-                          {canManage ? (
-                            <select
-                              value={m.role}
-                              onChange={(e) => updateMemberRole(m.user_id, e.target.value as any)}
-                              className="px-2.5 py-1 bg-[#fafafa] border border-black/[0.08] rounded-lg text-xs font-mono text-black outline-none cursor-pointer"
-                            >
-                              <option value="admin">Admin</option>
-                              <option value="member">Member</option>
-                              <option value="viewer">Viewer</option>
-                            </select>
-                          ) : (
-                            <span className="text-xs font-mono text-[#6b7280] uppercase px-2 py-0.5 bg-black/[0.03] rounded">
-                              {m.role}
-                            </span>
-                          )}
-
-                          {canManage && (
-                            <button
-                              onClick={() => {
-                                if (confirm(`Remove ${displayName} from workspace?`)) {
-                                  removeMember(m.user_id)
-                                }
-                              }}
-                              className="p-1.5 text-[#9ca3af] hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
-                              title="Remove Member"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* 3. Invite Member Form */}
-              <div className="p-5 rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-3">
-                <div className="flex items-center gap-2 text-xs font-normal text-black">
-                  <UserPlus size={15} />
-                  <span>Invite Collaborator</span>
-                </div>
-                <form onSubmit={handleInviteMember} className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                  <div className="sm:col-span-7">
-                    <input
-                      type="email"
-                      required
-                      placeholder="colleague@company.com"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-white border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
-                    />
-                  </div>
-                  <div className="sm:col-span-3">
-                    <select
-                      value={inviteRole}
-                      onChange={(e) => setInviteRole(e.target.value as any)}
-                      className="w-full px-3 py-2 bg-white border border-black/[0.08] rounded-xl text-xs font-mono text-black outline-none cursor-pointer"
-                    >
-                      <option value="member">Member</option>
-                      <option value="admin">Admin</option>
-                      <option value="viewer">Viewer</option>
-                    </select>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <button
-                      type="submit"
-                      disabled={inviting || !inviteEmail.trim()}
-                      className="w-full py-2 bg-black hover:bg-neutral-800 disabled:opacity-40 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs"
-                    >
-                      {inviting ? 'Inviting...' : 'Invite'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-
             </div>
           )}
 
