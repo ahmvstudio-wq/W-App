@@ -160,19 +160,12 @@ export default function LandingPage() {
       {/* Hero Section: Punchy 1-2 Liner, Short Description, Solo Focus */}
       <section className="pt-36 pb-20 px-6 sm:px-10 max-w-5xl mx-auto">
         <div className="space-y-6 text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 border border-neutral-200/80 text-xs text-neutral-600 mx-auto">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span className="font-medium text-black">Focus by AHMV Systems</span>
-            <span className="text-neutral-300">•</span>
-            <span>Built for Solo Creators &amp; Entrepreneurs</span>
-          </div>
-
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-light tracking-tight text-black leading-[1.08]">
+          <h1 className="text-3xl sm:text-5xl font-light tracking-tight text-black leading-tight">
             One workspace for your content, <br className="hidden sm:inline" />
             <span className="font-semibold text-black">tasks, and entire solo business.</span>
           </h1>
 
-          <p className="text-base sm:text-lg text-[#52525b] font-light leading-relaxed max-w-xl mx-auto">
+          <p className="text-sm sm:text-base text-[#52525b] font-light leading-relaxed max-w-lg mx-auto">
             Focus organizes your daily priorities, YouTube and Instagram pipelines, and meeting notes into one calm screen. Built for solo creators and entrepreneurs who ship.
           </p>
 
@@ -447,8 +440,8 @@ export default function LandingPage() {
       {/* SECTION 2: UPCOMING CREATOR SUITE (YouTube, Instagram, ChatGPT) */}
       <section id="creator-suite" className="py-24 px-6 sm:px-10 max-w-5xl mx-auto border-t border-black/[0.08]">
         <div className="text-center max-w-xl mx-auto mb-16 space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 border border-neutral-200 text-xs font-mono text-neutral-600 uppercase tracking-wider mb-2">
-            <span>UPCOMING ROADMAP</span>
+          <div className="text-xs font-mono text-neutral-400 uppercase tracking-widest">
+            UPCOMING ROADMAP
           </div>
           <h2 className="text-3xl sm:text-4xl font-light text-black tracking-tight">
             The dedicated Creator Suite.
