@@ -8,7 +8,8 @@ import { supabase } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { 
   ArrowRight, Check, CheckSquare, Video, ExternalLink, 
-  ChevronDown, Calendar, RefreshCw, X, Mail, Play, Camera, MessageSquare, Clock
+  ChevronDown, Calendar, RefreshCw, X, Mail, Play, Camera, 
+  MessageSquare, FolderKanban, Layers, FileText, Activity
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -99,24 +100,24 @@ export default function LandingPage() {
 
   const faqs = [
     {
-      q: 'Who is Focus built for?',
-      a: 'Focus is built specifically for solo creators, YouTubers, independent operators, and digital entrepreneurs who run a 1-person business. It removes the bureaucratic clutter of traditional project tools and brings your tasks, calendar, meetings, and content pipelines into one clean view.',
+      q: 'What is Focus and how does it replace fragmented tools?',
+      a: 'Focus is a unified operating workspace for founders, creators, and solo builders. Instead of juggling one app for whiteboards, another for tasks, a third for meeting recordings, and a fourth for calendar planning, Focus connects your entire workflow into one cohesive system.',
     },
     {
-      q: 'Which creator features are currently in development?',
-      a: 'We are actively developing dedicated YouTube production pipelines with CTR and audience retention tracking, automated Instagram Reel and carousel scheduling, and conversational ChatGPT life-context integration to auto-structure your weekly priorities.',
+      q: 'How does the visual Whiteboard connect with tasks and projects?',
+      a: 'Focus includes a native infinite canvas whiteboard directly inside your projects. You can sketch system flows, brainstorm video hooks, map architecture, and link visual nodes directly to execution milestones.',
     },
     {
-      q: 'How does the Fathom meeting integration work?',
-      a: 'When you record a sponsor briefing or client call on Fathom, your recording, summary, and action items sync into Focus. You can convert any takeaway into an actionable calendar task with one click.',
+      q: 'How does Fathom meeting intelligence work?',
+      a: 'When you finish a client call or sponsor briefing on Fathom, your recording, summary, and action items sync into Focus. You can convert any takeaway into an actionable calendar task with one click.',
     },
     {
-      q: 'Can I sync my deadlines with Google Calendar and Apple Calendar?',
-      a: 'Yes. Focus provides a direct calendar feed link that connects seamlessly with Google Calendar, Apple Calendar, and Microsoft Outlook with zero setup.',
+      q: 'What creator features are currently on the roadmap?',
+      a: 'We are extending the platform with dedicated YouTube analytics tracking (CTR, views, retention curves), automated Instagram Reel and carousel scheduling, and conversational ChatGPT life-context integration to auto-structure your weekly priorities.',
     },
     {
       q: 'Is Focus free to use?',
-      a: 'Yes. You can launch your free workspace right now in under 30 seconds. No credit card required.',
+      a: 'Yes. You can launch your free workspace right now in under 30 seconds with zero credit card required.',
     },
   ]
 
@@ -134,7 +135,8 @@ export default function LandingPage() {
           </div>
 
           <div className="hidden md:flex items-center gap-8 text-xs font-normal text-neutral-500">
-            <a href="#features" className="hover:text-black transition-colors">Features</a>
+            <a href="#system" className="hover:text-black transition-colors">Architecture</a>
+            <a href="#capabilities" className="hover:text-black transition-colors">Capabilities</a>
             <a href="#creator-suite" className="hover:text-black transition-colors">Creator Suite</a>
             <a href="#faq" className="hover:text-black transition-colors">FAQ</a>
           </div>
@@ -157,22 +159,22 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section: Punchy 1-2 Liner, Short Description, Solo Focus */}
+      {/* Hero Section: Systems Philosophy, 1-2 Liner, Proportional Typography */}
       <section className="pt-36 pb-20 px-6 sm:px-10 max-w-5xl mx-auto">
         <div className="space-y-6 text-center max-w-3xl mx-auto mb-14">
           <h1 className="text-3xl sm:text-5xl font-light tracking-tight text-black leading-tight">
-            One workspace for your content, <br className="hidden sm:inline" />
-            <span className="font-semibold text-black">tasks, and entire solo business.</span>
+            The unified operating workspace. <br className="hidden sm:inline" />
+            <span className="font-semibold text-black">Built for founders, creators, and solo builders.</span>
           </h1>
 
-          <p className="text-sm sm:text-base text-[#52525b] font-light leading-relaxed max-w-lg mx-auto">
-            Focus organizes your daily priorities, YouTube and Instagram pipelines, and meeting notes into one calm screen. Built for solo creators and entrepreneurs who ship.
+          <p className="text-sm sm:text-base text-[#52525b] font-light leading-relaxed max-w-2xl mx-auto">
+            From high-level architecture and visual whiteboards to P0 tasks, meeting transcripts, and upcoming creator pipelines. Focus unifies your entire workflow into one cohesive system.
           </p>
 
           {/* Gen Z Free Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-100 border border-neutral-200 text-xs text-neutral-700 font-light mx-auto">
             <span className="font-mono text-emerald-700 font-semibold">$0 Free</span>
-            <span className="text-neutral-300">•</span>
+            <span className="text-neutral-300">:</span>
             <span>You don&apos;t need to pay, lil bro. Keep the bag for camera gear.</span>
           </div>
 
@@ -185,17 +187,17 @@ export default function LandingPage() {
               <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
             </button>
             <a
-              href="#features"
+              href="#system"
               className="px-5 py-3 rounded-full bg-neutral-50 hover:bg-neutral-100 border border-black/[0.08] text-black text-xs font-normal transition-all"
             >
-              See All Features ↓
+              Explore System Architecture ↓
             </a>
           </div>
         </div>
 
-        {/* Minimal macOS-style Preview Window with Noticeable Apple Motion Pills */}
-        <div className="relative max-w-4xl mx-auto">
-          {/* Floating Motion Pill 1: YouTube (Noticeable 14px float) */}
+        {/* Systems Design Showcase: macOS Product Window */}
+        <div id="system" className="relative max-w-5xl mx-auto">
+          {/* Floating Motion Pill 1: YouTube Pipeline (Noticeable 14px float) */}
           <div 
             className="absolute -top-5 -right-3 sm:-right-6 z-30 bg-white border border-black/[0.1] shadow-lg rounded-2xl px-3.5 py-2 flex items-center gap-2.5 text-xs animate-float-slow select-none"
             style={{ animation: 'float-slow 4s ease-in-out infinite' }}
@@ -209,17 +211,17 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Floating Motion Pill 2: Instagram (Noticeable 14px float reverse) */}
+          {/* Floating Motion Pill 2: Fathom Engine (Noticeable 14px float reverse) */}
           <div 
             className="absolute -bottom-5 -left-3 sm:-left-6 z-30 bg-white border border-black/[0.1] shadow-lg rounded-2xl px-3.5 py-2 flex items-center gap-2.5 text-xs animate-float-reverse select-none"
             style={{ animation: 'float-delayed 4.5s ease-in-out infinite 0.5s' }}
           >
-            <div className="w-5 h-5 rounded-lg bg-purple-600 text-white flex items-center justify-center text-[10px] text-white shadow-xs">
-              <Camera size={11} />
+            <div className="w-5 h-5 rounded-lg bg-black text-white flex items-center justify-center text-[10px] shadow-xs">
+              <Video size={11} />
             </div>
             <div className="flex flex-col text-left">
-              <span className="font-medium text-black text-[11px] leading-tight">Instagram Planner</span>
-              <span className="text-[9px] text-neutral-400 font-mono">Coming Soon</span>
+              <span className="font-medium text-black text-[11px] leading-tight">Fathom Meeting Engine</span>
+              <span className="text-[9px] text-emerald-600 font-mono">Live Sync Active</span>
             </div>
           </div>
 
@@ -233,34 +235,108 @@ export default function LandingPage() {
                 <span className="w-3 h-3 rounded-full bg-[#28c840] border border-black/[0.08]" />
               </div>
               <div className="text-xs font-mono text-neutral-500">
-                Focus Studio: Daily Overview
+                Focus : Studio Workspace
               </div>
               <div className="w-12 text-right">
                 <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  Live
+                  Online
                 </span>
               </div>
             </div>
 
-            {/* Dashboard Content Grid */}
+            {/* Top Workspace System Navigation Bar */}
+            <div className="px-6 py-2.5 bg-white border-b border-black/[0.06] flex items-center gap-6 text-xs text-neutral-500 overflow-x-auto">
+              <span className="text-black font-semibold flex items-center gap-1.5 shrink-0">
+                <Activity size={13} />
+                <span>Dashboard</span>
+              </span>
+              <span className="hover:text-black transition-colors flex items-center gap-1.5 shrink-0">
+                <FolderKanban size={13} />
+                <span>Projects</span>
+              </span>
+              <span className="hover:text-black transition-colors flex items-center gap-1.5 shrink-0">
+                <Layers size={13} />
+                <span>Whiteboard</span>
+              </span>
+              <span className="hover:text-black transition-colors flex items-center gap-1.5 shrink-0">
+                <CheckSquare size={13} />
+                <span>Tasks</span>
+              </span>
+              <span className="hover:text-black transition-colors flex items-center gap-1.5 shrink-0">
+                <Video size={13} />
+                <span>Meetings</span>
+              </span>
+              <span className="hover:text-black transition-colors flex items-center gap-1.5 shrink-0">
+                <Calendar size={13} />
+                <span>Calendar</span>
+              </span>
+              <span className="hover:text-black transition-colors flex items-center gap-1.5 shrink-0">
+                <FileText size={13} />
+                <span>Documents</span>
+              </span>
+            </div>
+
+            {/* Cohesive 3-Column Systems Content Grid */}
             <div className="p-6 grid grid-cols-1 md:grid-cols-12 gap-6 bg-white text-left">
-              {/* Left Column: Today's Priorities */}
-              <div className="md:col-span-7 space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-black/[0.06]">
-                  <span className="text-xs font-semibold text-black uppercase tracking-wider">
-                    Today&apos;s High-Priority Tasks
+              {/* Column 1: Strategic Initiatives & Whiteboard Architecture */}
+              <div className="md:col-span-4 space-y-4">
+                <div className="flex items-center justify-between pb-1.5 border-b border-black/[0.06]">
+                  <span className="text-xs font-semibold text-black uppercase tracking-wider flex items-center gap-1.5">
+                    <FolderKanban size={13} />
+                    <span>Active Projects</span>
                   </span>
-                  <span className="text-[11px] font-mono text-neutral-400">3 of 5 Shipped</span>
+                  <span className="text-[10px] font-mono text-neutral-400">3 Total</span>
+                </div>
+
+                {/* Project Card */}
+                <div className="p-3.5 rounded-2xl bg-neutral-50 border border-black/[0.06] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-black">Focus Core Architecture</span>
+                    <span className="text-[10px] font-mono text-emerald-700 font-semibold">84%</span>
+                  </div>
+                  <div className="w-full h-1 bg-neutral-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: '84%' }} />
+                  </div>
+                  <div className="text-[10px] text-neutral-500 font-mono">
+                    Milestone: Fathom Webhook Engine (Done)
+                  </div>
+                </div>
+
+                {/* Visual Whiteboard Snippet */}
+                <div className="p-3.5 rounded-2xl bg-neutral-50 border border-black/[0.06] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-black flex items-center gap-1.5">
+                      <Layers size={13} />
+                      <span>Visual Whiteboard</span>
+                    </span>
+                    <span className="text-[9px] font-mono text-neutral-400">Canvas</span>
+                  </div>
+                  <div className="p-2.5 bg-white rounded-xl border border-black/[0.06] font-mono text-[10px] text-neutral-600 space-y-1">
+                    <div className="text-emerald-700">[Node: Client Call]</div>
+                    <div className="text-neutral-400 pl-2">&darr; Fathom Transcript</div>
+                    <div className="text-black pl-2 font-medium">[Node: Calendar P0 Task]</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Column 2: Execution Engine (P0 to P2 Tasks) */}
+              <div className="md:col-span-4 space-y-4">
+                <div className="flex items-center justify-between pb-1.5 border-b border-black/[0.06]">
+                  <span className="text-xs font-semibold text-black uppercase tracking-wider flex items-center gap-1.5">
+                    <CheckSquare size={13} />
+                    <span>Today&apos;s Execution</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-neutral-400">3 of 5 Done</span>
                 </div>
 
                 <div className="space-y-2">
                   <div className="p-3 rounded-xl bg-neutral-50 border border-black/[0.06] flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2">
                       <div className="w-4 h-4 rounded-md bg-emerald-500 text-white flex items-center justify-center text-[10px]">
                         <Check size={11} strokeWidth={3} />
                       </div>
                       <span className="text-xs text-neutral-400 line-through font-light">
-                        Finalize brand partnership agreement
+                        Deploy calendar ICS feed
                       </span>
                     </div>
                     <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-neutral-200/80 text-neutral-600">
@@ -269,10 +345,10 @@ export default function LandingPage() {
                   </div>
 
                   <div className="p-3 rounded-xl bg-white border border-black/[0.1] shadow-2xs flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2">
                       <div className="w-4 h-4 rounded-md border border-black/[0.3]" />
                       <span className="text-xs font-medium text-black">
-                        Deliver revised color grade for Sony sponsor cut
+                        Deliver Sony sponsor color grade
                       </span>
                     </div>
                     <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-red-50 text-red-700 font-medium">
@@ -281,105 +357,84 @@ export default function LandingPage() {
                   </div>
 
                   <div className="p-3 rounded-xl bg-white border border-black/[0.1] shadow-2xs flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2">
                       <div className="w-4 h-4 rounded-md border border-black/[0.3]" />
                       <span className="text-xs font-medium text-black">
-                        Upload YouTube Long-form: 1-Person Business Stack
+                        Upload YouTube 1-Person Business
                       </span>
                     </div>
                     <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">
                       P1: 4:00 PM
                     </span>
                   </div>
+                </div>
 
-                  <div className="p-3 rounded-xl bg-white border border-black/[0.1] shadow-2xs flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-4 h-4 rounded-md border border-black/[0.3]" />
-                      <span className="text-xs font-medium text-black">
-                        Schedule Instagram Reel: Studio editing flow
-                      </span>
-                    </div>
-                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">
-                      P1: 6:15 PM
-                    </span>
-                  </div>
+                {/* Velocity Indicator */}
+                <div className="p-2.5 bg-neutral-50 rounded-xl border border-black/[0.06] flex items-center justify-between text-[11px]">
+                  <span className="text-neutral-500">Monthly Execution:</span>
+                  <span className="font-mono text-black font-semibold">142 Tasks Shipped</span>
                 </div>
               </div>
 
-              {/* Right Column: Upcoming Creator Pipeline Showcase */}
-              <div className="md:col-span-5 space-y-4">
-                {/* YouTube Card */}
-                <div className="p-4 rounded-2xl bg-neutral-50 border border-black/[0.06] space-y-2.5">
+              {/* Column 3: Meeting Intelligence & Upcoming Creator Pipeline */}
+              <div className="md:col-span-4 space-y-4">
+                <div className="flex items-center justify-between pb-1.5 border-b border-black/[0.06]">
+                  <span className="text-xs font-semibold text-black uppercase tracking-wider flex items-center gap-1.5">
+                    <Video size={13} />
+                    <span>Intelligence &amp; Drops</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-emerald-600">Synced</span>
+                </div>
+
+                {/* Fathom Call Card */}
+                <div className="p-3.5 rounded-2xl bg-neutral-50 border border-black/[0.06] space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-black">Fathom Meeting Synced</span>
+                    <span className="text-[9px] font-mono text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
+                      32 mins
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-neutral-600 font-light truncate">
+                    Takeaway converted to P0 calendar task.
+                  </div>
+                </div>
+
+                {/* YouTube Studio Card (Coming Soon) */}
+                <div className="p-3.5 rounded-2xl bg-neutral-50 border border-black/[0.06] space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <div className="w-4 h-4 rounded bg-red-600 text-white flex items-center justify-center text-[7px] font-bold">
                         <Play size={8} fill="white" />
                       </div>
-                      <span className="text-xs font-medium text-black">YouTube Studio Pipeline</span>
+                      <span className="text-xs font-medium text-black">YouTube Studio</span>
                     </div>
                     <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-neutral-200/80 text-neutral-600">
                       Coming Soon
                     </span>
                   </div>
-
-                  <div className="grid grid-cols-3 gap-1.5 text-center">
-                    <div className="p-1.5 bg-white rounded-lg border border-black/[0.05]">
-                      <div className="text-[9px] text-neutral-400 font-mono">Views</div>
-                      <div className="text-[11px] font-semibold text-black">48.2k</div>
+                  <div className="grid grid-cols-3 gap-1 text-center">
+                    <div className="p-1 bg-white rounded border border-black/[0.05] text-[10px]">
+                      <span className="text-neutral-400 block font-mono text-[8px]">Views</span>
+                      <strong className="text-black">48.2k</strong>
                     </div>
-                    <div className="p-1.5 bg-white rounded-lg border border-black/[0.05]">
-                      <div className="text-[9px] text-neutral-400 font-mono">Avg CTR</div>
-                      <div className="text-[11px] font-semibold text-emerald-600">11.4%</div>
+                    <div className="p-1 bg-white rounded border border-black/[0.05] text-[10px]">
+                      <span className="text-neutral-400 block font-mono text-[8px]">CTR</span>
+                      <strong className="text-emerald-600">11.4%</strong>
                     </div>
-                    <div className="p-1.5 bg-white rounded-lg border border-black/[0.05]">
-                      <div className="text-[9px] text-neutral-400 font-mono">Retention</div>
-                      <div className="text-[11px] font-semibold text-purple-600">62% APV</div>
-                    </div>
-                  </div>
-
-                  <div className="text-[11px] text-neutral-600 font-light truncate">
-                    Next: &ldquo;How I Run a 1-Person Business&rdquo; (Friday)
-                  </div>
-                </div>
-
-                {/* Instagram Card */}
-                <div className="p-4 rounded-2xl bg-neutral-50 border border-black/[0.06] space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <Camera size={13} className="text-purple-600" />
-                      <span className="text-xs font-medium text-black">Instagram Planner</span>
-                    </div>
-                    <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-neutral-200/80 text-neutral-600">
-                      Coming Soon
-                    </span>
-                  </div>
-
-                  <div className="text-[11px] text-neutral-600 font-light space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span>Reel: Studio BTS Workflow</span>
-                      <span className="font-mono text-[10px] text-neutral-400">Ready</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Carousel: 5 Solopreneur Rules</span>
-                      <span className="font-mono text-[10px] text-neutral-400">Draft</span>
+                    <div className="p-1 bg-white rounded border border-black/[0.05] text-[10px]">
+                      <span className="text-neutral-400 block font-mono text-[8px]">Retention</span>
+                      <strong className="text-purple-600">62%</strong>
                     </div>
                   </div>
                 </div>
 
-                {/* Fathom Call Card */}
-                <div className="p-4 rounded-2xl bg-neutral-50 border border-black/[0.06] space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <Video size={13} className="text-black" />
-                      <span className="text-xs font-medium text-black">Fathom Meeting Synced</span>
-                    </div>
-                    <span className="text-[9px] font-mono text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
-                      32 mins
-                    </span>
+                {/* Calendar Sync Status */}
+                <div className="p-3 rounded-2xl bg-neutral-50 border border-black/[0.06] flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar size={13} className="text-neutral-500" />
+                    <span className="text-neutral-700 font-medium">Calendar Sync</span>
                   </div>
-                  <div className="text-[11px] text-neutral-500 font-light truncate">
-                    Takeaway converted: Revised Sony Alpha color grade
-                  </div>
+                  <span className="text-[10px] font-mono text-emerald-700">Google &amp; Apple</span>
                 </div>
               </div>
             </div>
@@ -387,51 +442,84 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SECTION 1: ALL CORE FEATURES FOR SOLO CREATORS & ENTREPRENEURS */}
-      <section id="features" className="py-24 px-6 sm:px-10 max-w-5xl mx-auto border-t border-black/[0.08]">
+      {/* SECTION 1: THE 6 CORE OG SYSTEM CAPABILITIES */}
+      <section id="capabilities" className="py-24 px-6 sm:px-10 max-w-5xl mx-auto border-t border-black/[0.08]">
         <div className="text-center max-w-xl mx-auto mb-16 space-y-2">
           <div className="text-xs font-mono text-neutral-400 uppercase tracking-widest">
             CORE PLATFORM
           </div>
           <h2 className="text-3xl sm:text-4xl font-light text-black tracking-tight">
-            Built for execution. Zero administrative bloat.
+            Engineered for deep focus and relentless execution.
           </h2>
           <p className="text-xs sm:text-sm text-neutral-500 font-light">
-            Everything you need to run your independent business from one screen.
+            Every tool in Focus was built to remove friction between idea, decision, and delivery.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1: Fast Priority Tasks */}
+          {/* Card 1: Strategic Projects & Milestones */}
+          <div className="p-6 rounded-3xl bg-neutral-50 border border-black/[0.06] space-y-3 hover:border-black/[0.15] transition-all">
+            <div className="w-9 h-9 rounded-xl bg-black text-white flex items-center justify-center">
+              <FolderKanban size={16} />
+            </div>
+            <h3 className="text-base font-normal text-black">Strategic Projects &amp; Milestones</h3>
+            <p className="text-xs text-neutral-500 font-light leading-relaxed">
+              Group related initiatives, track completion percentages, monitor project health, and map dependencies without enterprise bureaucracy.
+            </p>
+          </div>
+
+          {/* Card 2: Infinite Visual Whiteboard */}
+          <div className="p-6 rounded-3xl bg-neutral-50 border border-black/[0.06] space-y-3 hover:border-black/[0.15] transition-all">
+            <div className="w-9 h-9 rounded-xl bg-black text-white flex items-center justify-center">
+              <Layers size={16} />
+            </div>
+            <h3 className="text-base font-normal text-black">Infinite Visual Whiteboard</h3>
+            <p className="text-xs text-neutral-500 font-light leading-relaxed">
+              Native node-based canvas inside every project. Architect system flows, brainstorm video hooks, and connect visual ideas directly to tasks.
+            </p>
+          </div>
+
+          {/* Card 3: Frictionless Task Execution */}
           <div className="p-6 rounded-3xl bg-neutral-50 border border-black/[0.06] space-y-3 hover:border-black/[0.15] transition-all">
             <div className="w-9 h-9 rounded-xl bg-black text-white flex items-center justify-center">
               <CheckSquare size={16} />
             </div>
-            <h3 className="text-base font-normal text-black">Fast Priority Tasks</h3>
+            <h3 className="text-base font-normal text-black">P0 to P3 Task Architecture</h3>
             <p className="text-xs text-neutral-500 font-light leading-relaxed">
-              P0 to P3 prioritization with kanban boards and quick-add tasks. Type what you need to ship and hit enter. No corporate form fields.
+              Lightning-fast execution engine with list and kanban views. Prioritize P0 client revisions and P1 deliverables with zero form fields.
             </p>
           </div>
 
-          {/* Card 2: Fathom Meeting Transcripts */}
+          {/* Card 4: Fathom Meeting Transcripts */}
           <div className="p-6 rounded-3xl bg-neutral-50 border border-black/[0.06] space-y-3 hover:border-black/[0.15] transition-all">
             <div className="w-9 h-9 rounded-xl bg-black text-white flex items-center justify-center">
               <Video size={16} />
             </div>
-            <h3 className="text-base font-normal text-black">Fathom Meeting Notes</h3>
+            <h3 className="text-base font-normal text-black">Fathom Meeting Intelligence</h3>
             <p className="text-xs text-neutral-500 font-light leading-relaxed">
-              Connect Fathom to automatically import recordings, full transcripts, and summaries. Convert sponsor decisions to tasks in one click.
+              Spoken discussions converted directly to execution. Call recordings, full transcripts, and 1-click takeaway conversion to calendar tasks.
             </p>
           </div>
 
-          {/* Card 3: Live Calendar Integration */}
+          {/* Card 5: Universal Calendar Sync */}
           <div className="p-6 rounded-3xl bg-neutral-50 border border-black/[0.06] space-y-3 hover:border-black/[0.15] transition-all">
             <div className="w-9 h-9 rounded-xl bg-black text-white flex items-center justify-center">
               <Calendar size={16} />
             </div>
-            <h3 className="text-base font-normal text-black">Live Calendar Sync</h3>
+            <h3 className="text-base font-normal text-black">Universal Calendar Sync</h3>
             <p className="text-xs text-neutral-500 font-light leading-relaxed">
-              Subscribe with one click in Google Calendar, Apple Calendar, or Outlook. Your release dates and deadlines stay synced in real time.
+              Connect via live ICS feed to Google Calendar, Apple Calendar, and Outlook. Your deadlines and drop schedules reflect in real time.
+            </p>
+          </div>
+
+          {/* Card 6: Project Documents & Notes */}
+          <div className="p-6 rounded-3xl bg-neutral-50 border border-black/[0.06] space-y-3 hover:border-black/[0.15] transition-all">
+            <div className="w-9 h-9 rounded-xl bg-black text-white flex items-center justify-center">
+              <FileText size={16} />
+            </div>
+            <h3 className="text-base font-normal text-black">Living Documents &amp; Briefs</h3>
+            <p className="text-xs text-neutral-500 font-light leading-relaxed">
+              Rich project specifications, creative briefs, sponsor contracts, and architecture notes stored directly alongside the tasks that fulfill them.
             </p>
           </div>
         </div>
@@ -444,10 +532,10 @@ export default function LandingPage() {
             UPCOMING ROADMAP
           </div>
           <h2 className="text-3xl sm:text-4xl font-light text-black tracking-tight">
-            The dedicated Creator Suite.
+            Extending the system for modern creators.
           </h2>
           <p className="text-xs sm:text-sm text-neutral-500 font-light">
-            Tools designed specifically for content pipelines, audience retention, and natural language organization.
+            Bringing the same systems-level rigor to content pipelines and audience retention.
           </p>
         </div>
 
@@ -502,7 +590,7 @@ export default function LandingPage() {
             </div>
             <h3 className="text-base font-normal text-black">ChatGPT Life Context</h3>
             <p className="text-xs text-neutral-500 font-light leading-relaxed">
-              Feed your entire schedule, shoot days, editing hours, and contracts to ChatGPT in plain English. It translates your context into structured weekly sprints and tasks automatically.
+              Feed your schedule, shoot days, and contracts to ChatGPT in plain conversational English. It translates your context into structured projects, milestones, and daily priorities.
             </p>
             <div className="text-[11px] font-mono text-neutral-400 pt-2 border-t border-black/[0.05]">
               Integration: OpenAPI Custom Action
@@ -552,7 +640,7 @@ export default function LandingPage() {
           <span>All systems operational</span>
         </div>
         <div className="text-[11px]">
-          &copy; {new Date().getFullYear()} Focus by AHMV Systems. Built for solo creators and entrepreneurs.
+          &copy; {new Date().getFullYear()} Focus by AHMV Systems. Built for founders, solo creators, and builders.
         </div>
       </footer>
 
@@ -612,7 +700,7 @@ export default function LandingPage() {
                     {mode === 'login' ? 'Sign in to Focus by AHMV Systems' : 'Create your free workspace'}
                   </h3>
                   <p className="text-xs text-neutral-500 font-light">
-                    {mode === 'login' ? 'Access your projects, tasks, and notes.' : 'Takes less than 30 seconds. No credit card required.'}
+                    {mode === 'login' ? 'Access your projects, whiteboard, and tasks.' : 'Takes less than 30 seconds. No credit card required.'}
                   </p>
                 </div>
 
