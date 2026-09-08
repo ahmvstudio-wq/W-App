@@ -14,12 +14,8 @@ import CommandPalette from '@/components/CommandPalette'
 import FocusTimer from '@/components/FocusTimer'
 import CreateTaskModal from '@/components/CreateTaskModal'
 import NaturalLanguageInputModal from '@/components/NaturalLanguageInputModal'
-import dynamic from 'next/dynamic'
+import GameTutorialModal from '@/components/GameTutorialModal'
 import { WorkspaceProvider } from '@/context/WorkspaceContext'
-
-const GameTutorialModal = dynamic(() => import('@/components/GameTutorialModal'), {
-  ssr: false,
-})
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
