@@ -7,7 +7,8 @@ import { supabase } from '@/lib/supabase/client'
 import { 
   Plus, Search, Filter, FolderKanban, Activity, Target, X, Zap, 
   Trash2, ChevronRight, Clock, TrendingUp, Layers, CheckCircle2, 
-  Building2, Briefcase, Sparkles, ArrowUpRight, Palette, Edit3
+  Building2, Briefcase, Sparkles, ArrowUpRight, Palette, Edit3,
+  Play, ListTodo
 } from 'lucide-react'
 import { getProjectHealth, getInitials, daysUntil, daysSince, cn } from '@/lib/utils'
 import type { Project } from '@/types'
@@ -25,15 +26,7 @@ export interface MasterProjectInfo {
   colorTheme?: 'emerald' | 'indigo' | 'purple' | 'blue' | 'amber' | 'rose'
 }
 
-const DEFAULT_MASTER_PROJECTS: MasterProjectInfo[] = [
-  {
-    id: 'mp-primary',
-    name: 'Primary Portfolio',
-    subtitle: 'Strategic Initiatives & Products',
-    description: 'Central master portfolio organizing all active projects and deliverables.',
-    colorTheme: 'purple'
-  }
-]
+const DEFAULT_MASTER_PROJECTS: MasterProjectInfo[] = []
 
 export default function ProjectsPage() {
   const router = useRouter()
@@ -42,16 +35,16 @@ export default function ProjectsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isCreateMasterModalOpen, setIsCreateMasterModalOpen] = useState(false)
   const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
-  const [createInitialMasterProject, setCreateInitialMasterProject] = useState<string>('Primary Portfolio')
+  const [createInitialMasterProject, setCreateInitialMasterProject] = useState<string>('')
   
   // Data States
   const [projects, setProjects] = useState<Project[]>([])
-  const [masterProjects, setMasterProjects] = useState<MasterProjectInfo[]>(DEFAULT_MASTER_PROJECTS)
+  const [masterProjects, setMasterProjects] = useState<MasterProjectInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   
   // Selected Master Project for the Command Hub Banner & Filter
-  const [activeMasterProjectName, setActiveMasterProjectName] = useState<string>('Primary Portfolio')
+  const [activeMasterProjectName, setActiveMasterProjectName] = useState<string>('')
   const [selectedMasterFilter, setSelectedMasterFilter] = useState<string>('all')
 
   // Load custom master projects from localStorage
@@ -61,14 +54,10 @@ export default function ProjectsPage() {
       if (saved) {
         const parsed = JSON.parse(saved)
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Merge defaults with saved
-          const merged = [...DEFAULT_MASTER_PROJECTS]
-          parsed.forEach((p: MasterProjectInfo) => {
-            if (!merged.some(m => m.name.toLowerCase() === p.name.toLowerCase())) {
-              merged.push(p)
-            }
-          })
-          setMasterProjects(merged)
+          const cleaned = parsed.filter((p: MasterProjectInfo) => p.name !== 'Primary Portfolio')
+          if (cleaned.length > 0) {
+            setMasterProjects(cleaned)
+          }
         }
       }
     } catch (e) {
@@ -174,20 +163,14 @@ export default function ProjectsPage() {
         description: 'Underlying infrastructure, hosting, and systems architecture.',
         colorTheme: 'blue'
       }
-    ] : [
-      {
-        id: 'mp-primary',
-        name: 'Primary Portfolio',
-        subtitle: 'Strategic Initiatives & Products',
-        description: 'Central master portfolio organizing all active projects and deliverables.',
-        colorTheme: 'purple'
-      }
-    ]
+    ] : []
 
     const wsSettings = wsData?.settings || {}
-    const savedMasterProjects: MasterProjectInfo[] = Array.isArray(wsSettings.master_projects) && wsSettings.master_projects.length > 0
-      ? wsSettings.master_projects
-      : defaultMastersForWorkspace
+    const rawSaved: MasterProjectInfo[] = Array.isArray(wsSettings.master_projects) ? wsSettings.master_projects : []
+    // Filter out dummy "Primary Portfolio" if non-Taufiq user
+    const savedMasterProjects: MasterProjectInfo[] = (!isTaufiq && rawSaved.length === 1 && rawSaved[0].name === 'Primary Portfolio')
+      ? []
+      : (rawSaved.length > 0 ? rawSaved : defaultMastersForWorkspace)
 
     const projectMasterMap: Record<string, string> = wsSettings.project_master_map || {}
 
@@ -200,7 +183,7 @@ export default function ProjectsPage() {
     const { data } = await query
     
     if (data) {
-      const fallbackMaster = savedMasterProjects[0]?.name || (isTaufiq ? 'Tadbeer TT' : 'Primary Portfolio')
+      const fallbackMaster = savedMasterProjects[0]?.name || (isTaufiq ? 'Tadbeer TT' : '')
       const enriched: Project[] = data.map((p: any) => ({
         ...p,
         master_project: projectMasterMap[p.id] || p.master_project || fallbackMaster
@@ -208,25 +191,30 @@ export default function ProjectsPage() {
       setProjects(enriched)
 
       // Auto-register any new master_project names found
-      const foundNames = Array.from(new Set(enriched.map(p => p.master_project || fallbackMaster)))
+      const foundNames = Array.from(new Set(enriched.map(p => p.master_project).filter((n): n is string => Boolean(n))))
       const mergedMasters = [...savedMasterProjects]
       foundNames.forEach(name => {
         if (!mergedMasters.some(m => m.name.toLowerCase() === name.toLowerCase())) {
           mergedMasters.push({
             id: `mp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
             name,
-            subtitle: 'Client Program & Portfolio',
-            description: `Master initiative hub for ${name}.`,
+            subtitle: 'Master Campaign',
+            description: `Initiatives under ${name}.`,
             colorTheme: 'purple'
           })
         }
       })
       setMasterProjects(mergedMasters)
 
-      if (!activeMasterProjectName || !mergedMasters.some(m => m.name.toLowerCase() === activeMasterProjectName.toLowerCase())) {
-        setActiveMasterProjectName(fallbackMaster)
+      if (mergedMasters.length > 0) {
+        if (!activeMasterProjectName || !mergedMasters.some(m => m.name.toLowerCase() === activeMasterProjectName.toLowerCase())) {
+          setActiveMasterProjectName(mergedMasters[0].name)
+        }
+        setCreateInitialMasterProject(mergedMasters[0].name)
+      } else {
+        setActiveMasterProjectName('')
+        setCreateInitialMasterProject('')
       }
-      setCreateInitialMasterProject(fallbackMaster)
     }
     setLoading(false)
   }
@@ -234,8 +222,13 @@ export default function ProjectsPage() {
   useEffect(() => {
     fetchProjects()
     const handleWsChanged = () => fetchProjects()
+    const handleOpenCreateMaster = () => setIsCreateMasterModalOpen(true)
     window.addEventListener('workspace-changed', handleWsChanged)
-    return () => window.removeEventListener('workspace-changed', handleWsChanged)
+    window.addEventListener('open-create-master-modal', handleOpenCreateMaster)
+    return () => {
+      window.removeEventListener('workspace-changed', handleWsChanged)
+      window.removeEventListener('open-create-master-modal', handleOpenCreateMaster)
+    }
   }, [])
 
   // All distinct Master Project names
@@ -248,13 +241,22 @@ export default function ProjectsPage() {
 
   // Active Master Project Object
   const activeMasterObj = useMemo(() => {
+    if (!activeMasterProjectName) {
+      return {
+        id: 'none',
+        name: 'Master Campaign',
+        subtitle: 'Start by creating your first campaign',
+        description: 'Organize your missions under one umbrella brand.',
+        colorTheme: 'emerald' as const
+      }
+    }
     const found = masterProjects.find(m => m.name.toLowerCase() === activeMasterProjectName.toLowerCase())
     if (found) return found
     return {
       id: 'custom',
       name: activeMasterProjectName,
-      subtitle: 'Program & Initiative Hub',
-      description: `Executive program tracking initiatives under ${activeMasterProjectName}.`,
+      subtitle: 'Campaign Hub',
+      description: `Strategic initiatives for ${activeMasterProjectName}.`,
       colorTheme: 'emerald' as const
     }
   }, [masterProjects, activeMasterProjectName])
@@ -317,16 +319,28 @@ export default function ProjectsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
-            <span>CALLMY</span>
+            <span>FOCUS</span>
             <span>•</span>
-            <span className="text-black font-normal">{allMasterNames.length} MASTER PROGRAMS &amp; {projects.length} INITIATIVES</span>
+            <span>SOLO OS</span>
+            <span>•</span>
+            <span className="text-black font-normal">{allMasterNames.length} CAMPAIGNS &amp; {projects.length} MISSIONS</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-black">
-            Master Projects &amp; Initiatives
+            Campaigns &amp; Projects
           </h1>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 font-body">
+          {/* Tutorial Guide Button */}
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-game-tutorial'))}
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            title="Interactive Video Game Tutorial & Guide"
+          >
+            <Target size={14} className="text-amber-500" />
+            <span>Tutorial Guide</span>
+          </button>
+
           <button
             onClick={() => setIsSynthesizeOpen(true)}
             className="flex items-center px-3 sm:px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
@@ -339,7 +353,7 @@ export default function ProjectsPage() {
             className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
           >
             <Building2 size={14} className="text-indigo-600" />
-            <span>New Master</span>
+            <span>New Campaign</span>
           </button>
 
           <button
@@ -350,19 +364,168 @@ export default function ProjectsPage() {
             className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer font-body"
           >
             <Plus size={15} />
-            <span>New Initiative</span>
+            <span>New Mission</span>
           </button>
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* MASTER PROGRAM SWITCHER CAROUSEL (PRIMARY PORTFOLIO, INTERNAL, + CREATE)  */}
-      {/* ========================================================================= */}
-      <div className="space-y-3 font-body">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">
-            SELECT MASTER PROGRAM / CLIENT HUB
-          </span>
+      {allMasterNames.length === 0 ? (
+        /* ========================================================================= */
+        /* VIDEO GAME TUTORIAL & SYSTEM BRIEFING FOR NEW USERS (CLEAN EMPTY STATE)   */
+        /* ========================================================================= */
+        <div className="space-y-8 animate-fadeIn font-body">
+          {/* Main Briefing Card */}
+          <div className="p-6 sm:p-10 rounded-3xl bg-white border border-black/[0.1] shadow-xl relative overflow-hidden">
+            {/* Ambient subtle glow */}
+            <div className="absolute right-0 top-0 w-96 h-96 bg-amber-100/40 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute left-1/4 bottom-0 w-80 h-80 bg-emerald-100/30 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 space-y-8">
+              {/* Header Badge & Title */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full bg-black text-white text-[10px] font-mono uppercase tracking-widest font-semibold flex items-center gap-1.5">
+                    <Target size={12} className="text-amber-400" />
+                    SYSTEM BRIEFING
+                  </span>
+                  <span className="text-[#9ca3af] text-xs font-mono">•</span>
+                  <span className="text-xs font-mono text-[#6b7280]">SOLO CREATOR &amp; ENTREPRENEUR OS</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-light tracking-tight text-black">
+                  How Focus works in <span className="font-semibold">3 simple levels</span>.
+                </h2>
+                <p className="text-xs sm:text-sm text-[#4b5563] font-light max-w-2xl leading-relaxed">
+                  No confusing enterprise jargon. Everything you build is organized into <strong>Campaigns</strong>, <strong>Missions</strong>, and <strong>Action Steps</strong>.
+                </p>
+              </div>
+
+              {/* 3 Level Hierarchy Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Level 1 */}
+                <div className="p-5 rounded-2xl bg-[#fafafa] border border-black/[0.08] hover:border-black/[0.2] transition-all space-y-3 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md font-semibold">
+                        LEVEL 1: THE UMBRELLA
+                      </span>
+                      <Building2 size={16} className="text-amber-600" />
+                    </div>
+                    <h3 className="text-base font-semibold text-black">
+                      1. Master Campaign
+                    </h3>
+                    <p className="text-xs text-[#4b5563] font-light leading-relaxed">
+                      Your <strong>umbrella business or brand</strong>. For example: <em>YouTube Channel</em>, <em>Clothing Brand</em>, or <em>Agency</em>. Everything related to that brand lives here.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-black/[0.05] text-[11px] font-mono text-[#6b7280]">
+                    Keeps distinct brands completely separated.
+                  </div>
+                </div>
+
+                {/* Level 2 */}
+                <div className="p-5 rounded-2xl bg-[#fafafa] border border-black/[0.08] hover:border-black/[0.2] transition-all space-y-3 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md font-semibold">
+                        LEVEL 2: THE MISSIONS
+                      </span>
+                      <FolderKanban size={16} className="text-blue-600" />
+                    </div>
+                    <h3 className="text-base font-semibold text-black">
+                      2. Projects (Missions)
+                    </h3>
+                    <p className="text-xs text-[#4b5563] font-light leading-relaxed">
+                      A <strong>concrete mission or launch</strong> under that campaign. For example: <em>Launch Spring Collection</em> or <em>Film 5 Video Series</em>.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-black/[0.05] text-[11px] font-mono text-[#6b7280]">
+                    Has a deadline, live health check, and task list.
+                  </div>
+                </div>
+
+                {/* Level 3 */}
+                <div className="p-5 rounded-2xl bg-[#fafafa] border border-black/[0.08] hover:border-black/[0.2] transition-all space-y-3 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md font-semibold">
+                        LEVEL 3: ACTION STEPS
+                      </span>
+                      <ListTodo size={16} className="text-emerald-600" />
+                    </div>
+                    <h3 className="text-base font-semibold text-black">
+                      3. Tasks (Objectives)
+                    </h3>
+                    <p className="text-xs text-[#4b5563] font-light leading-relaxed">
+                      Your <strong>step-by-step checklist</strong>. Assign each task to a project, set how urgent it is (P0 to P3), and mark it shipped. Progress fills up automatically.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-black/[0.05] text-[11px] font-mono text-[#6b7280]">
+                    Complete tasks to level up your mission progress.
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+                <button
+                  onClick={() => setIsCreateMasterModalOpen(true)}
+                  className="flex items-center justify-center gap-2 px-6 py-3 bg-black hover:bg-neutral-800 text-white font-medium text-xs rounded-xl shadow-md transition-all cursor-pointer"
+                >
+                  <Plus size={15} />
+                  <span>Start Your First Master Campaign</span>
+                </button>
+
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent('open-game-tutorial'))}
+                  className="flex items-center justify-center gap-2 px-5 py-3 bg-white hover:bg-neutral-50 text-black border border-black/[0.12] font-medium text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+                >
+                  <Play size={14} className="text-amber-500 fill-amber-500" />
+                  <span>Watch Interactive Game Walkthrough (Zoom-Ins)</span>
+                </button>
+              </div>
+
+              {/* One-Click Starter Presets */}
+              <div className="pt-4 border-t border-black/[0.06] space-y-2">
+                <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block">
+                  OR CLICK A POPULAR PRESET TO INSTANTLY INITIALIZE:
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { name: 'YouTube Studio', icon: '🎙️', desc: 'Main channel, weekly uploads, and content production.' },
+                    { name: 'Clothing Brand', icon: '👕', desc: 'Apparel drops, e-commerce supply, and marketing.' },
+                    { name: 'Client Studio', icon: '💼', desc: 'Freelance deliverables, consulting, and client sprints.' },
+                    { name: 'SaaS Product', icon: '💻', desc: 'Software product development, roadmap, and growth.' },
+                  ].map((preset) => (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => handleCreateNewMasterProject({
+                        name: preset.name,
+                        subtitle: `${preset.icon} Active Brand`,
+                        description: preset.desc,
+                        colorTheme: 'emerald'
+                      })}
+                      className="px-3 py-1.5 rounded-xl bg-white hover:bg-black hover:text-white border border-black/[0.08] text-xs font-mono transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
+                    >
+                      <span>{preset.icon}</span>
+                      <span>+ {preset.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* ========================================================================= */}
+          {/* MASTER PROGRAM SWITCHER CAROUSEL (PRIMARY PORTFOLIO, INTERNAL, + CREATE)  */}
+          {/* ========================================================================= */}
+          <div className="space-y-3 font-body">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">
+                SELECT MASTER CAMPAIGN / BRAND HUB
+              </span>
           <button
             onClick={() => setIsCreateMasterModalOpen(true)}
             className="text-xs text-indigo-600 hover:underline font-mono flex items-center gap-1 cursor-pointer"
@@ -803,6 +966,8 @@ export default function ProjectsPage() {
           })}
         </div>
       )}
+    </>
+  )}
 
       {/* Creation Modal for Initiatives */}
       {isCreateModalOpen && (
@@ -867,9 +1032,9 @@ function CreateMasterProjectModal({
             </div>
             <div>
               <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block font-light">
-                ORGANIZATION HUB
+                SOLO OS CAMPAIGN
               </span>
-              <h2 className="text-base font-normal text-black tracking-tight">Create Master Project</h2>
+              <h2 className="text-base font-normal text-black tracking-tight">Create Master Campaign</h2>
             </div>
           </div>
           <button onClick={onClose} className="p-2 text-[#9ca3af] hover:text-black rounded-xl cursor-pointer">
@@ -880,13 +1045,16 @@ function CreateMasterProjectModal({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4 bg-[#fbfbfd]">
           <div>
-            <label className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block mb-1.5 font-light">
-              MASTER PROJECT / CLIENT NAME *
+            <label className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block mb-1 font-light">
+              CAMPAIGN / BRAND NAME *
             </label>
+            <p className="text-[11px] text-[#9ca3af] font-light mb-1.5">
+              Your main brand or umbrella (e.g. YouTube Studio, Clothing Brand, Agency).
+            </p>
             <input
               type="text"
               required
-              placeholder="e.g. Creator Pipeline, Web Platform, Client Work"
+              placeholder="e.g. YouTube Studio, Clothing Brand, Freelance Agency"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full px-4 py-2.5 bg-white border border-black/[0.1] focus:border-black rounded-xl text-xs text-black outline-none font-light shadow-xs"
@@ -895,12 +1063,12 @@ function CreateMasterProjectModal({
           </div>
 
           <div>
-            <label className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block mb-1.5 font-light">
-              CLIENT / PROGRAM SUBTITLE
+            <label className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block mb-1 font-light">
+              SUBTITLE (OPTIONAL)
             </label>
             <input
               type="text"
-              placeholder="e.g. Primary Portfolio & Initiatives"
+              placeholder="e.g. Weekly Video Series, E-Commerce Drop"
               value={subtitle}
               onChange={(e) => setSubtitle(e.target.value)}
               className="w-full px-4 py-2.5 bg-white border border-black/[0.1] focus:border-black rounded-xl text-xs text-black outline-none font-light shadow-xs"
@@ -908,12 +1076,12 @@ function CreateMasterProjectModal({
           </div>
 
           <div>
-            <label className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block mb-1.5 font-light">
-              STRATEGIC DESCRIPTION
+            <label className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block mb-1 font-light">
+              WHAT IS THIS CAMPAIGN ABOUT?
             </label>
             <textarea
               rows={3}
-              placeholder="Describe the overarching goals and scope of this master program..."
+              placeholder="Describe the main goal of this brand or creative studio..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-4 py-2.5 bg-white border border-black/[0.1] focus:border-black rounded-xl text-xs text-black outline-none font-light shadow-xs resize-none"
@@ -933,7 +1101,7 @@ function CreateMasterProjectModal({
               disabled={!name.trim()}
               className="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs disabled:opacity-50"
             >
-              Create Master Program
+              Start Campaign
             </button>
           </div>
         </form>
@@ -943,8 +1111,8 @@ function CreateMasterProjectModal({
 }
 
 function CreateProjectWizard({ 
-  initialMasterProject = 'Primary Portfolio',
-  availableMasterProjects = ['Primary Portfolio'],
+  initialMasterProject = '',
+  availableMasterProjects = [],
   onOpenCreateMaster,
   onClose, 
   onSuccess 

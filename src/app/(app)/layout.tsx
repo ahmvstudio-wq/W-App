@@ -8,12 +8,13 @@ import type { User } from '@/types'
 import { getInitials, cn } from '@/lib/utils'
 import {
   LayoutDashboard, FolderKanban, CheckSquare, FileText,
-  Zap, Settings, LogOut, Plus, Search, Sparkles, Video
+  Zap, Settings, LogOut, Plus, Search, Sparkles, Video, Target
 } from 'lucide-react'
 import CommandPalette from '@/components/CommandPalette'
 import FocusTimer from '@/components/FocusTimer'
 import CreateTaskModal from '@/components/CreateTaskModal'
 import NaturalLanguageInputModal from '@/components/NaturalLanguageInputModal'
+import GameTutorialModal from '@/components/GameTutorialModal'
 import { WorkspaceProvider } from '@/context/WorkspaceContext'
 
 const NAV = [
@@ -34,6 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false)
   const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -87,8 +89,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const handleOpenModal = () => setIsCreateTaskOpen(true)
+    const handleOpenTutorial = () => setIsTutorialOpen(true)
     window.addEventListener('open-create-task-modal', handleOpenModal)
-    return () => window.removeEventListener('open-create-task-modal', handleOpenModal)
+    window.addEventListener('open-game-tutorial', handleOpenTutorial)
+    return () => {
+      window.removeEventListener('open-create-task-modal', handleOpenModal)
+      window.removeEventListener('open-game-tutorial', handleOpenTutorial)
+    }
   }, [])
 
   useEffect(() => {
@@ -202,6 +209,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <span>Synthesize</span>
           </button>
 
+          {/* Interactive Game Tutorial Guide */}
+          <button
+            onClick={() => setIsTutorialOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-[#f5f5f7] hover:bg-[#ebebee] border border-black/[0.05] text-black font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            title="Interactive Video Game Tutorial & System Guide"
+          >
+            <Target size={13} className="text-amber-500" />
+            <span className="hidden sm:inline">Guide</span>
+          </button>
+
           {/* New Task Trigger */}
           <button
             onClick={() => setIsCreateTaskOpen(true)}
@@ -229,6 +246,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <div className="text-xs font-normal text-black truncate">{user?.name}</div>
                   <div className="text-[10px] text-[#9ca3af] font-mono truncate">{user?.email}</div>
                 </div>
+
+                <button
+                  onClick={() => setIsTutorialOpen(true)}
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-[#6b7280] hover:text-black hover:bg-black/[0.03] transition-colors cursor-pointer text-left"
+                >
+                  <Target size={14} className="text-amber-500" />
+                  <span>How It Works (Guide)</span>
+                </button>
 
                 <Link
                   href="/settings"
@@ -286,6 +311,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <NaturalLanguageInputModal
         isOpen={isSynthesizeOpen}
         onClose={() => setIsSynthesizeOpen(false)}
+      />
+
+      <GameTutorialModal
+        isOpen={isTutorialOpen}
+        onClose={() => setIsTutorialOpen(false)}
+        onCreateMaster={() => {
+          setIsTutorialOpen(false)
+          window.dispatchEvent(new CustomEvent('open-create-master-modal'))
+        }}
       />
       </div>
     </WorkspaceProvider>

@@ -216,13 +216,16 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId, 
           {/* Project & Status */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-[11px] font-mono text-[#6b7280] block mb-1 font-light">PROJECT (OPTIONAL)</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-mono text-[#6b7280] block font-light">ASSIGN TO PROJECT</label>
+                <span className="text-[10px] text-[#9ca3af] font-light">Fills project bar</span>
+              </div>
               <select 
                 value={projectId} 
                 onChange={e => setProjectId(e.target.value)} 
                 className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
               >
-                <option value="">No Project (General Sprint)</option>
+                <option value="">No Project (Quick To-Do)</option>
                 {projects.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
@@ -230,15 +233,15 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId, 
             </div>
 
             <div>
-              <label className="text-[11px] font-mono text-[#6b7280] block mb-1 font-light">INITIAL STATUS</label>
+              <label className="text-[11px] font-mono text-[#6b7280] block mb-1 font-light">WHERE DOES THIS START?</label>
               <select 
                 value={status} 
                 onChange={e => setStatus(e.target.value as any)} 
                 className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
               >
-                <option value="todo">To-Do (Pending)</option>
+                <option value="todo">To-Do (Not Started)</option>
                 <option value="in_progress">In Progress (Starting Now)</option>
-                <option value="shipped">Shipped (Log Completed Work)</option>
+                <option value="shipped">Shipped (Already Done)</option>
               </select>
             </div>
           </div>
@@ -246,16 +249,16 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId, 
           {/* Priority & Timebox */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-[11px] font-mono text-[#6b7280] block mb-1 font-light">PRIORITY</label>
+              <label className="text-[11px] font-mono text-[#6b7280] block mb-1 font-light">PRIORITY / URGENCY</label>
               <select
                 value={priority}
                 onChange={e => setPriority(e.target.value as Priority)}
                 className="w-full px-4 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs text-black outline-none font-light"
               >
-                <option value="p0">P0 - Critical (Blocker)</option>
-                <option value="p1">P1 - High (Sprint Core)</option>
-                <option value="p2">P2 - Medium (Standard)</option>
-                <option value="p3">P3 - Low (Nice to have)</option>
+                <option value="p0">P0 - Urgent (Do this first)</option>
+                <option value="p1">P1 - High (Important)</option>
+                <option value="p2">P2 - Normal (Standard to-do)</option>
+                <option value="p3">P3 - Low (Whenever)</option>
               </select>
             </div>
 
