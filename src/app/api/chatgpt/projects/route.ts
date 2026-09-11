@@ -18,12 +18,17 @@ export async function GET(req: NextRequest) {
     const priority = searchParams.get('priority')
     const search = searchParams.get('search')
     const limit = parseInt(searchParams.get('limit') || '50', 10)
+    const workspaceId = searchParams.get('workspace_id')
 
     let query = supabase
       .from('projects')
       .select('*, tasks(id, title, status, priority, due_date)')
       .order('created_at', { ascending: false })
       .limit(limit)
+
+    if (workspaceId) {
+      query = query.eq('workspace_id', workspaceId)
+    }
 
     if (status) {
       query = query.eq('status', status)
@@ -91,8 +96,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Project name is required.' }, { status: 400 })
     }
 
-    const workspaceId = explicitWorkspaceId || (await getDefaultWorkspaceId(supabase))
     const ownerId = explicitOwnerId || (await getDefaultUserId(supabase))
+    const workspaceId = explicitWorkspaceId || (await getDefaultWorkspaceId(supabase, ownerId))
 
     const newProjectData: any = {
       name: name.trim(),

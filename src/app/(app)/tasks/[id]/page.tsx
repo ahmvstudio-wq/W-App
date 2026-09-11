@@ -65,8 +65,8 @@ export default function DedicatedTaskPage() {
   const [aiReview, setAiReview] = useState<string | null>(null)
   const [auditingAi, setAuditingAi] = useState(false)
 
-  async function fetchTaskData() {
-    setLoading(true)
+  async function fetchTaskData(silent = false) {
+    if (!silent) setLoading(true)
     try {
       const { data, error } = await supabase
         .from('tasks')
@@ -124,7 +124,30 @@ export default function DedicatedTaskPage() {
   }
 
   useEffect(() => {
-    if (taskId) fetchTaskData()
+    if (!taskId) return
+    fetchTaskData(false)
+
+    const channel = supabase.channel(`task-${taskId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `id=eq.${taskId}` }, () => {
+        fetchTaskData(true)
+      })
+      .subscribe()
+
+    const handleFocus = () => fetchTaskData(true)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchTaskData(true)
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      supabase.removeChannel(channel)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [taskId])
 
   // Save microtasks to local storage on change

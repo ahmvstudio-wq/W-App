@@ -45,14 +45,14 @@ export default function SingleProjectPage() {
     }
   }
 
-  async function fetchProject() {
+  async function fetchProject(silent = false) {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       setLoading(false)
       return
     }
 
-    if (!project) setLoading(true)
+    if (!project && !silent) setLoading(true)
     
     const { data, error } = await supabase
       .from('projects')
@@ -89,16 +89,38 @@ export default function SingleProjectPage() {
   }
 
   useEffect(() => {
-    fetchProject()
+    fetchProject(false)
     
     const channel = supabase.channel(`project-${projectId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'projects', filter: `id=eq.${projectId}` }, () => {
-        fetchProject()
+        fetchProject(true)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `project_id=eq.${projectId}` }, () => {
+        fetchProject(true)
       })
       .subscribe()
       
+    const handleFocus = () => fetchProject(true)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchProject(true)
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchProject(true)
+      }
+    }, 15000)
+
     return () => {
       supabase.removeChannel(channel)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      clearInterval(pollInterval)
     }
   }, [projectId])
 

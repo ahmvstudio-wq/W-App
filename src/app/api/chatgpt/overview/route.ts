@@ -1,7 +1,7 @@
 export const runtime = 'edge'
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyApiAuth, unauthorizedResponse } from '@/lib/api/auth'
-import { getApiClient } from '@/lib/supabase/admin'
+import { getApiClient, getDefaultWorkspaceId, getDefaultUserId } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,21 +12,32 @@ export async function GET(req: NextRequest) {
 
   try {
     const supabase = getApiClient()
+    const { searchParams } = new URL(req.url)
+    const explicitWorkspaceId = searchParams.get('workspace_id')
+    const ownerId = await getDefaultUserId(supabase)
+    const workspaceId = explicitWorkspaceId || (await getDefaultWorkspaceId(supabase, ownerId))
 
     // 1. Fetch Projects
-    const { data: projects, error: projError } = await supabase
+    let projQuery = supabase
       .from('projects')
       .select('id, name, description, status, priority, deadline, success_metric, min_shippable_version')
       .order('created_at', { ascending: false })
 
-    if (projError) throw projError
-
     // 2. Fetch Tasks
-    const { data: tasks, error: tasksError } = await supabase
+    let taskQuery = supabase
       .from('tasks')
       .select('id, title, description, status, priority, due_date, time_box_minutes, blocked_reason, project_id, created_at')
       .order('created_at', { ascending: false })
 
+    if (workspaceId) {
+      projQuery = projQuery.eq('workspace_id', workspaceId)
+      taskQuery = taskQuery.eq('workspace_id', workspaceId)
+    }
+
+    const { data: projects, error: projError } = await projQuery
+    if (projError) throw projError
+
+    const { data: tasks, error: tasksError } = await taskQuery
     if (tasksError) throw tasksError
 
     // 3. Fetch Recent Daily Logs

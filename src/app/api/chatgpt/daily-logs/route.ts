@@ -52,8 +52,8 @@ export async function POST(req: NextRequest) {
       user_id: explicitUserId,
     } = body
 
-    const workspaceId = explicitWorkspaceId || (await getDefaultWorkspaceId(supabase))
     const userId = explicitUserId || (await getDefaultUserId(supabase))
+    const workspaceId = explicitWorkspaceId || (await getDefaultWorkspaceId(supabase, userId))
 
     const logData = {
       date,

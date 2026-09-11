@@ -108,8 +108,8 @@ export default function ProjectsPage() {
     }
   }
 
-  async function fetchProjects() {
-    setLoading(true)
+  async function fetchProjects(silent = false) {
+    if (!silent) setLoading(true)
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       setProjects([])
@@ -220,14 +220,41 @@ export default function ProjectsPage() {
   }
 
   useEffect(() => {
-    fetchProjects()
-    const handleWsChanged = () => fetchProjects()
+    fetchProjects(false)
+
+    const channel = supabase.channel('projects_channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => fetchProjects(true))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => fetchProjects(true))
+      .subscribe()
+
+    const handleWsChanged = () => fetchProjects(false)
     const handleOpenCreateMaster = () => setIsCreateMasterModalOpen(true)
+    const handleFocus = () => fetchProjects(true)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchProjects(true)
+      }
+    }
+
     window.addEventListener('workspace-changed', handleWsChanged)
     window.addEventListener('open-create-master-modal', handleOpenCreateMaster)
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    // Silent background poll every 15s to keep UI in sync with ChatGPT actions
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchProjects(true)
+      }
+    }, 15000)
+
     return () => {
+      supabase.removeChannel(channel)
       window.removeEventListener('workspace-changed', handleWsChanged)
       window.removeEventListener('open-create-master-modal', handleOpenCreateMaster)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      clearInterval(pollInterval)
     }
   }, [])
 

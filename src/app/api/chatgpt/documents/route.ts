@@ -63,8 +63,19 @@ export async function POST(req: NextRequest) {
       owner_id: explicitOwnerId,
     } = body
 
-    const workspaceId = explicitWorkspaceId || (await getDefaultWorkspaceId(supabase))
     const ownerId = explicitOwnerId || (await getDefaultUserId(supabase))
+
+    let workspaceId = explicitWorkspaceId
+    if (!workspaceId && project_id) {
+      const { data: proj } = await supabase.from('projects').select('workspace_id').eq('id', project_id).maybeSingle()
+      if (proj?.workspace_id) {
+        workspaceId = proj.workspace_id
+      }
+    }
+
+    if (!workspaceId) {
+      workspaceId = await getDefaultWorkspaceId(supabase, ownerId)
+    }
 
     // Handle content whether text or JSON
     let parsedContent = content

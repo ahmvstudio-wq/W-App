@@ -77,7 +77,7 @@ export default function TasksPage() {
       const { data, error } = await query
       
       if (error) {
-        toast.error(`Fetch failed: ${error.message}`)
+        if (!silent) toast.error(`Fetch failed: ${error.message}`)
       } else {
         setTasks(data || [])
         if (selectedTask) {
@@ -86,7 +86,7 @@ export default function TasksPage() {
         }
       }
     } catch (err: any) {
-      toast.error('Sync failed. Retrying...')
+      if (!silent) toast.error('Sync failed. Retrying...')
     } finally {
       setLoading(false)
     }
@@ -102,11 +102,30 @@ export default function TasksPage() {
       .subscribe()
 
     const handleWsChanged = () => fetchTasks(false)
+    const handleFocus = () => fetchTasks(true)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchTasks(true)
+      }
+    }
+
     window.addEventListener('workspace-changed', handleWsChanged)
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    // Silent background poll every 15s to keep UI in sync with ChatGPT actions
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchTasks(true)
+      }
+    }, 15000)
       
     return () => {
       supabase.removeChannel(channel)
       window.removeEventListener('workspace-changed', handleWsChanged)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      clearInterval(pollInterval)
     }
   }, [])
 

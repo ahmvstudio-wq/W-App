@@ -22,14 +22,36 @@ export function getApiClient(): SupabaseClient {
   return cachedClient
 }
 
-export async function getDefaultWorkspaceId(client?: SupabaseClient): Promise<string | null> {
+export async function getDefaultWorkspaceId(client?: SupabaseClient, explicitUserId?: string | null): Promise<string | null> {
   try {
     const supabase = client || getApiClient()
-    const { data, error } = await supabase.from('workspaces').select('id').limit(1)
-    if (error || !data || data.length === 0) {
-      return null
+    const targetUserId = explicitUserId || (await getDefaultUserId(supabase))
+
+    if (targetUserId) {
+      const { data: userWs } = await supabase
+        .from('workspaces')
+        .select('id')
+        .eq('owner_id', targetUserId)
+        .order('created_at', { ascending: true })
+        .limit(1)
+
+      if (userWs && userWs.length > 0) {
+        return userWs[0].id
+      }
     }
-    return data[0].id
+
+    // Next preference: workspace with configured settings or active projects
+    const { data: configuredWs } = await supabase
+      .from('workspaces')
+      .select('id, settings')
+      .order('created_at', { ascending: true })
+
+    if (configuredWs && configuredWs.length > 0) {
+      const found = configuredWs.find((w: any) => w.settings && Object.keys(w.settings).length > 0)
+      return found ? found.id : configuredWs[0].id
+    }
+
+    return null
   } catch {
     return null
   }

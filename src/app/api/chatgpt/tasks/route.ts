@@ -23,12 +23,17 @@ export async function GET(req: NextRequest) {
     const dateTo = searchParams.get('date_to')
     const formatType = searchParams.get('format') // 'json' or 'csv'
     const limit = parseInt(searchParams.get('limit') || '50', 10)
+    const workspaceId = searchParams.get('workspace_id')
 
     let query = supabase
       .from('tasks')
       .select('*, project:projects(id, name, status, color)')
       .order('created_at', { ascending: false })
       .limit(limit)
+
+    if (workspaceId) {
+      query = query.eq('workspace_id', workspaceId)
+    }
 
     if (status && !date) {
       if (status === 'active') {
@@ -163,8 +168,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Task title is required.' }, { status: 400 })
     }
 
-    const workspaceId = explicitWorkspaceId || (await getDefaultWorkspaceId(supabase))
     const ownerId = explicitOwnerId || (await getDefaultUserId(supabase))
+
+    let workspaceId = explicitWorkspaceId
+    if (!workspaceId && project_id) {
+      const { data: proj } = await supabase.from('projects').select('workspace_id').eq('id', project_id).maybeSingle()
+      if (proj?.workspace_id) {
+        workspaceId = proj.workspace_id
+      }
+    }
+
+    if (!workspaceId) {
+      workspaceId = await getDefaultWorkspaceId(supabase, ownerId)
+    }
 
     const newTaskData: any = {
       title: title.trim(),

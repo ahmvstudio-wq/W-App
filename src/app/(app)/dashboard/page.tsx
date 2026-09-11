@@ -43,11 +43,30 @@ export default function DashboardPage() {
       .subscribe()
 
     const handleWsChanged = () => fetchData(false)
+    const handleFocus = () => fetchData(true)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData(true)
+      }
+    }
+
     window.addEventListener('workspace-changed', handleWsChanged)
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    // Silent background poll every 15s to keep UI in sync with ChatGPT actions
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchData(true)
+      }
+    }, 15000)
       
     return () => {
       supabase.removeChannel(channel)
       window.removeEventListener('workspace-changed', handleWsChanged)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      clearInterval(pollInterval)
     }
   }, [])
 
