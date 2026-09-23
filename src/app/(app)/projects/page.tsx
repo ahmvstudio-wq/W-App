@@ -146,31 +146,9 @@ export default function ProjectsPage() {
       .eq('id', activeWsId)
       .single()
 
-    const isTaufiq = session.user.email?.toLowerCase().includes('taufiq') || wsData?.owner_id === '89f0a1d6-3c0e-4bb9-8df9-cfe1e8de4128'
-
-    const defaultMastersForWorkspace: MasterProjectInfo[] = isTaufiq ? [
-      {
-        id: 'mp-tadbeer',
-        name: 'Tadbeer TT',
-        subtitle: 'Primary Business Architecture',
-        description: 'Core commercial trading, client CRM, e-commerce products, and operations.',
-        colorTheme: 'emerald'
-      },
-      {
-        id: 'mp-internal',
-        name: 'Internal Core',
-        subtitle: 'Platform & Infrastructure',
-        description: 'Underlying infrastructure, hosting, and systems architecture.',
-        colorTheme: 'blue'
-      }
-    ] : []
-
     const wsSettings = wsData?.settings || {}
     const rawSaved: MasterProjectInfo[] = Array.isArray(wsSettings.master_projects) ? wsSettings.master_projects : []
-    // Filter out dummy "Primary Portfolio" if non-Taufiq user
-    const savedMasterProjects: MasterProjectInfo[] = (!isTaufiq && rawSaved.length === 1 && rawSaved[0].name === 'Primary Portfolio')
-      ? []
-      : (rawSaved.length > 0 ? rawSaved : defaultMastersForWorkspace)
+    const savedMasterProjects: MasterProjectInfo[] = rawSaved
 
     const projectMasterMap: Record<string, string> = wsSettings.project_master_map || {}
 
@@ -183,7 +161,7 @@ export default function ProjectsPage() {
     const { data } = await query
     
     if (data) {
-      const fallbackMaster = savedMasterProjects[0]?.name || (isTaufiq ? 'Tadbeer TT' : '')
+      const fallbackMaster = savedMasterProjects[0]?.name || ''
       const enriched: Project[] = data.map((p: any) => ({
         ...p,
         master_project: projectMasterMap[p.id] || p.master_project || fallbackMaster

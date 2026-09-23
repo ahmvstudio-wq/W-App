@@ -8,7 +8,9 @@ import type { User } from '@/types'
 import { getInitials, cn } from '@/lib/utils'
 import {
   LayoutDashboard, FolderKanban, CheckSquare, FileText,
-  Zap, Settings, LogOut, Plus, Search, Sparkles, Video, Target
+  Zap, Settings, LogOut, Plus, Search, Sparkles, Video, Target,
+  Layers, Activity,
+  type LucideIcon
 } from 'lucide-react'
 import CommandPalette from '@/components/CommandPalette'
 import FocusTimer from '@/components/FocusTimer'
@@ -17,10 +19,12 @@ import NaturalLanguageInputModal from '@/components/NaturalLanguageInputModal'
 import GameTutorialModal from '@/components/GameTutorialModal'
 import { WorkspaceProvider } from '@/context/WorkspaceContext'
 
-const NAV = [
+const NAV: { href: string; label: string; icon?: LucideIcon }[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/projects', label: 'Projects', icon: FolderKanban },
   { href: '/tasks', label: 'Tasks', icon: CheckSquare },
+  { href: '/content', label: 'Content Vault', icon: Layers },
+  { href: '/create', label: 'Cultlike Create', icon: Activity },
   { href: '/meetings', label: 'Meetings', icon: Video },
   { href: '/documents', label: 'Documents', icon: FileText },
 ]
@@ -119,8 +123,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#fbfbfd] flex items-center justify-center font-sans">
-        <div className="text-center space-y-1">
-          <div className="text-sm font-medium text-black tracking-tight">Focus</div>
+        <div className="text-center space-y-2 flex flex-col items-center">
+          <img src="/logo.png" alt="Cultlike OS" className="h-12 w-auto object-contain" />
           <div className="text-[#8a8d95] text-[11px] font-mono tracking-wider uppercase font-light">Loading workspace...</div>
         </div>
       </div>
@@ -140,20 +144,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-40 h-16 bg-white/80 backdrop-blur-xl border-b border-black/[0.06] px-6 sm:px-10 flex items-center justify-between">
           {/* Left: Brand Identity & Workspace Switcher */}
           <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="flex items-center gap-2 group">
-              <div className="w-6 h-6 rounded-lg bg-black text-white flex items-center justify-center shadow-xs">
-                <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="9" />
-                  <circle cx="12" cy="12" r="4" />
-                  <line x1="12" y1="1" x2="12" y2="4" />
-                  <line x1="12" y1="20" x2="12" y2="23" />
-                  <line x1="1" y1="12" x2="4" y2="12" />
-                  <line x1="20" y1="12" x2="23" y2="12" />
-                </svg>
-              </div>
-              <span className="font-semibold text-sm tracking-tight text-black group-hover:opacity-80 transition-opacity">
-                Focus
-              </span>
+            <Link href="/dashboard" className="flex items-center group">
+              <img src="/logo.png" alt="Cultlike OS" className="h-10 w-auto object-contain hover:opacity-80 transition-opacity" />
             </Link>
           </div>
 
@@ -172,13 +164,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     : 'text-[#6b7280] hover:text-black hover:bg-black/[0.02]'
                 )}
               >
-                <Icon
-                  size={14}
-                  className={cn(
-                    'transition-colors',
-                    active ? 'text-black' : 'text-[#9ca3af]'
-                  )}
-                />
+                {Icon && (
+                  <Icon
+                    size={14}
+                    className={cn(
+                      'transition-colors',
+                      active ? 'text-black' : 'text-[#9ca3af]'
+                    )}
+                  />
+                )}
                 <span>{label}</span>
               </Link>
             )
@@ -296,12 +290,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   : 'text-[#8a8d95] hover:text-black'
               )}
             >
-              <div className={cn(
-                'p-1 rounded-lg transition-colors',
-                active && 'bg-black text-white'
-              )}>
-                <Icon size={16} />
-              </div>
+              {Icon && (
+                <div className={cn(
+                  'p-1 rounded-lg transition-colors',
+                  active && 'bg-black text-white'
+                )}>
+                  <Icon size={16} />
+                </div>
+              )}
               <span className="text-[10px] tracking-tight mt-0.5">{label}</span>
             </Link>
           )

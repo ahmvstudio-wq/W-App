@@ -32,6 +32,7 @@ export default function SettingsPage() {
   const [showAdvancedOAuth, setShowAdvancedOAuth] = useState(false)
 
   const [fathomKey, setFathomKey] = useState('')
+  const [isFathomConnected, setIsFathomConnected] = useState(false)
   const [savingFathomKey, setSavingFathomKey] = useState(false)
   const [testingFathom, setTestingFathom] = useState(false)
   const [copiedWebhook, setCopiedWebhook] = useState(false)
@@ -50,11 +51,28 @@ export default function SettingsPage() {
   }
 
   useEffect(() => {
-    if (currentWorkspace?.settings?.fathom_api_key) {
-      setFathomKey(currentWorkspace.settings.fathom_api_key)
-    } else {
-      setFathomKey('')
+    async function loadUserFathomKey() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        const userKey = session?.user?.user_metadata?.fathom_api_key || 
+          (typeof window !== 'undefined' ? localStorage.getItem('focus_user_fathom_api_key') : null)
+        
+        if (userKey) {
+          setFathomKey(userKey)
+          setIsFathomConnected(true)
+        } else if (currentWorkspace?.settings?.fathom_api_key) {
+          setFathomKey(currentWorkspace.settings.fathom_api_key)
+          setIsFathomConnected(true)
+        } else {
+          setFathomKey('')
+          setIsFathomConnected(false)
+        }
+      } catch {
+        setFathomKey('')
+        setIsFathomConnected(false)
+      }
     }
+    loadUserFathomKey()
   }, [currentWorkspace?.settings?.fathom_api_key])
 
   const googleConnected = searchParams.get('google_connected') === 'true'
@@ -115,27 +133,82 @@ export default function SettingsPage() {
 
   const handleSaveFathomKey = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!currentWorkspace?.id || savingFathomKey) return
+    if (savingFathomKey) return
     setSavingFathomKey(true)
     try {
-      const updatedSettings = {
-        ...(currentWorkspace.settings || {}),
-        fathom_api_key: fathomKey.trim() || undefined,
-      }
-      const res = await fetch(`/api/workspaces/${currentWorkspace.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ settings: updatedSettings }),
+      const trimmedKey = fathomKey.trim()
+
+      // 1. Update user_metadata for this authenticated user (strictly private to this user)
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { fathom_api_key: trimmedKey || null }
       })
-      const data = await res.json()
-      if (data.success) {
-        toast.success(fathomKey.trim() ? 'Custom Fathom API Key saved for this workspace!' : 'Reset to default Fathom integration.')
-        await refreshWorkspaces()
+      if (authError) throw authError
+
+      // 2. Persist locally for immediate client access
+      if (trimmedKey) {
+        localStorage.setItem('focus_user_fathom_api_key', trimmedKey)
+        setIsFathomConnected(true)
+        toast.success('Your personal Fathom account has been connected!')
       } else {
-        toast.error(data.error || 'Failed to save Fathom key')
+        localStorage.removeItem('focus_user_fathom_api_key')
+        setIsFathomConnected(false)
+        toast.success('Fathom account disconnected.')
       }
-    } catch {
-      toast.error('Error saving Fathom settings')
+
+      // Also sync to workspace settings if user is owner/admin
+      if (currentWorkspace?.id) {
+        try {
+          const updatedSettings = {
+            ...(currentWorkspace.settings || {}),
+            fathom_api_key: trimmedKey || undefined,
+          }
+          await fetch(`/api/workspaces/${currentWorkspace.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ settings: updatedSettings }),
+          })
+          await refreshWorkspaces()
+        } catch {}
+      }
+
+      window.dispatchEvent(new CustomEvent('fathom-key-updated', { detail: trimmedKey }))
+    } catch (err: any) {
+      toast.error(`Error saving Fathom settings: ${err.message}`)
+    } finally {
+      setSavingFathomKey(false)
+    }
+  }
+
+  const handleDisconnectFathom = async () => {
+    if (savingFathomKey) return
+    setSavingFathomKey(true)
+    try {
+      await supabase.auth.updateUser({
+        data: { fathom_api_key: null }
+      })
+      localStorage.removeItem('focus_user_fathom_api_key')
+      setFathomKey('')
+      setIsFathomConnected(false)
+
+      if (currentWorkspace?.id) {
+        try {
+          const updatedSettings = {
+            ...(currentWorkspace.settings || {}),
+            fathom_api_key: undefined,
+          }
+          await fetch(`/api/workspaces/${currentWorkspace.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ settings: updatedSettings }),
+          })
+          await refreshWorkspaces()
+        } catch {}
+      }
+
+      window.dispatchEvent(new CustomEvent('fathom-key-updated', { detail: '' }))
+      toast.success('Your personal Fathom account was disconnected.')
+    } catch (err: any) {
+      toast.error(`Disconnect error: ${err.message}`)
     } finally {
       setSavingFathomKey(false)
     }
@@ -342,21 +415,21 @@ export default function SettingsPage() {
                       <Video size={20} className="text-black" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-normal text-black">Fathom Meeting Notes</h3>
+                      <h3 className="text-sm font-normal text-black">Fathom Meeting Notes (Personal)</h3>
                       <p className="text-xs text-[#6b7280] font-light">
-                        Automatically import call recordings, transcripts, and action items.
+                        Connect your personal Fathom account to import your call recordings, transcripts, and action items.
                       </p>
                     </div>
                   </div>
 
                   <span className={cn(
                     "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-normal border",
-                    currentWorkspace?.settings?.fathom_api_key
-                      ? "bg-purple-50 text-purple-700 border-purple-200"
-                      : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    isFathomConnected
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : "bg-neutral-100 text-neutral-600 border-neutral-200"
                   )}>
-                    <CheckCircle2 size={12} />
-                    <span>{currentWorkspace?.settings?.fathom_api_key ? 'Workspace Key' : 'Connected'}</span>
+                    {isFathomConnected ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                    <span>{isFathomConnected ? 'Connected (Personal Account)' : 'Not Connected'}</span>
                   </span>
                 </div>
 
@@ -364,7 +437,7 @@ export default function SettingsPage() {
                 <form onSubmit={handleSaveFathomKey} className="p-4 rounded-xl bg-white border border-black/[0.06] space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-medium text-black">
-                      Fathom API Key (Optional)
+                      Your Personal Fathom API Key
                     </label>
                     <a
                       href="https://fathom.video/settings/api"
@@ -372,22 +445,22 @@ export default function SettingsPage() {
                       rel="noreferrer"
                       className="text-xs text-[#6b7280] hover:text-black hover:underline flex items-center gap-1"
                     >
-                      <span>Find your key</span>
+                      <span>Find your key in Fathom</span>
                       <ExternalLink size={11} />
                     </a>
                   </div>
 
                   <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-                    Add a dedicated API key if you want calls isolated strictly to this workspace.
+                    Calls and recordings are kept strictly independent to your account and will only be visible to you.
                   </p>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <input
                       type="password"
-                      placeholder="Paste your Fathom API key"
+                      placeholder="Paste your personal Fathom API key"
                       value={fathomKey}
                       onChange={(e) => setFathomKey(e.target.value)}
-                      className="flex-1 px-3.5 py-2 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-xs font-mono text-black outline-none focus:border-black"
+                      className="flex-1 min-w-[220px] px-3.5 py-2 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-xs font-mono text-black outline-none focus:border-black"
                     />
                     <button
                       type="button"
@@ -402,8 +475,18 @@ export default function SettingsPage() {
                       disabled={savingFathomKey}
                       className="px-4 py-2 bg-black hover:bg-neutral-800 disabled:opacity-40 text-white rounded-xl text-xs font-normal transition-all cursor-pointer whitespace-nowrap shadow-xs"
                     >
-                      {savingFathomKey ? 'Saving...' : 'Save'}
+                      {savingFathomKey ? 'Saving...' : isFathomConnected ? 'Update Key' : 'Connect'}
                     </button>
+                    {isFathomConnected && (
+                      <button
+                        type="button"
+                        onClick={handleDisconnectFathom}
+                        disabled={savingFathomKey}
+                        className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-xs font-normal transition-all cursor-pointer whitespace-nowrap"
+                      >
+                        Disconnect
+                      </button>
+                    )}
                   </div>
                 </form>
 

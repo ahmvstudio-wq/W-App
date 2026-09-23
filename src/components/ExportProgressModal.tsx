@@ -122,7 +122,7 @@ export default function ExportProgressModal({ tasks, onClose }: ExportProgressMo
         cacheBust: true,
       })
       const link = document.createElement('a')
-      link.download = `callmy-progress-${format(new Date(), 'yyyy-MM-dd')}.png`
+      link.download = `cultlike-progress-${format(new Date(), 'yyyy-MM-dd')}.png`
       link.href = dataUrl
       link.click()
       toast.success('Progress report image downloaded!')
@@ -157,7 +157,7 @@ export default function ExportProgressModal({ tasks, onClose }: ExportProgressMo
       } else {
         // Fallback: download if clipboard API is not available
         const link = document.createElement('a')
-        link.download = `callmy-progress-${format(new Date(), 'yyyy-MM-dd')}.png`
+        link.download = `cultlike-progress-${format(new Date(), 'yyyy-MM-dd')}.png`
         link.href = dataUrl
         link.click()
         toast.success('Image downloaded (clipboard unavailable in browser)')
@@ -283,7 +283,7 @@ export default function ExportProgressModal({ tasks, onClose }: ExportProgressMo
                     'px-2.5 py-0.5 rounded-md font-mono text-[10px] font-semibold tracking-wider uppercase',
                     theme === 'dark' ? 'bg-white/10 text-white' : 'bg-black text-white'
                   )}>
-                    CALLMY // EXECUTION INTELLIGENCE
+                    CULTLIKE OS // EXECUTION INTELLIGENCE
                   </span>
                   <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-mono text-[10px] font-medium uppercase">
                     ● Active Sprint Status
@@ -599,7 +599,7 @@ export default function ExportProgressModal({ tasks, onClose }: ExportProgressMo
               'mt-6 pt-4 border-t flex items-center justify-between text-[10px] font-mono border-inherit',
               theme === 'dark' ? 'text-neutral-500' : 'text-neutral-400'
             )}>
-              <span>CALLMY • WORKSPACE EXECUTIVE REPORT</span>
+              <span>CULTLIKE OS • WORKSPACE EXECUTIVE REPORT</span>
               <span>VERIFIED SNAPSHOT • HIGH FIDELITY RENDER</span>
             </div>
           </div>

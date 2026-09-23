@@ -39,22 +39,27 @@ export interface FathomMeeting {
   attendees: FathomAttendee[]
 }
 
-const FATHOM_API_KEY = process.env.FATHOM_API_KEY || 'VB4MPQZrn0K7K_hFiXCsRg.mfJeDGKBdb_HZwMgjmgfa_eI_Ultt1J3SGJuN1h2VKY'
-const GROQ_API_KEY = process.env.GROQ_API_KEY || ''
+const FATHOM_API_KEY = process.env.FATHOM_API_KEY || ''
 
-let cachedMeetings: FathomMeeting[] | null = null
-let cacheTimestamp = 0
-const CACHE_TTL_MS = 60 * 1000 // 60s memory cache
+// Cache partitioned by API key to prevent any cross-user data leakage
+const keyMeetingsCache = new Map<string, { meetings: FathomMeeting[]; timestamp: number }>()
+const CACHE_TTL_MS = 60 * 1000 // 60s memory cache per key
 
 /**
  * Fetch all real meetings from Fathom API with full pagination across all historical pages
  */
 export async function fetchFathomMeetings(limit?: number, forceRefresh = false, customApiKey?: string): Promise<FathomMeeting[]> {
-  const apiKey = customApiKey || FATHOM_API_KEY
+  const apiKey = (customApiKey || FATHOM_API_KEY || '').trim()
+  if (!apiKey) {
+    // If no API key is provided, return empty array immediately (no leakage of other accounts)
+    return []
+  }
+
   const now = Date.now()
-  if (!forceRefresh && !customApiKey && cachedMeetings && (now - cacheTimestamp < CACHE_TTL_MS)) {
-    if (limit) return cachedMeetings.slice(0, limit)
-    return cachedMeetings
+  const cached = keyMeetingsCache.get(apiKey)
+  if (!forceRefresh && cached && (now - cached.timestamp < CACHE_TTL_MS)) {
+    if (limit) return cached.meetings.slice(0, limit)
+    return cached.meetings
   }
 
   try {
@@ -152,13 +157,12 @@ export async function fetchFathomMeetings(limit?: number, forceRefresh = false, 
       }
     })
 
-    cachedMeetings = meetings
-    cacheTimestamp = Date.now()
+    keyMeetingsCache.set(apiKey, { meetings, timestamp: Date.now() })
 
     return limit ? meetings.slice(0, limit) : meetings
   } catch (err) {
     console.error('[Fathom Client] Exception fetching meetings:', err)
-    return cachedMeetings || []
+    return keyMeetingsCache.get(apiKey)?.meetings || []
   }
 }
 
@@ -171,11 +175,15 @@ export async function fetchFathomRecordingDetail(recordingId: number | string, c
   transcript?: { speaker: string; timestamp: string; text: string }[]
   action_items?: FathomActionItem[]
 }> {
-  const apiKey = customApiKey || FATHOM_API_KEY
+  const apiKey = (customApiKey || FATHOM_API_KEY || '').trim()
   const result: any = {
     key_takeaways: [],
     transcript: [],
     action_items: []
+  }
+
+  if (!apiKey) {
+    return result
   }
 
   try {

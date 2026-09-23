@@ -325,9 +325,7 @@ export default function TasksPage() {
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-shrink-0">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
-            <span>CALLMY_MGMT</span>
-            <span>•</span>
+          <div className="text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1 font-light">
             <span className="text-black font-normal">{inProgressCount} ACTIVE IN FLIGHT</span>
           </div>
           <h1 className="text-3xl font-light tracking-tight text-black flex items-center gap-3">

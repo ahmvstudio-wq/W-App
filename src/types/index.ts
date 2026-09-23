@@ -205,3 +205,54 @@ export interface Asset {
   created_at: string
 }
 
+export type ContentPlatform = 'youtube' | 'instagram' | 'tiktok' | 'twitter' | 'linkedin'
+export type ContentType = 'video' | 'short' | 'reel' | 'post' | 'carousel' | 'story'
+export type ContentStatus = 'draft' | 'scheduled' | 'publishing' | 'published' | 'failed'
+
+export interface ContentItem {
+  id: string
+  workspace_id: string
+  owner_id: string
+  title: string
+  caption?: string
+  platform: ContentPlatform
+  content_type: ContentType
+  status: ContentStatus
+  media_urls: string[]
+  thumbnail_url?: string
+  scheduled_at?: string
+  published_at?: string
+  external_post_id?: string
+  external_post_url?: string
+  metrics?: {
+    views?: number
+    likes?: number
+    comments?: number
+    shares?: number
+    watch_time_hours?: number
+  }
+  created_at: string
+  updated_at: string
+}
+
+export interface OAuthClient {
+  id: string
+  client_id: string
+  client_secret: string
+  name: string
+  redirect_uris: string[]
+  created_at: string
+}
+
+export interface OAuthToken {
+  id: string
+  client_id: string
+  user_id: string
+  access_token: string
+  refresh_token?: string
+  scope: string
+  expires_at: string
+  created_at: string
+}
+
+

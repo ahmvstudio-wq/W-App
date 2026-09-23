@@ -10,22 +10,51 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { title, description, priority = 'p1', projectId } = await req.json()
+    const body = await req.json()
+    const { title, description, priority = 'p1', projectId, workspaceId } = body
 
     if (!title) {
       return NextResponse.json({ success: false, error: 'Title is required' }, { status: 400 })
     }
 
     const supabase = getApiClient()
-    const { data: workspaces } = await supabase.from('workspaces').select('id, owner_id').limit(1).single()
+    
+    // Resolve user from token if available
+    let userId: string | null = req.headers.get('x-user-id')
+    const authHeader = req.headers.get('authorization')
+    if (!userId && authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7)
+      try {
+        const { data: { user } } = await supabase.auth.getUser(token)
+        if (user?.id) userId = user.id
+      } catch {}
+    }
 
-    if (!workspaces) {
+    // Resolve workspace
+    const targetWorkspaceId = workspaceId || req.headers.get('x-workspace-id')
+    let wsData: any = null
+    if (targetWorkspaceId) {
+      const { data: ws } = await supabase.from('workspaces').select('id, owner_id').eq('id', targetWorkspaceId).single()
+      wsData = ws
+    }
+    if (!wsData && userId) {
+      const { data: ws } = await supabase.from('workspaces').select('id, owner_id').eq('owner_id', userId).limit(1).single()
+      wsData = ws
+    }
+    if (!wsData) {
+      const { data: ws } = await supabase.from('workspaces').select('id, owner_id').limit(1).single()
+      wsData = ws
+    }
+
+    if (!wsData) {
       return NextResponse.json({ success: false, error: 'No active workspace found' }, { status: 404 })
     }
 
+    const taskOwnerId = userId || wsData.owner_id
+
     const { data: task, error } = await supabase.from('tasks').insert({
-      workspace_id: workspaces.id,
-      owner_id: workspaces.owner_id,
+      workspace_id: wsData.id,
+      owner_id: taskOwnerId,
       project_id: projectId || null,
       title,
       description: description || 'Extracted from Fathom AI meeting notes',

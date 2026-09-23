@@ -4,7 +4,7 @@ import type { Task } from '@/types'
 /**
  * Export tasks array as a UTF-8 CSV file and trigger browser download
  */
-export function exportTasksToCSV(tasks: Task[], filenamePrefix = 'callmy-tasks') {
+export function exportTasksToCSV(tasks: Task[], filenamePrefix = 'cultlike-tasks') {
   const headers = [
     'Task ID',
     'Title',

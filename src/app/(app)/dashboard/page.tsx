@@ -252,10 +252,8 @@ export default function DashboardPage() {
       {/* Top Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
-            <span>CALLMY</span>
-            <span>•</span>
-            <span className="text-black font-normal">DASHBOARD</span>
+          <div className="text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1 font-light">
+            DASHBOARD
           </div>
           <h1 className="text-3xl font-light tracking-tight text-black">
             Your Daily Dashboard

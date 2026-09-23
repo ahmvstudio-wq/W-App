@@ -12,15 +12,15 @@ export async function GET(req: NextRequest) {
   const openApiSpec = {
     openapi: '3.1.0',
     info: {
-      title: 'CallMy Mgmt AI Chief of Staff API',
+      title: 'Cultlike OS Executive Operating System API (ChatGPT & Claude Connectors)',
       description:
-        'Official API for ChatGPT Custom GPT Actions to read and manage tasks, projects, documents, blockers, and daily logs in CallMy Mgmt.',
+        'Official API and Tool Manifest for ChatGPT Custom GPTs and Claude Connectors to orchestrate projects, sprint tasks, content vault assets, and multi-platform distribution in Cultlike OS.',
       version: '1.0.0',
     },
     servers: [
       {
         url: baseUrl,
-        description: 'Focus OS Application Server',
+        description: 'Cultlike OS Production Server',
       },
     ],
     paths: {
@@ -639,6 +639,102 @@ export async function GET(req: NextRequest) {
           },
         },
       },
+      '/api/chatgpt/content': {
+        get: {
+          operationId: 'getContentVault',
+          summary: 'List staged and scheduled content in the vault',
+          description: 'Fetches content deliverables filtered by platform (youtube, instagram) or status (draft, scheduled, published).',
+          parameters: [
+            {
+              name: 'platform',
+              in: 'query',
+              required: false,
+              schema: { type: 'string', enum: ['all', 'youtube', 'instagram'] },
+              description: 'Filter by distribution platform.'
+            },
+            {
+              name: 'status',
+              in: 'query',
+              required: false,
+              schema: { type: 'string', enum: ['all', 'draft', 'scheduled', 'published'] },
+              description: 'Filter by publishing status.'
+            },
+            {
+              name: 'limit',
+              in: 'query',
+              required: false,
+              schema: { type: 'integer', default: 30 },
+              description: 'Number of items to retrieve.'
+            }
+          ],
+          responses: {
+            '200': { description: 'Content items retrieved successfully.' }
+          }
+        },
+        post: {
+          operationId: 'createContentItem',
+          summary: 'Stage new content item into vault',
+          description: 'Creates a new deliverable (video, short, reel, carousel) ready for scheduling or immediate publishing.',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['title'],
+                  properties: {
+                    title: { type: 'string', description: 'Title of the video or post.' },
+                    caption: { type: 'string', description: 'Caption, description, or script notes.' },
+                    platform: { type: 'string', enum: ['youtube', 'instagram'], default: 'youtube' },
+                    content_type: { type: 'string', enum: ['video', 'short', 'reel', 'post', 'carousel'], default: 'video' },
+                    status: { type: 'string', enum: ['draft', 'scheduled'], default: 'draft' },
+                    scheduled_at: { type: 'string', format: 'date-time', description: 'Optional ISO timestamp for scheduling.' },
+                    media_urls: { type: 'array', items: { type: 'string' }, description: 'Array of media asset URLs.' }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            '200': { description: 'Content item created successfully.' }
+          }
+        }
+      },
+      '/api/chatgpt/content/schedule': {
+        post: {
+          operationId: 'scheduleContent',
+          summary: 'Schedule a content item for automated dispatch',
+          description: 'Sets the publication date and switches status to scheduled.',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['id', 'scheduled_at'],
+                  properties: {
+                    id: { type: 'string', description: 'UUID of the content item.' },
+                    scheduled_at: { type: 'string', format: 'date-time', description: 'Target release datetime.' }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            '200': { description: 'Content scheduled successfully.' }
+          }
+        }
+      },
+      '/api/chatgpt/content/analytics': {
+        get: {
+          operationId: 'getContentAnalytics',
+          summary: 'Get aggregated content reach and analytics',
+          description: 'Returns total reach, views, likes, comments, and breakdown by platform and status.',
+          responses: {
+            '200': { description: 'Analytics fetched successfully.' }
+          }
+        }
+      }
     },
     components: {
       schemas: {},
@@ -646,13 +742,27 @@ export async function GET(req: NextRequest) {
         BearerAuth: {
           type: 'http',
           scheme: 'bearer',
+          description: 'Provide your API Key or OAuth 2.0 access token.'
         },
+        OAuth2Auth: {
+          type: 'oauth2',
+          description: 'Cultlike OS native OAuth 2.0 authorization code flow for 1-click connectors.',
+          flows: {
+            authorizationCode: {
+              authorizationUrl: `${baseUrl}/api/oauth/authorize`,
+              tokenUrl: `${baseUrl}/api/oauth/token`,
+              scopes: {
+                read: 'Read workspace tasks, projects, and content deliverables',
+                write: 'Create and modify deliverables, tasks, and schedules'
+              }
+            }
+          }
+        }
       },
     },
     security: [
-      {
-        BearerAuth: [],
-      },
+      { BearerAuth: [] },
+      { OAuth2Auth: ['read', 'write'] }
     ],
   }
 
