@@ -18,11 +18,9 @@ export default function LoadingRadar({
 }: LoadingRadarProps) {
   return (
     <AppleLoadingScreen
-      label={label}
-      sublabel={sublabel}
+      label={label || sublabel}
       fullScreen={fullScreen}
       compact={compact}
     />
   )
 }
-

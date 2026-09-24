@@ -180,13 +180,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isCreatorActive = pathname === '/content' || pathname?.startsWith('/content') || pathname === '/create' || pathname?.startsWith('/create')
 
   if (!mounted || loading) {
-    return (
-      <AppleLoadingScreen 
-        label="Initializing Cultlike OS" 
-        sublabel="Zero Latency Workspace // Vision Core" 
-        fullScreen 
-      />
-    )
+    return <AppleLoadingScreen fullScreen />
   }
 
   return (
