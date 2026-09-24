@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { 
   Plus, Search, Filter, FolderKanban, Activity, Target, X, Zap, 
-  Trash2, ChevronRight, Clock, TrendingUp, Layers, CheckCircle2, 
+  Trash2, ChevronRight, ChevronDown, Clock, TrendingUp, Layers, CheckCircle2, 
   Building2, Briefcase, Sparkles, ArrowUpRight, Palette, Edit3,
   Play, ListTodo
 } from 'lucide-react'
@@ -47,6 +47,22 @@ export default function ProjectsPage() {
   // Selected Master Project for the Command Hub Banner & Filter
   const [activeMasterProjectName, setActiveMasterProjectName] = useState<string>('')
   const [selectedMasterFilter, setSelectedMasterFilter] = useState<string>('all')
+  const [isCommandHubExpanded, setIsCommandHubExpanded] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('cultlike_command_hub_expanded') === 'true'
+    }
+    return false
+  })
+
+  const toggleCommandHub = () => {
+    setIsCommandHubExpanded(prev => {
+      const next = !prev
+      try {
+        localStorage.setItem('cultlike_command_hub_expanded', String(next))
+      } catch {}
+      return next
+    })
+  }
 
   // Load custom master projects from localStorage
   useEffect(() => {
@@ -608,45 +624,65 @@ export default function ProjectsPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* ACTIVE MASTER PROGRAM COMMAND BANNER (CRYSTAL CLEAR HIGH-CONTRAST)         */}
+      {/* ACTIVE MASTER PROGRAM COMMAND BANNER (COLLAPSIBLE & EXPANDABLE ON CHOICE) */}
       {/* ========================================================================= */}
-      <div className="p-8 rounded-3xl bg-white text-black shadow-md relative overflow-hidden font-body border-2 border-black/[0.08] animate-fadeIn">
+      <div className={cn(
+        "rounded-3xl bg-white text-black shadow-md relative overflow-hidden font-body border-2 border-black/[0.08] transition-all duration-300 animate-fadeIn",
+        isCommandHubExpanded ? "p-6 sm:p-8" : "p-5 sm:p-6"
+      )}>
         {/* Subtle Ambient Background Accents */}
         <div className="absolute right-0 top-0 w-80 h-80 bg-emerald-50/60 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute left-1/3 bottom-0 w-80 h-80 bg-indigo-50/50 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 space-y-6">
           {/* Top Row: Master Program Meta & Actions */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-black/[0.08]">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-lg bg-emerald-100/90 text-emerald-950 font-mono text-[10px] uppercase tracking-wider font-semibold border border-emerald-300 flex items-center gap-1.5 shadow-xs">
+          <div className={cn(
+            "flex flex-col lg:flex-row lg:items-center justify-between gap-4",
+            isCommandHubExpanded && "pb-6 border-b border-black/[0.08]"
+          )}>
+            <div className="space-y-1.5 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-lg bg-emerald-100/90 text-emerald-950 font-mono text-[10px] uppercase tracking-wider font-semibold border border-emerald-300 flex items-center gap-1.5 shadow-xs">
                   <Building2 size={12} className="text-emerald-700" />
                   ACTIVE MASTER PROGRAM
                 </span>
                 <span className="text-black/30 text-xs font-mono">•</span>
                 <span className="text-emerald-700 text-xs font-mono font-semibold">Executive Command Hub</span>
-              </div>
-              <h2 className="text-2xl font-normal tracking-tight text-black flex items-center gap-3">
-                <span>{activeMasterObj.name}</span>
-                {activeMasterObj.subtitle && (
-                  <span className="text-xs font-mono text-[#4b5563] font-normal">
-                    ({activeMasterObj.subtitle})
+
+                {/* Collapsed Pill Badge with Quick Stats */}
+                {!isCommandHubExpanded && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-neutral-100 border border-black/[0.06] text-neutral-700 font-medium">
+                    {activeMasterProjects.length} Initiatives • {activeMasterProgress}% Shipped
                   </span>
                 )}
-              </h2>
-              <p className="text-xs text-[#4b5563] font-normal max-w-2xl leading-relaxed">
+              </div>
+
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl sm:text-2xl font-normal tracking-tight text-black flex items-center gap-2 truncate">
+                  <span>{activeMasterObj.name}</span>
+                  {activeMasterObj.subtitle && (
+                    <span className="text-xs font-mono text-[#4b5563] font-normal truncate">
+                      ({activeMasterObj.subtitle})
+                    </span>
+                  )}
+                </h2>
+              </div>
+
+              <p className={cn(
+                "text-xs text-[#4b5563] font-normal max-w-2xl leading-relaxed",
+                !isCommandHubExpanded && "line-clamp-1"
+              )}>
                 {activeMasterObj.description}
               </p>
             </div>
 
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
               <button
                 onClick={() => {
                   setSelectedMasterFilter(activeMasterObj.name)
                 }}
                 className={cn(
-                  'px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border shadow-xs',
+                  'px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border shadow-xs',
                   selectedMasterFilter === activeMasterObj.name
                     ? 'bg-black text-white border-black'
                     : 'bg-white hover:bg-neutral-100 text-black border-black/[0.15]'
@@ -660,86 +696,115 @@ export default function ProjectsPage() {
                   setCreateInitialMasterProject(activeMasterObj.name)
                   setIsCreateModalOpen(true)
                 }}
-                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium transition-all cursor-pointer shadow-sm"
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium transition-all cursor-pointer shadow-sm"
               >
                 <Plus size={14} />
                 <span>Add Initiative to {activeMasterObj.name}</span>
               </button>
+
+              {/* Expand / Collapse Toggle Button */}
+              <button
+                type="button"
+                onClick={toggleCommandHub}
+                className={cn(
+                  "flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer border shadow-xs select-none",
+                  isCommandHubExpanded
+                    ? "bg-neutral-900 text-white border-neutral-900 hover:bg-black"
+                    : "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-black/[0.08]"
+                )}
+                title={isCommandHubExpanded ? "Collapse sub-initiatives breakdown" : "Expand sub-initiatives breakdown"}
+              >
+                <ChevronDown
+                  size={14}
+                  className={cn("transition-transform duration-200", isCommandHubExpanded && "rotate-180")}
+                />
+                <span>{isCommandHubExpanded ? 'Collapse Hub' : `Expand Hub (${activeMasterProjects.length})`}</span>
+              </button>
             </div>
           </div>
 
-          {/* Middle Row: Sub-Initiatives Grid inside this Master Project */}
-          <div className="space-y-2.5">
-            <span className="text-[10px] font-mono text-[#4b5563] uppercase tracking-wider block font-semibold">
-              SUB-INITIATIVES UNDER {activeMasterObj.name.toUpperCase()} ({activeMasterProjects.length})
-            </span>
+          {/* Collapsible Content: Sub-Initiatives Grid & Program Metrics */}
+          {isCommandHubExpanded && (
+            <div className="space-y-6 animate-fadeIn">
+              {/* Middle Row: Sub-Initiatives Grid inside this Master Project */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-[#4b5563] uppercase tracking-wider block font-semibold">
+                    SUB-INITIATIVES UNDER {activeMasterObj.name.toUpperCase()} ({activeMasterProjects.length})
+                  </span>
+                  <span className="text-[11px] font-mono text-[#6b7280]">
+                    Direct whiteboard & tasks overview
+                  </span>
+                </div>
 
-            {activeMasterProjects.length === 0 ? (
-              <div className="py-8 text-center rounded-2xl bg-neutral-50 border border-dashed border-black/[0.12] text-[#6b7280] text-xs font-light">
-                No initiatives assigned to {activeMasterObj.name} yet. Click &quot;Add Initiative to {activeMasterObj.name}&quot; above.
+                {activeMasterProjects.length === 0 ? (
+                  <div className="py-8 text-center rounded-2xl bg-neutral-50 border border-dashed border-black/[0.12] text-[#6b7280] text-xs font-light">
+                    No initiatives assigned to {activeMasterObj.name} yet. Click &quot;Add Initiative to {activeMasterObj.name}&quot; above.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {activeMasterProjects.map((p) => {
+                      const pTasks = p.tasks || []
+                      const pShipped = pTasks.filter((t: any) => t.status === 'shipped').length
+                      const pProg = pTasks.length > 0 ? Math.round((pShipped / pTasks.length) * 100) : 0
+
+                      return (
+                        <Link
+                          key={p.id}
+                          href={`/projects/${p.id}`}
+                          className="p-4 rounded-2xl bg-[#f8f9fa] hover:bg-white border border-black/[0.08] hover:border-black/[0.22] hover:shadow-md transition-all block group space-y-2"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-semibold text-black truncate group-hover:text-emerald-700 transition-colors">
+                              {p.name}
+                            </span>
+                            <ArrowUpRight size={13} className="text-[#6b7280] group-hover:text-black transition-colors flex-shrink-0" />
+                          </div>
+
+                          <p className="text-[11px] text-[#4b5563] line-clamp-1 font-light">
+                            {p.description || 'No description'}
+                          </p>
+
+                          <div className="space-y-1 pt-1">
+                            <div className="flex justify-between text-[10px] font-mono text-[#4b5563]">
+                              <span className="font-medium">{pShipped}/{pTasks.length} shipped</span>
+                              <span className="font-semibold text-black">{pProg}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-black/[0.08] rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-emerald-600 rounded-full transition-all duration-300"
+                                style={{ width: `${pProg}%` }}
+                              />
+                            </div>
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {activeMasterProjects.map((p) => {
-                  const pTasks = p.tasks || []
-                  const pShipped = pTasks.filter((t: any) => t.status === 'shipped').length
-                  const pProg = pTasks.length > 0 ? Math.round((pShipped / pTasks.length) * 100) : 0
 
-                  return (
-                    <Link
-                      key={p.id}
-                      href={`/projects/${p.id}`}
-                      className="p-4 rounded-2xl bg-[#f8f9fa] hover:bg-white border border-black/[0.08] hover:border-black/[0.22] hover:shadow-md transition-all block group space-y-2"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold text-black truncate group-hover:text-emerald-700 transition-colors">
-                          {p.name}
-                        </span>
-                        <ArrowUpRight size={13} className="text-[#6b7280] group-hover:text-black transition-colors flex-shrink-0" />
-                      </div>
-
-                      <p className="text-[11px] text-[#4b5563] line-clamp-1 font-light">
-                        {p.description || 'No description'}
-                      </p>
-
-                      <div className="space-y-1 pt-1">
-                        <div className="flex justify-between text-[10px] font-mono text-[#4b5563]">
-                          <span className="font-medium">{pShipped}/{pTasks.length} shipped</span>
-                          <span className="font-semibold text-black">{pProg}%</span>
-                        </div>
-                        <div className="w-full h-1.5 bg-black/[0.08] rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-emerald-600 rounded-full transition-all duration-300"
-                            style={{ width: `${pProg}%` }}
-                          />
-                        </div>
-                      </div>
-                    </Link>
-                  )
-                })}
+              {/* Bottom Row: Program Metrics */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-black/[0.08] text-xs font-mono">
+                <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
+                  <span className="text-[10px] text-[#6b7280] block uppercase font-medium">TOTAL INITIATIVES</span>
+                  <span className="text-lg font-normal text-black">{activeMasterProjects.length} Active</span>
+                </div>
+                <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
+                  <span className="text-[10px] text-[#6b7280] block uppercase font-medium">OVERALL COMPLETION</span>
+                  <span className="text-lg font-semibold text-emerald-700">{activeMasterProgress}% Shipped</span>
+                </div>
+                <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
+                  <span className="text-[10px] text-[#6b7280] block uppercase font-medium">DELIVERABLES</span>
+                  <span className="text-lg font-normal text-black">{activeMasterShipped} / {activeMasterTasks.length} Done</span>
+                </div>
+                <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
+                  <span className="text-[10px] text-[#6b7280] block uppercase font-medium">PROGRAM STATUS</span>
+                  <span className="text-lg font-normal text-indigo-700">High Velocity</span>
+                </div>
               </div>
-            )}
-          </div>
-
-          {/* Bottom Row: Program Metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3 border-t border-black/[0.08] text-xs font-mono">
-            <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
-              <span className="text-[10px] text-[#6b7280] block uppercase font-medium">TOTAL INITIATIVES</span>
-              <span className="text-lg font-normal text-black">{activeMasterProjects.length} Active</span>
             </div>
-            <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
-              <span className="text-[10px] text-[#6b7280] block uppercase font-medium">OVERALL COMPLETION</span>
-              <span className="text-lg font-semibold text-emerald-700">{activeMasterProgress}% Shipped</span>
-            </div>
-            <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
-              <span className="text-[10px] text-[#6b7280] block uppercase font-medium">DELIVERABLES</span>
-              <span className="text-lg font-normal text-black">{activeMasterShipped} / {activeMasterTasks.length} Done</span>
-            </div>
-            <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
-              <span className="text-[10px] text-[#6b7280] block uppercase font-medium">PROGRAM STATUS</span>
-              <span className="text-lg font-normal text-indigo-700">High Velocity</span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
