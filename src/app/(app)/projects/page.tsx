@@ -17,6 +17,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import NaturalLanguageInputModal from '@/components/NaturalLanguageInputModal'
+import { CardSkeleton } from '@/components/ui/SkeletonPulse'
+import { getCached, setCached } from '@/lib/cache/swrCache'
+import { triggerSyncStart, triggerSyncDone } from '@/components/NavigationProgressBar'
 
 export interface MasterProjectInfo {
   id: string
@@ -37,10 +40,15 @@ export default function ProjectsPage() {
   const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
   const [createInitialMasterProject, setCreateInitialMasterProject] = useState<string>('')
   
-  // Data States
-  const [projects, setProjects] = useState<Project[]>([])
+  // Data States with Instant 0ms SWR Hydration
+  const [projects, setProjects] = useState<Project[]>(() => {
+    return getCached<Project[]>('projects_list') || []
+  })
   const [masterProjects, setMasterProjects] = useState<MasterProjectInfo[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState<boolean>(() => {
+    const cached = getCached<Project[]>('projects_list')
+    return !cached || cached.length === 0
+  })
   const [searchQuery, setSearchQuery] = useState('')
   
   // Selected Master Project for the Command Hub Banner & Filter
@@ -99,17 +107,27 @@ export default function ProjectsPage() {
 
   async function handleDeleteProject(id: string) {
     if (!confirm('Are you sure you want to delete this project? This will also delete all associated tasks, assets, and calendar events.')) return
+    
+    // Optimistic 0ms UI update
+    setProjects(prev => {
+      const next = prev.filter(p => p.id !== id)
+      setCached('projects_list', next)
+      return next
+    })
+
+    triggerSyncStart()
     const { error } = await supabase.from('projects').delete().eq('id', id)
+    triggerSyncDone()
     if (error) {
       toast.error(`Failed to delete project: ${error.message}`)
+      fetchProjects(true)
     } else {
       toast.success('Project deleted')
-      fetchProjects()
     }
   }
 
   async function fetchProjects(silent = false) {
-    if (!silent) setLoading(true)
+    if (!silent && (!projects || projects.length === 0)) setLoading(true)
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       setProjects([])
@@ -167,6 +185,7 @@ export default function ProjectsPage() {
         master_project: projectMasterMap[p.id] || p.master_project || fallbackMaster
       }))
       setProjects(enriched)
+      setCached('projects_list', enriched)
 
       // Auto-register any new master_project names found
       const foundNames = Array.from(new Set(enriched.map(p => p.master_project).filter((n): n is string => Boolean(n))))
@@ -855,11 +874,9 @@ export default function ProjectsPage() {
         </div>
       </div>
 
-      {/* Projects Grid */}
+      {/* Projects Grid with Motion Shimmer Skeleton */}
       {loading ? (
-        <div className="py-20 text-center text-xs text-[#9ca3af] font-body font-light">
-          Loading projects portfolio...
-        </div>
+        <CardSkeleton count={6} />
       ) : filteredProjects.length === 0 ? (
         <div className="py-20 text-center rounded-3xl bg-white border border-dashed border-black/[0.1] text-[#6b7280] text-xs font-body font-light">
           No initiatives found under this filter. Click &quot;New Initiative&quot; to initialize a project.

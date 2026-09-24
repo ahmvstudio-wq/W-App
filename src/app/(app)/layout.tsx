@@ -18,6 +18,9 @@ import CreateTaskModal from '@/components/CreateTaskModal'
 import NaturalLanguageInputModal from '@/components/NaturalLanguageInputModal'
 import GameTutorialModal from '@/components/GameTutorialModal'
 import { WorkspaceProvider } from '@/context/WorkspaceContext'
+import NavigationProgressBar from '@/components/NavigationProgressBar'
+import LoadingRadar from '@/components/ui/LoadingRadar'
+import { getCached, setCached } from '@/lib/cache/swrCache'
 
 const NAV: { href: string; label: string; icon?: LucideIcon }[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -30,8 +33,13 @@ const NAV: { href: string; label: string; icon?: LucideIcon }[] = [
 ]
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  // Synchronous 0ms user hydration from cache
+  const [user, setUser] = useState<User | null>(() => {
+    return getCached<User>('auth_user') || null
+  })
+  const [loading, setLoading] = useState<boolean>(() => {
+    return !getCached<User>('auth_user')
+  })
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
@@ -49,14 +57,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       if (!mounted) return
 
       if (!session) {
+        setUser(null)
+        setCached('auth_user', null)
         router.replace('/')
       } else {
-        setUser({
+        const userData: User = {
           id: session.user.id,
           email: session.user.email || '',
           name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
           created_at: session.user.created_at,
-        })
+        }
+        setUser(userData)
+        setCached('auth_user', userData)
         setLoading(false)
       }
     }
@@ -68,14 +80,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       if (event === 'SIGNED_OUT' || !session) {
         setUser(null)
+        setCached('auth_user', null)
         router.replace('/')
       } else if (session) {
-        setUser({
+        const userData: User = {
           id: session.user.id,
           email: session.user.email || '',
           name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
           created_at: session.user.created_at,
-        })
+        }
+        setUser(userData)
+        setCached('auth_user', userData)
         setLoading(false)
       }
     })
@@ -87,6 +102,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [router])
 
   async function handleLogout() {
+    setCached('auth_user', null)
     await supabase.auth.signOut()
     router.push('/')
   }
@@ -122,17 +138,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fbfbfd] flex items-center justify-center font-sans">
-        <div className="text-center space-y-2 flex flex-col items-center">
-          <img src="/logo.png" alt="Cultlike OS" className="h-12 w-auto object-contain" />
-          <div className="text-[#8a8d95] text-[11px] font-mono tracking-wider uppercase font-light">Loading workspace...</div>
-        </div>
-      </div>
+      <LoadingRadar 
+        label="Initializing Cultlike OS" 
+        sublabel="Zero Latency Workspace" 
+        fullScreen 
+      />
     )
   }
 
   return (
     <WorkspaceProvider>
+      <NavigationProgressBar />
       <div className="min-h-screen bg-[#fbfbfd] text-[#111827] font-sans selection:bg-black/10 flex flex-col relative">
         <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
         {isCreateTaskOpen && (
@@ -157,6 +173,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <Link
                 key={href}
                 href={href}
+                onMouseEnter={() => router.prefetch(href)}
                 className={cn(
                   'flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs transition-all duration-150 relative font-light',
                   active

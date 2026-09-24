@@ -13,10 +13,16 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { getCached, setCached } from '@/lib/cache/swrCache'
+import { CardSkeleton } from '@/components/ui/SkeletonPulse'
+import { triggerSyncStart, triggerSyncDone } from '@/components/NavigationProgressBar'
 
 export default function ContentVaultPage() {
-  const [items, setItems] = useState<ContentItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [items, setItems] = useState<ContentItem[]>(() => getCached<ContentItem[]>('content_items') || [])
+  const [loading, setLoading] = useState<boolean>(() => {
+    const cached = getCached<ContentItem[]>('content_items')
+    return !cached || cached.length === 0
+  })
   const [platformFilter, setPlatformFilter] = useState<'all' | ContentPlatform>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | ContentStatus>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -37,8 +43,8 @@ export default function ContentVaultPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Fetch Items
-  async function fetchItems() {
-    setLoading(true)
+  async function fetchItems(silent = false) {
+    if (!silent && (!items || items.length === 0)) setLoading(true)
     try {
       let wsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
       
@@ -51,6 +57,7 @@ export default function ContentVaultPage() {
       const data = await res.json()
       if (data.success && data.items) {
         setItems(data.items)
+        setCached('content_items', data.items)
       }
     } catch (err) {
       console.error('Error fetching content items:', err)
@@ -362,12 +369,9 @@ export default function ContentVaultPage() {
         </div>
       </div>
 
-      {/* Content Grid */}
+      {/* Content Grid with Motion Shimmer Skeleton */}
       {loading ? (
-        <div className="py-24 text-center text-[#9ca3af] flex flex-col items-center gap-2">
-          <Loader2 size={24} className="animate-spin text-black" />
-          <span className="text-xs font-light">Loading content vault...</span>
-        </div>
+        <CardSkeleton count={6} />
       ) : filteredItems.length === 0 ? (
         <div className="py-24 text-center bg-white border border-black/[0.06] rounded-3xl p-12">
           <Film size={36} className="mx-auto text-[#9ca3af] mb-3 opacity-60" />

@@ -20,14 +20,21 @@ import TaskDetailDrawer from '@/components/TaskDetailDrawer'
 import NaturalLanguageInputModal from '@/components/NaturalLanguageInputModal'
 import ExportProgressModal from '@/components/ExportProgressModal'
 import { exportTasksToCSV } from '@/lib/exportUtils'
+import { getCached, setCached } from '@/lib/cache/swrCache'
+import { TaskRowSkeleton } from '@/components/ui/SkeletonPulse'
+import { triggerSyncStart, triggerSyncDone } from '@/components/NavigationProgressBar'
 
 export default function TasksPage() {
   const [view, setView] = useState<'board' | 'list'>('board')
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
   const [isExportModalOpen, setIsExportModalOpen] = useState(false)
-  const [tasks, setTasks] = useState<Task[]>([]) 
-  const [loading, setLoading] = useState(true)
+  // Instant 0ms SWR hydration
+  const [tasks, setTasks] = useState<Task[]>(() => getCached<Task[]>('tasks_list') || []) 
+  const [loading, setLoading] = useState<boolean>(() => {
+    const cached = getCached<Task[]>('tasks_list')
+    return !cached || cached.length === 0
+  })
   const [searchQuery, setSearchQuery] = useState('')
   const [priorityFilter, setPriorityFilter] = useState<string>('all')
   const [selectedDate, setSelectedDate] = useState<string>('')
@@ -37,7 +44,7 @@ export default function TasksPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
   async function fetchTasks(silent = false) {
-    if (!silent) setLoading(true)
+    if (!silent && (!tasks || tasks.length === 0)) setLoading(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
@@ -79,9 +86,11 @@ export default function TasksPage() {
       if (error) {
         if (!silent) toast.error(`Fetch failed: ${error.message}`)
       } else {
-        setTasks(data || [])
+        const nextTasks = data || []
+        setTasks(nextTasks)
+        setCached('tasks_list', nextTasks)
         if (selectedTask) {
-          const updated = data?.find(t => t.id === selectedTask.id)
+          const updated = nextTasks.find(t => t.id === selectedTask.id)
           if (updated) setSelectedTask(updated)
         }
       }
@@ -160,16 +169,21 @@ export default function TasksPage() {
       updates.completed_at = null
     }
 
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updates } : t))
+    setTasks(prev => {
+      const next = prev.map(t => t.id === taskId ? { ...t, ...updates } : t)
+      setCached('tasks_list', next)
+      return next
+    })
 
+    triggerSyncStart()
     const { error } = await supabase.from('tasks').update(updates).eq('id', taskId)
+    triggerSyncDone()
     if (error) {
       toast.error(`Update failed: ${error.message}`)
       fetchTasks(true)
       return
     }
     toast.success(newStatus === 'shipped' ? 'Task shipped! Work duration recorded.' : `Task moved to ${newStatus}`)
-    fetchTasks(true)
   }
 
   function handleDragStart(e: React.DragEvent, taskId: string) {

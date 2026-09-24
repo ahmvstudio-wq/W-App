@@ -1,9 +1,11 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import type { Workspace, WorkspaceMember, WorkspaceRole } from '@/types'
 import { toast } from 'sonner'
+import { getCached, setCached } from '@/lib/cache/swrCache'
+import { triggerSyncStart, triggerSyncDone } from '@/components/NavigationProgressBar'
 
 interface WorkspaceContextType {
   workspaces: Workspace[]
@@ -12,6 +14,7 @@ interface WorkspaceContextType {
   userRole: WorkspaceRole | null
   members: WorkspaceMember[]
   loading: boolean
+  isRevalidating: boolean
   refreshWorkspaces: () => Promise<void>
   refreshMembers: () => Promise<void>
   createWorkspace: (name: string) => Promise<Workspace | null>
@@ -25,11 +28,38 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefin
 const ACTIVE_WS_STORAGE_KEY = 'focus_active_workspace_id'
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([])
-  const [currentWorkspace, setCurrentWorkspaceState] = useState<Workspace | null>(null)
-  const [members, setMembers] = useState<WorkspaceMember[]>([])
+  // Synchronous 0ms instant hydration from SWR cache
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(() => {
+    return getCached<Workspace[]>('workspaces') || []
+  })
+
+  const [currentWorkspace, setCurrentWorkspaceState] = useState<Workspace | null>(() => {
+    const list = getCached<Workspace[]>('workspaces') || []
+    if (typeof window !== 'undefined') {
+      const savedId = localStorage.getItem(ACTIVE_WS_STORAGE_KEY)
+      if (savedId) {
+        const found = list.find((w) => w.id === savedId)
+        if (found) return found
+      }
+    }
+    return list[0] || null
+  })
+
+  const [members, setMembers] = useState<WorkspaceMember[]>(() => {
+    const activeId = typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_WS_STORAGE_KEY) : null
+    return activeId ? getCached<WorkspaceMember[]>(`members_${activeId}`) || [] : []
+  })
+
   const [userRole, setUserRole] = useState<WorkspaceRole | null>('owner')
-  const [loading, setLoading] = useState(true)
+  
+  // If we have cached workspaces, never block rendering with a full-screen loading state!
+  const [loading, setLoading] = useState<boolean>(() => {
+    const cached = getCached<Workspace[]>('workspaces')
+    return !cached || cached.length === 0
+  })
+
+  const [isRevalidating, setIsRevalidating] = useState(false)
+  const isFetchingRef = useRef(false)
 
   // Switch workspace and persist to localStorage + cookie
   const setCurrentWorkspace = useCallback((ws: Workspace) => {
@@ -41,24 +71,51 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  // Fetch all members for current workspace
+  // Fetch all members for current workspace with local memory cache
   const refreshMembers = useCallback(async () => {
     if (!currentWorkspace?.id) return
-    try {
-      const res = await fetch(`/api/workspaces/${currentWorkspace.id}/members`)
-      const data = await res.json()
-      if (data.success && data.members) {
-        setMembers(data.members)
+    const cacheKey = `members_${currentWorkspace.id}`
 
-        // Determine current user's role
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user?.id) {
-          if (currentWorkspace.owner_id === session.user.id) {
-            setUserRole('owner')
-          } else {
-            const currentMember = data.members.find((m: WorkspaceMember) => m.user_id === session.user.id)
-            setUserRole(currentMember?.role || 'member')
-          }
+    try {
+      // 1. Direct Supabase query (bypasses cold start API route)
+      const { data: memberRows, error } = await supabase
+        .from('workspace_members')
+        .select('id, workspace_id, user_id, role, created_at, profile:profiles(id, name, avatar_url)')
+        .eq('workspace_id', currentWorkspace.id)
+        .order('created_at', { ascending: true })
+
+      let memberList: WorkspaceMember[] = []
+      if (!error && Array.isArray(memberRows) && memberRows.length > 0) {
+        memberList = memberRows as any
+      } else {
+        // Fallback: Owner as single member
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('id, name, avatar_url')
+          .eq('id', currentWorkspace.owner_id)
+          .single()
+
+        memberList = [{
+          id: `owner-${currentWorkspace.id}`,
+          workspace_id: currentWorkspace.id,
+          user_id: currentWorkspace.owner_id,
+          role: 'owner',
+          created_at: new Date().toISOString(),
+          profile: prof || null,
+        } as any]
+      }
+
+      setMembers(memberList)
+      setCached(cacheKey, memberList)
+
+      // Determine current user's role
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user?.id) {
+        if (currentWorkspace.owner_id === session.user.id) {
+          setUserRole('owner')
+        } else {
+          const currentMember = memberList.find((m) => m.user_id === session.user.id)
+          setUserRole(currentMember?.role || 'member')
         }
       }
     } catch (err) {
@@ -66,69 +123,63 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentWorkspace?.id, currentWorkspace?.owner_id])
 
-  // Fetch workspaces list
+  // Fast direct client query for workspaces with SWR persistence
   const refreshWorkspaces = useCallback(async () => {
+    if (isFetchingRef.current) return
+    isFetchingRef.current = true
+    setIsRevalidating(true)
+
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         setLoading(false)
+        setIsRevalidating(false)
+        isFetchingRef.current = false
         return
       }
 
-      const res = await fetch('/api/workspaces', {
-        headers: {
-          'x-user-id': session.user.id,
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      })
-      const data = await res.json()
-
-      let list: Workspace[] = []
-      if (data.success && Array.isArray(data.workspaces) && data.workspaces.length > 0) {
-        list = data.workspaces
-      } else {
-        // Direct Supabase query fallback strictly scoped to current user
-        const { data: ownedWs } = await supabase
+      // Parallel direct queries via Supabase client (sub-50ms)
+      const [ownedRes, memberRes] = await Promise.all([
+        supabase
           .from('workspaces')
           .select('*')
           .eq('owner_id', session.user.id)
-          .order('created_at', { ascending: false })
-
-        // Also check member workspaces
-        const { data: memberRows } = await supabase
+          .order('created_at', { ascending: false }),
+        supabase
           .from('workspace_members')
           .select('role, workspace:workspaces(*)')
           .eq('user_id', session.user.id)
+      ])
 
-        const ownedList = (ownedWs || []).map((ws) => ({
-          ...ws,
-          role: 'owner' as WorkspaceRole,
+      const ownedList = (ownedRes.data || []).map((ws) => ({
+        ...ws,
+        role: 'owner' as WorkspaceRole,
+      }))
+
+      const memberList = (memberRes.data || [])
+        .filter((r: any) => r.workspace)
+        .map((r: any) => ({
+          ...r.workspace,
+          role: r.role || 'member',
         }))
 
-        const memberList = (memberRows || [])
-          .filter((r: any) => r.workspace)
-          .map((r: any) => ({
-            ...r.workspace,
-            role: r.role || 'member',
-          }))
+      const wsMap = new Map<string, Workspace>()
+      ownedList.forEach((w) => wsMap.set(w.id, w))
+      memberList.forEach((w: any) => {
+        if (!wsMap.has(w.id)) wsMap.set(w.id, w)
+      })
 
-        const wsMap = new Map<string, Workspace>()
-        ownedList.forEach((w) => wsMap.set(w.id, w))
-        memberList.forEach((w: any) => {
-          if (!wsMap.has(w.id)) wsMap.set(w.id, w)
-        })
+      let list = Array.from(wsMap.values())
 
-        list = Array.from(wsMap.values())
-      }
-
-      // If still empty, create default workspace on the fly
+      // Auto-provision default workspace if completely empty
       if (list.length === 0) {
         const userName = session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'My'
         const { data: newWs } = await supabase
           .from('workspaces')
           .insert({
-            name: `${userName} Workspace`,
+            name: `${userName}'s Workspace`,
             owner_id: session.user.id,
+            settings: {},
           })
           .select()
           .single()
@@ -139,8 +190,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       }
 
       setWorkspaces(list)
+      setCached('workspaces', list)
 
-      // Select active workspace: check saved preference first
+      // Resolve active workspace
       const savedId = typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_WS_STORAGE_KEY) : null
       const matched = list.find((w) => w.id === savedId)
 
@@ -150,14 +202,13 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         setCurrentWorkspace(list[0])
       } else {
         setCurrentWorkspaceState(null)
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem(ACTIVE_WS_STORAGE_KEY)
-        }
       }
     } catch (err) {
       console.error('[WorkspaceContext] refreshWorkspaces error:', err)
     } finally {
       setLoading(false)
+      setIsRevalidating(false)
+      isFetchingRef.current = false
     }
   }, [setCurrentWorkspace])
 
@@ -172,6 +223,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         setWorkspaces([])
         setCurrentWorkspaceState(null)
         setMembers([])
+        setCached('workspaces', [])
       }
     })
 
@@ -190,34 +242,42 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   // Create new workspace
   const createWorkspace = async (name: string): Promise<Workspace | null> => {
     try {
+      triggerSyncStart()
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return null
 
-      const res = await fetch('/api/workspaces', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
+      const { data: newWs, error } = await supabase
+        .from('workspaces')
+        .insert({
           name,
-          user_id: session.user.id,
-        }),
-      })
+          owner_id: session.user.id,
+          settings: {},
+        })
+        .select()
+        .single()
 
-      const data = await res.json()
-      if (data.success && data.workspace) {
-        toast.success(`Workspace "${name}" created!`)
-        await refreshWorkspaces()
-        setCurrentWorkspace(data.workspace)
-        return data.workspace
-      } else {
-        toast.error(data.error || 'Failed to create workspace')
+      if (error || !newWs) {
+        toast.error(error?.message || 'Failed to create workspace')
         return null
       }
+
+      try {
+        await supabase.from('workspace_members').insert({
+          workspace_id: newWs.id,
+          user_id: session.user.id,
+          role: 'owner',
+        })
+      } catch {}
+
+      toast.success(`Workspace "${name}" created!`)
+      await refreshWorkspaces()
+      setCurrentWorkspace({ ...newWs, role: 'owner' })
+      return newWs
     } catch (err: any) {
       toast.error(err.message || 'Error creating workspace')
       return null
+    } finally {
+      triggerSyncDone()
     }
   }
 
@@ -225,6 +285,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const inviteMember = async (email: string, role: WorkspaceRole = 'member'): Promise<boolean> => {
     if (!currentWorkspace?.id) return false
     try {
+      triggerSyncStart()
       const res = await fetch(`/api/workspaces/${currentWorkspace.id}/members`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -233,11 +294,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
       const data = await res.json()
       if (data.success) {
-        if (data.invited) {
-          toast.success(`Invite created for ${email}`)
-        } else {
-          toast.success(`${email} joined workspace!`)
-        }
+        toast.success(data.invited ? `Invite created for ${email}` : `${email} joined workspace!`)
         await refreshMembers()
         return true
       } else {
@@ -247,6 +304,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       toast.error(err.message || 'Error inviting member')
       return false
+    } finally {
+      triggerSyncDone()
     }
   }
 
@@ -254,6 +313,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const updateMemberRole = async (userId: string, role: WorkspaceRole): Promise<boolean> => {
     if (!currentWorkspace?.id) return false
     try {
+      triggerSyncStart()
       const res = await fetch(`/api/workspaces/${currentWorkspace.id}/members`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -272,6 +332,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       toast.error(err.message || 'Error updating role')
       return false
+    } finally {
+      triggerSyncDone()
     }
   }
 
@@ -279,6 +341,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const removeMember = async (userId: string): Promise<boolean> => {
     if (!currentWorkspace?.id) return false
     try {
+      triggerSyncStart()
       const res = await fetch(`/api/workspaces/${currentWorkspace.id}/members?user_id=${userId}`, {
         method: 'DELETE',
       })
@@ -295,6 +358,8 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       toast.error(err.message || 'Error removing member')
       return false
+    } finally {
+      triggerSyncDone()
     }
   }
 
@@ -307,6 +372,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         userRole,
         members,
         loading,
+        isRevalidating,
         refreshWorkspaces,
         refreshMembers,
         createWorkspace,

@@ -11,65 +11,88 @@ import {
 import { toPng } from 'html-to-image'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { getCached, setCached } from '@/lib/cache/swrCache'
+
+interface ProofStats {
+  shippingStreak: number
+  tasksShippedAllTime: number
+  tasksShippedThisMonth: number
+  mostShippedInDay: number
+  deepWorkHours: number
+  onTimeDeliveryRate: number
+  creatorTier: string
+}
 
 export default function CultlikeCreatePage() {
-  const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState({
-    shippingStreak: 9,
-    tasksShippedAllTime: 48,
-    tasksShippedThisMonth: 19,
-    mostShippedInDay: 7,
-    deepWorkHours: 84.5,
-    onTimeDeliveryRate: 96,
-    creatorTier: 'Diamond Producer'
+  const [loading, setLoading] = useState(false)
+  const [stats, setStats] = useState<ProofStats>(() => {
+    return getCached<ProofStats>('proof_stats') || {
+      shippingStreak: 9,
+      tasksShippedAllTime: 48,
+      tasksShippedThisMonth: 19,
+      mostShippedInDay: 7,
+      deepWorkHours: 84.5,
+      onTimeDeliveryRate: 96,
+      creatorTier: 'Diamond Producer'
+    }
   })
-  const [shippedItems, setShippedItems] = useState<{ title: string; type: string; date: string }[]>([])
+  const [shippedItems, setShippedItems] = useState<{ title: string; type: string; date: string }[]>(() => {
+    return getCached<{ title: string; type: string; date: string }[]>('proof_shipped') || []
+  })
   const scorecardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     async function loadProofData() {
-      setLoading(true)
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) return
 
-        // 1. Fetch shipped tasks
-        const { data: tasks } = await supabase
-          .from('tasks')
-          .select('id, title, status, updated_at, created_at')
-          .eq('status', 'shipped')
-          .order('updated_at', { ascending: false })
-          .limit(20)
+        // 1 & 2. Parallel fetch shipped tasks and published content
+        const [tasksRes, contentRes] = await Promise.all([
+          supabase
+            .from('tasks')
+            .select('id, title, status, updated_at, created_at')
+            .eq('status', 'shipped')
+            .order('updated_at', { ascending: false })
+            .limit(20),
+          supabase
+            .from('content_items')
+            .select('id, title, platform, content_type, published_at')
+            .eq('status', 'published')
+            .order('published_at', { ascending: false })
+            .limit(10)
+        ])
 
-        // 2. Fetch published content items
-        const { data: content } = await supabase
-          .from('content_items')
-          .select('id, title, platform, content_type, published_at')
-          .eq('status', 'published')
-          .order('published_at', { ascending: false })
-          .limit(10)
+        const tasks = tasksRes.data || []
+        const content = contentRes.data || []
 
         const combined = [
-          ...(tasks || []).map(t => ({
+          ...tasks.map(t => ({
             title: t.title,
             type: 'Sprint Task',
             date: t.updated_at || t.created_at
           })),
-          ...(content || []).map(c => ({
+          ...content.map(c => ({
             title: c.title,
             type: `${c.platform.toUpperCase()} ${c.content_type}`,
             date: c.published_at || new Date().toISOString()
           }))
         ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
-        setShippedItems(combined.slice(0, 10))
+        const topShipped = combined.slice(0, 10)
+        setShippedItems(topShipped)
+        setCached('proof_shipped', topShipped)
 
-        const totalShipped = (tasks?.length || 0) + (content?.length || 0)
-        setStats(prev => ({
-          ...prev,
-          tasksShippedAllTime: Math.max(totalShipped, 14),
-          tasksShippedThisMonth: Math.max((tasks?.length || 0), 8)
-        }))
+        const totalShipped = tasks.length + content.length
+        setStats(prev => {
+          const next = {
+            ...prev,
+            tasksShippedAllTime: Math.max(totalShipped, 14),
+            tasksShippedThisMonth: Math.max(tasks.length, 8)
+          }
+          setCached('proof_stats', next)
+          return next
+        })
       } catch (err) {
         console.warn('Error loading proof data:', err)
       } finally {
