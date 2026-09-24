@@ -3,13 +3,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyApiAuth, unauthorizedResponse } from '@/lib/api/auth'
 import { getApiClient, getDefaultWorkspaceId, getDefaultUserId } from '@/lib/supabase/admin'
 import { synthesizeHeuristic, type SynthesizedPlan } from '@/lib/ai/synthesizer'
-import Groq from 'groq-sdk'
+import { Anthropic } from '@anthropic-ai/sdk'
 
 export const dynamic = 'force-dynamic'
 
-const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null
+const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null
 
-const SYSTEM_PROMPT = `You are the Executive Operating System of CallMy Mgmt.
+const SYSTEM_PROMPT = `You are the Executive Operating System of Cultlike OS.
 Your job is to take a natural language brain dump or directive and decompose it into a structured, multi-phase project or task plan.
 
 CRITICAL RULES:
@@ -39,20 +39,18 @@ export async function POST(req: NextRequest) {
 
     let plan: SynthesizedPlan
 
-    if (groq) {
+    if (anthropic) {
       try {
-        const completion = await groq.chat.completions.create({
-          model: 'openai/gpt-oss-20b',
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            { role: 'user', content: text.trim() }
-          ],
-          temperature: 0.1,
-          max_tokens: 2500
+        const message = await anthropic.messages.create({
+          model: 'claude-3-haiku-20240307',
+          max_tokens: 2500,
+          system: SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: text.trim() }]
         })
-        const content = completion.choices[0]?.message?.content
-        if (content) {
-          plan = JSON.parse(content)
+        const textContent = message.content[0]?.type === 'text' ? message.content[0].text : ''
+        const jsonMatch = textContent.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          plan = JSON.parse(jsonMatch[0])
           plan.raw_input = text.trim()
         } else {
           plan = synthesizeHeuristic(text.trim())

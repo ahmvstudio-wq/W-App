@@ -79,8 +79,7 @@ export default function SingleProjectPage() {
       let masterName = data.master_project
       if (data.workspace_id) {
         const { data: wsRow } = await supabase.from('workspaces').select('settings, owner_id').eq('id', data.workspace_id).single()
-        const isTaufiq = wsRow?.owner_id === '89f0a1d6-3c0e-4bb9-8df9-cfe1e8de4128'
-        masterName = wsRow?.settings?.project_master_map?.[data.id] || masterName || (isTaufiq ? 'Tadbeer TT' : 'Primary Portfolio')
+        masterName = wsRow?.settings?.project_master_map?.[data.id] || masterName || wsRow?.settings?.master_projects?.[0]?.name || ''
       }
       
       setProject({ ...data, master_project: masterName, owner: ownerData, tasks: sortedTasks })

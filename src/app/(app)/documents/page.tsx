@@ -162,8 +162,8 @@ export default function DocumentsPage() {
       <div className="flex-1 p-8 overflow-y-auto bg-[#fbfbfd] space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
-              CALLMY_MGMT • KNOWLEDGE & STRATEGY
+            <div className="text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1 font-light">
+              KNOWLEDGE & STRATEGY
             </div>
             <h1 className="text-2xl font-light text-black tracking-tight">
               {folders.find((f) => f.id === activeFolder)?.name}

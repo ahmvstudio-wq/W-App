@@ -188,20 +188,8 @@ export default function LandingPage() {
       {/* Spacious, Minimal Floating Navbar */}
       <nav className="fixed top-5 left-0 right-0 z-40 max-w-5xl mx-auto px-6">
         <div className="bg-white/90 backdrop-blur-md border border-black/[0.08] shadow-xs rounded-full px-6 py-3.5 flex items-center justify-between transition-all">
-          <div className="flex items-center gap-2.5">
-            {/* High-End Focus Reticle Logo Mark: Zero Letters */}
-            <div className="w-7 h-7 rounded-xl bg-black text-white flex items-center justify-center shadow-xs">
-              <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="9" />
-                <circle cx="12" cy="12" r="4" />
-                <line x1="12" y1="1" x2="12" y2="4" />
-                <line x1="12" y1="20" x2="12" y2="23" />
-                <line x1="1" y1="12" x2="4" y2="12" />
-                <line x1="20" y1="12" x2="23" y2="12" />
-              </svg>
-            </div>
-            <span className="font-semibold tracking-tight text-sm text-black">Focus</span>
-            <span className="text-[11px] text-neutral-400 font-mono tracking-tight hidden sm:inline">by AHMV Systems</span>
+          <div className="flex items-center">
+            <img src="/logo.png" alt="Cultlike OS" className="h-10 w-auto object-contain" />
           </div>
 
           <div className="hidden md:flex items-center gap-7 text-xs font-normal text-neutral-500">
@@ -978,20 +966,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Clean Minimal Footer: Focus Reticle Icon (Zero Letters) */}
+      {/* Clean Minimal Footer */}
       <footer className="py-12 px-6 border-t border-black/[0.08] text-center space-y-3 text-xs text-neutral-400 font-light">
-        <div className="flex items-center justify-center gap-2">
-          <div className="w-5 h-5 rounded-lg bg-black text-white flex items-center justify-center">
-            <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="9" />
-              <circle cx="12" cy="12" r="4" />
-              <line x1="12" y1="1" x2="12" y2="4" />
-              <line x1="12" y1="20" x2="12" y2="23" />
-              <line x1="1" y1="12" x2="4" y2="12" />
-              <line x1="20" y1="12" x2="23" y2="12" />
-            </svg>
-          </div>
-          <span className="font-medium text-black">Focus by AHMV Systems</span>
+        <div className="flex items-center justify-center">
+          <img src="/logo.png" alt="Cultlike OS" className="h-8 w-auto object-contain" />
         </div>
 
         <div className="flex items-center justify-center gap-2 text-emerald-700">
@@ -1000,7 +978,7 @@ export default function LandingPage() {
         </div>
 
         <div className="text-[11px]">
-          &copy; {new Date().getFullYear()} Focus by AHMV Systems. Built for founders, solo creators, and builders.
+          &copy; {new Date().getFullYear()} Cultlike OS. Built for founders, solo creators, and builders.
         </div>
       </footer>
 
@@ -1053,19 +1031,9 @@ export default function LandingPage() {
             ) : (
               <>
                 <div className="text-center mb-6 space-y-1">
-                  {/* Focus Reticle Icon: Zero Letters */}
-                  <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center mx-auto mb-3 shadow-xs">
-                    <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="9" />
-                      <circle cx="12" cy="12" r="4" />
-                      <line x1="12" y1="1" x2="12" y2="4" />
-                      <line x1="12" y1="20" x2="12" y2="23" />
-                      <line x1="1" y1="12" x2="4" y2="12" />
-                      <line x1="20" y1="12" x2="23" y2="12" />
-                    </svg>
-                  </div>
+                  <img src="/logo.png" alt="Cultlike OS" className="h-12 w-auto object-contain mx-auto mb-3" />
                   <h3 className="text-lg font-normal text-black">
-                    {mode === 'login' ? 'Sign in to Focus by AHMV Systems' : 'Create your free workspace'}
+                    {mode === 'login' ? 'Sign in to Cultlike OS' : 'Create your free workspace'}
                   </h3>
                   <p className="text-xs text-neutral-500 font-light">
                     {mode === 'login' ? 'Access your projects, whiteboard, and tasks.' : 'Takes less than 30 seconds. No credit card required.'}

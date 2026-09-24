@@ -21,11 +21,15 @@ import AnnualExecutionGrid from '@/components/AnnualExecutionGrid'
 import InteractiveVelocityChart from '@/components/InteractiveVelocityChart'
 import CreateTaskModal from '@/components/CreateTaskModal'
 import TaskDetailDrawer from '@/components/TaskDetailDrawer'
+import { getCached, setCached } from '@/lib/cache/swrCache'
 
 export default function DashboardPage() {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState(true)
+  const [tasks, setTasks] = useState<Task[]>(() => getCached<Task[]>('dashboard_tasks') || [])
+  const [projects, setProjects] = useState<Project[]>(() => getCached<Project[]>('dashboard_projects') || [])
+  const [loading, setLoading] = useState<boolean>(() => {
+    const cached = getCached<Task[]>('dashboard_tasks')
+    return !cached || cached.length === 0
+  })
   const [brief, setBrief] = useState<string | null>(null)
   const [generatingBrief, setGeneratingBrief] = useState(false)
   const [userName, setUserName] = useState<string>('Founder')
@@ -113,14 +117,18 @@ export default function DashboardPage() {
       .eq('workspace_id', activeWsId)
       .order('updated_at', { ascending: false })
 
-    const { data: tasksData } = await tasksQuery
-    const { data: projectsData } = await projectsQuery
+    const [{ data: tasksData }, { data: projectsData }] = await Promise.all([
+      tasksQuery,
+      projectsQuery
+    ])
 
     const activeTasks = tasksData || []
     const activeProjects = projectsData || []
 
     setTasks(activeTasks)
     setProjects(activeProjects)
+    setCached('dashboard_tasks', activeTasks)
+    setCached('dashboard_projects', activeProjects)
     setLoading(false)
     
     if (!brief && activeTasks.length > 0) {
@@ -252,10 +260,8 @@ export default function DashboardPage() {
       {/* Top Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
-            <span>CALLMY</span>
-            <span>•</span>
-            <span className="text-black font-normal">DASHBOARD</span>
+          <div className="text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1 font-light">
+            DASHBOARD
           </div>
           <h1 className="text-3xl font-light tracking-tight text-black">
             Your Daily Dashboard

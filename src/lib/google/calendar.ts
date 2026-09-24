@@ -34,14 +34,14 @@ function escapeIcsText(text: string): string {
 /**
  * Generate standard RFC 5545 iCalendar data (.ics) for all tasks
  */
-export function generateIcsCalendar(tasks: Task[], calendarName = 'CallMy Tasks'): string {
+export function generateIcsCalendar(tasks: Task[], calendarName = 'Cultlike OS Tasks'): string {
   const now = new Date()
   const dtStamp = formatIcsDate(now)
 
   let ics = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//CallMy Mgmt//Universal Task Calendar//EN',
+    'PRODID:-//Cultlike OS//Universal Task Calendar//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${calendarName}`,
@@ -62,7 +62,7 @@ export function generateIcsCalendar(tasks: Task[], calendarName = 'CallMy Tasks'
 
     const summary = `${projectName}${task.title}`
     const description = `Priority: ${priorityLabel}\\nStatus: ${statusLabel}\\nEstimated Time: ${durationMinutes} minutes\\n${escapeIcsText(task.description || '')}`
-    const uid = `task-${task.id}@callmy-mgmt.app`
+    const uid = `task-${task.id}@cultlike.app`
 
     ics.push(
       'BEGIN:VEVENT',

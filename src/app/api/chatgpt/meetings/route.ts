@@ -16,8 +16,9 @@ export async function GET(req: NextRequest) {
     const date = searchParams.get('date') // YYYY-MM-DD
     const attendee = searchParams.get('attendee')?.toLowerCase()
     const limit = parseInt(searchParams.get('limit') || '25', 10)
+    const customApiKey = searchParams.get('fathom_api_key') || req.headers.get('x-fathom-key') || undefined
 
-    const allMeetings = await fetchFathomMeetings()
+    const allMeetings = await fetchFathomMeetings(undefined, false, customApiKey)
 
     let filtered = allMeetings.filter((m) => {
       // 1. Search keyword

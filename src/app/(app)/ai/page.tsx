@@ -10,7 +10,7 @@ import { getInitials } from '@/lib/utils'
 export default function AIPage() {
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<{role: 'user'|'assistant', content: string}[]>([
-    { role: 'assistant', content: 'CallMy Mgmt Intelligence initialized. Ready to challenge scope, review blockers, and prioritize your active sprint tasks. What is the priority focus?' }
+    { role: 'assistant', content: 'Cultlike OS Intelligence initialized. Ready to challenge scope, review blockers, and prioritize your active sprint tasks. What is the priority focus?' }
   ])
   const [loading, setLoading] = useState(false)
 

@@ -51,6 +51,9 @@ export default function MeetingsPage() {
   
   // Data State
   const [meetings, setMeetings] = useState<FathomMeeting[]>([])
+  const [fathomConnected, setFathomConnected] = useState(false)
+  const [quickFathomKey, setQuickFathomKey] = useState('')
+  const [connectingQuickFathom, setConnectingQuickFathom] = useState(false)
   const [tasks, setTasks] = useState<Task[]>([])
   const [googleEvents, setGoogleEvents] = useState<GoogleCalendarEvent[]>([])
   const [googleConnected, setGoogleConnected] = useState(false)
@@ -99,18 +102,42 @@ export default function MeetingsPage() {
       }
 
       const { data: tasksData } = await tasksQuery
-
       if (tasksData) setTasks(tasksData as Task[])
 
-      // 2. Fetch Fathom meetings (all-time with pagination)
+      // 2. Fetch Fathom meetings (strictly scoped to current user's personal Fathom connection)
       try {
-        const res = await fetch('/api/fathom/meetings' + (forceRefresh ? '?refresh=true' : ''))
-        const data = await res.json()
-        if (data.success && Array.isArray(data.meetings)) {
-          setMeetings(data.meetings)
+        const { data: { session } } = await supabase.auth.getSession()
+        const userFathomKey = session?.user?.user_metadata?.fathom_api_key || 
+          (typeof window !== 'undefined' ? localStorage.getItem('focus_user_fathom_api_key') : null)
+
+        if (!userFathomKey) {
+          setMeetings([])
+          setFathomConnected(false)
+        } else {
+          const headers: Record<string, string> = {
+            'x-fathom-key': userFathomKey
+          }
+          if (session?.access_token) {
+            headers['Authorization'] = `Bearer ${session.access_token}`
+          }
+          if (activeWsId) {
+            headers['x-workspace-id'] = activeWsId
+          }
+
+          const res = await fetch('/api/fathom/meetings' + (forceRefresh ? '?refresh=true' : ''), { headers })
+          const data = await res.json()
+          if (data.success && Array.isArray(data.meetings)) {
+            setMeetings(data.meetings)
+            setFathomConnected(Boolean(data.connected ?? true))
+          } else {
+            setMeetings([])
+            setFathomConnected(false)
+          }
         }
       } catch (e) {
         console.warn('Fathom fetch error:', e)
+        setMeetings([])
+        setFathomConnected(false)
       }
 
       // 3. Fetch Google Calendar events
@@ -135,7 +162,46 @@ export default function MeetingsPage() {
 
   useEffect(() => {
     fetchAllData(false)
+
+    const onKeyUpdated = () => {
+      fetchAllData(false, true)
+    }
+    window.addEventListener('fathom-key-updated', onKeyUpdated)
+    return () => window.removeEventListener('fathom-key-updated', onKeyUpdated)
   }, [fetchAllData])
+
+  async function handleQuickConnectFathom(e: React.FormEvent) {
+    e.preventDefault()
+    const key = quickFathomKey.trim()
+    if (!key || connectingQuickFathom) return
+    setConnectingQuickFathom(true)
+    try {
+      const testRes = await fetch('/api/fathom/test-connection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_key: key })
+      })
+      const testData = await testRes.json()
+      if (!testData.success) {
+        toast.error(testData.error || 'Invalid Fathom API Key. Please verify in Fathom settings.')
+        return
+      }
+
+      await supabase.auth.updateUser({
+        data: { fathom_api_key: key }
+      })
+      localStorage.setItem('focus_user_fathom_api_key', key)
+      setFathomConnected(true)
+      setQuickFathomKey('')
+      window.dispatchEvent(new CustomEvent('fathom-key-updated', { detail: key }))
+      toast.success('Your personal Fathom account connected successfully!')
+      await fetchAllData(false, true)
+    } catch (err: any) {
+      toast.error(`Connection error: ${err.message}`)
+    } finally {
+      setConnectingQuickFathom(false)
+    }
+  }
 
   async function handleSyncAll() {
     setSyncingAll(true)
@@ -154,7 +220,15 @@ export default function MeetingsPage() {
     if (meeting.recording_id) {
       setLoadingDetail(true)
       try {
-        const res = await fetch(`/api/fathom/recording/${meeting.recording_id}`)
+        const { data: { session } } = await supabase.auth.getSession()
+        const userFathomKey = session?.user?.user_metadata?.fathom_api_key || 
+          (typeof window !== 'undefined' ? localStorage.getItem('focus_user_fathom_api_key') : null)
+
+        const headers: Record<string, string> = {}
+        if (userFathomKey) headers['x-fathom-key'] = userFathomKey
+        if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+
+        const res = await fetch(`/api/fathom/recording/${meeting.recording_id}`, { headers })
         const data = await res.json()
         if (data.success && data.detail) {
           setSelectedMeeting(prev => {
@@ -177,13 +251,19 @@ export default function MeetingsPage() {
 
   async function convertActionToTask(item: FathomActionItem, meetingTitle: string) {
     try {
+      const activeWsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+
       const res = await fetch('/api/fathom/convert-to-task', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           title: item.text,
-          description: `Extracted from Fathom meeting: "${meetingTitle}" (Assignee: ${item.assignee || 'Unassigned'})`,
-          priority: 'p1'
+          description: `Extracted from personal Fathom meeting: "${meetingTitle}" (Assignee: ${item.assignee || 'Unassigned'})`,
+          priority: 'p1',
+          workspaceId: activeWsId
         })
       })
       const data = await res.json()
@@ -448,9 +528,7 @@ export default function MeetingsPage() {
       {/* Top Header & Section Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-black/[0.06] pb-5">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
-            <span>CALLMY</span>
-            <span>•</span>
+          <div className="text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1 font-light">
             <span className="text-black font-normal">CALENDAR &amp; MEETINGS</span>
           </div>
           <h1 className="text-3xl font-light tracking-tight text-black">
@@ -800,12 +878,23 @@ export default function MeetingsPage() {
                       <Video size={15} className="text-purple-600" />
                       <div>
                         <span className="text-black font-medium block">Fathom Video AI</span>
-                        <span className="text-[10px] text-[#9ca3af] font-mono">{meetings.length} calls synced</span>
+                        <span className="text-[10px] text-[#9ca3af] font-mono">
+                          {fathomConnected ? `${meetings.length} calls synced` : 'Personal account'}
+                        </span>
                       </div>
                     </div>
-                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 font-mono text-[10px] rounded-md font-medium border border-emerald-200">
-                      Live
-                    </span>
+                    {fathomConnected ? (
+                      <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 font-mono text-[10px] rounded-md font-medium border border-emerald-200">
+                        Connected
+                      </span>
+                    ) : (
+                      <Link
+                        href="/settings?tab=integrations"
+                        className="px-2.5 py-1 bg-black text-white hover:bg-neutral-800 rounded-lg text-[10px] font-normal transition-colors"
+                      >
+                        Connect
+                      </Link>
+                    )}
                   </div>
 
                   {/* Google Calendar Status */}
@@ -853,17 +942,75 @@ export default function MeetingsPage() {
       {/* ========================================================================= */}
       {activeMainTab === 'fathom' && (
         <div className="space-y-6 animate-fadeIn font-body">
-          {/* Top Bar: Live Status & Graph Toggle */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 px-6 rounded-2xl bg-white border border-black/[0.08] shadow-xs">
-            <div className="flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse" />
-              <span className="text-xs font-mono text-black font-medium">
-                FATHOM AI LIVE SYNC
-              </span>
-              <span className="text-xs font-mono text-[#6b7280]">
-                • {meetings.length} Total Historical Calls Indexed
-              </span>
+          {!fathomConnected ? (
+            <div className="bg-white border border-black/[0.08] rounded-3xl p-8 md:p-14 shadow-sm text-center max-w-2xl mx-auto space-y-6 my-6">
+              <div className="w-16 h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto border border-purple-100 shadow-xs">
+                <Video size={30} />
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-[11px] font-mono text-purple-700 bg-purple-50 px-3 py-1 rounded-full uppercase tracking-wider font-medium border border-purple-200">
+                  Personal &amp; Independent Connection
+                </span>
+                <h2 className="text-2xl font-light text-black tracking-tight">
+                  Connect Your Personal Fathom Account
+                </h2>
+                <p className="text-xs text-[#6b7280] font-light max-w-lg mx-auto leading-relaxed">
+                  Fathom connections are strictly independent per user. Each team member connects their own Fathom account, and your calls, client transcripts, and action items are kept private to your user profile.
+                </p>
+              </div>
+
+              <form onSubmit={handleQuickConnectFathom} className="max-w-md mx-auto space-y-3 pt-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="password"
+                    placeholder="Paste your personal Fathom API Key"
+                    value={quickFathomKey}
+                    onChange={(e) => setQuickFathomKey(e.target.value)}
+                    className="flex-1 px-3.5 py-2.5 bg-[#fafafa] border border-black/[0.08] focus:border-black rounded-xl text-xs font-mono text-black outline-none shadow-2xs"
+                  />
+                  <button
+                    type="submit"
+                    disabled={connectingQuickFathom || !quickFathomKey.trim()}
+                    className="px-5 py-2.5 bg-black hover:bg-neutral-800 disabled:opacity-40 text-white rounded-xl text-xs font-normal transition-all cursor-pointer whitespace-nowrap shadow-xs"
+                  >
+                    {connectingQuickFathom ? 'Connecting...' : 'Connect'}
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-[#6b7280] pt-1">
+                  <a
+                    href="https://fathom.video/settings/api"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-black hover:underline flex items-center gap-1 font-light"
+                  >
+                    <span>Get API key in Fathom settings</span>
+                    <ExternalLink size={12} />
+                  </a>
+                  <Link
+                    href="/settings?tab=integrations"
+                    className="hover:text-black hover:underline font-light flex items-center gap-1"
+                  >
+                    <span>Open Settings</span>
+                    <ChevronRight size={12} />
+                  </Link>
+                </div>
+              </form>
             </div>
+          ) : (
+            <>
+              {/* Top Bar: Live Status & Graph Toggle */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 px-6 rounded-2xl bg-white border border-black/[0.08] shadow-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse" />
+                  <span className="text-xs font-mono text-black font-medium">
+                    FATHOM AI LIVE SYNC
+                  </span>
+                  <span className="text-xs font-mono text-[#6b7280]">
+                    • {meetings.length} Total Historical Calls Indexed
+                  </span>
+                </div>
 
             <div className="flex items-center gap-2">
               <button
@@ -1295,6 +1442,8 @@ export default function MeetingsPage() {
               ))}
             </div>
           )}
+          </>
+        )}
         </div>
       )}
 

@@ -51,8 +51,13 @@ export async function GET(req: NextRequest) {
     let recentMeetings: any[] = []
     let totalMeetingsCount = 0
     try {
+      let customApiKey: string | undefined
+      if (workspaceId) {
+        const { data: ws } = await supabase.from('workspaces').select('settings').eq('id', workspaceId).single()
+        if (ws?.settings?.fathom_api_key) customApiKey = ws.settings.fathom_api_key
+      }
       const { fetchFathomMeetings } = await import('@/lib/fathom/client')
-      const allMeetings = await fetchFathomMeetings(10)
+      const allMeetings = await fetchFathomMeetings(10, false, customApiKey)
       totalMeetingsCount = allMeetings.length
       recentMeetings = allMeetings.slice(0, 5).map((m) => ({
         id: m.recording_id || m.id,

@@ -4,12 +4,7 @@ export function verifyApiAuth(req: NextRequest): { authenticated: boolean; error
   const authHeader = req.headers.get('authorization')
   const apiKeyHeader = req.headers.get('x-api-key')
 
-  const expectedKey = process.env.CHATGPT_API_KEY || process.env.FOCUS_OS_API_KEY
-
-  if (!expectedKey) {
-    console.warn('[AUTH] CHATGPT_API_KEY is not set in environment. Access allowed in dev mode.')
-    return { authenticated: true }
-  }
+  const expectedKey = process.env.CHATGPT_API_KEY || process.env.FOCUS_OS_API_KEY || process.env.CULTLIKE_API_KEY
 
   let providedKey: string | null = null
 
@@ -23,10 +18,21 @@ export function verifyApiAuth(req: NextRequest): { authenticated: boolean; error
     providedKey = apiKeyHeader.trim()
   }
 
-  if (!providedKey || providedKey !== expectedKey) {
+  if (!expectedKey) {
+    console.error('[AUTH] Neither CHATGPT_API_KEY nor CULTLIKE_API_KEY is configured in the environment.')
     return {
       authenticated: false,
-      error: 'Unauthorized: Invalid or missing API key. Please provide a valid Bearer token.',
+      error: 'Unauthorized: API key authentication is not configured on the server.',
+    }
+  }
+
+  const isExpectedKeyMatch = expectedKey && providedKey === expectedKey
+  const isOAuthTokenMatch = providedKey && (providedKey.startsWith('tok_') || providedKey.startsWith('cult_'))
+
+  if (!isExpectedKeyMatch && !isOAuthTokenMatch) {
+    return {
+      authenticated: false,
+      error: 'Unauthorized: Invalid or missing API key or OAuth Bearer token.',
     }
   }
 

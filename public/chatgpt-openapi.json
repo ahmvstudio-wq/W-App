@@ -1,14 +1,14 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "CallMy Mgmt AI Chief of Staff API",
-    "description": "Official API for ChatGPT Custom GPT Actions to read and manage tasks, projects, documents, blockers, Fathom meetings, and execution analytics in CallMy Mgmt.",
+    "title": "Cultlike OS Executive Operating System API (ChatGPT & Claude Connectors)",
+    "description": "Official API for ChatGPT Custom GPT Actions & Claude Connectors to orchestrate projects, sprint tasks, content vault deliverables, Fathom meetings, and execution analytics in Cultlike OS.",
     "version": "2.0.0"
   },
   "servers": [
     {
       "url": "https://callmy-mgmt.vercel.app",
-      "description": "Production Server"
+      "description": "Cultlike OS Server"
     }
   ],
   "paths": {
