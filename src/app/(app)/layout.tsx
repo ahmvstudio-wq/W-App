@@ -239,29 +239,30 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* Elegant subtle divider separating Core OS tools from Creator Suite */}
           <div className="h-4 w-px bg-black/[0.08] mx-1" />
 
-          {/* Dedicated Creator Studio Dropdown */}
+          {/* Dedicated Creator Studio Dropdown with Ambient Lighting */}
           <div className="relative" ref={creatorMenuRef}>
             <button
               onClick={() => setCreatorMenuOpen(!creatorMenuOpen)}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all duration-150 relative font-light cursor-pointer select-none',
+                'relative group flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs transition-all duration-300 cursor-pointer select-none font-light',
                 isCreatorActive
-                  ? 'bg-white text-black font-normal shadow-sm'
-                  : 'text-[#6b7280] hover:text-black hover:bg-black/[0.02]'
+                  ? 'bg-white text-black font-normal shadow-[0_0_18px_rgba(168,85,247,0.35),0_0_6px_rgba(99,102,241,0.25)] border border-purple-400/40 ring-1 ring-purple-400/30'
+                  : 'text-[#4b5563] hover:text-black bg-gradient-to-r from-violet-500/[0.06] via-fuchsia-500/[0.06] to-indigo-500/[0.06] hover:from-violet-500/[0.12] hover:via-fuchsia-500/[0.12] hover:to-indigo-500/[0.12] border border-purple-500/20 shadow-[0_0_12px_rgba(168,85,247,0.12)] hover:shadow-[0_0_18px_rgba(168,85,247,0.22)]'
               )}
             >
-              <Sparkles
-                size={13}
+              {/* Soft Ambient Light Halo Behind Button */}
+              <span
                 className={cn(
-                  'transition-colors',
-                  isCreatorActive ? 'text-amber-500' : 'text-[#9ca3af]'
+                  "absolute -inset-0.5 rounded-xl bg-gradient-to-r from-violet-500/30 via-fuchsia-500/30 to-indigo-500/30 blur-xs -z-10 transition-opacity duration-300 pointer-events-none",
+                  isCreatorActive ? "opacity-100" : "opacity-40 group-hover:opacity-80"
                 )}
               />
-              <span>Creator Studio</span>
+
+              <span className="relative z-10 tracking-tight font-normal">Creator Studio</span>
               <ChevronDown
                 size={11}
                 className={cn(
-                  'transition-transform duration-200 text-[#9ca3af]',
+                  'transition-transform duration-200 text-[#9ca3af] relative z-10',
                   creatorMenuOpen && 'rotate-180'
                 )}
               />
@@ -446,10 +447,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             )}
           >
             <div className={cn(
-              'p-1 rounded-lg transition-colors',
-              isCreatorActive && 'bg-black text-white'
+              'p-1 rounded-lg transition-all flex items-center justify-center',
+              isCreatorActive && 'shadow-[0_0_12px_rgba(168,85,247,0.45)]'
             )}>
-              <Sparkles size={15} />
+              <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-indigo-500 block shadow-xs" />
             </div>
             <span className="text-[9px] tracking-tight mt-0.5">Creator</span>
           </button>
