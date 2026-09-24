@@ -24,12 +24,9 @@ import TaskDetailDrawer from '@/components/TaskDetailDrawer'
 import { getCached, setCached } from '@/lib/cache/swrCache'
 
 export default function DashboardPage() {
-  const [tasks, setTasks] = useState<Task[]>(() => getCached<Task[]>('dashboard_tasks') || [])
-  const [projects, setProjects] = useState<Project[]>(() => getCached<Project[]>('dashboard_projects') || [])
-  const [loading, setLoading] = useState<boolean>(() => {
-    const cached = getCached<Task[]>('dashboard_tasks')
-    return !cached || cached.length === 0
-  })
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
   const [brief, setBrief] = useState<string | null>(null)
   const [generatingBrief, setGeneratingBrief] = useState(false)
   const [userName, setUserName] = useState<string>('Founder')
@@ -39,7 +36,15 @@ export default function DashboardPage() {
   const [showShippedToday, setShowShippedToday] = useState(false)
 
   useEffect(() => {
-    fetchData(false)
+    const cachedTasks = getCached<Task[]>('dashboard_tasks')
+    const cachedProjects = getCached<Project[]>('dashboard_projects')
+    if (cachedTasks && cachedTasks.length > 0) setTasks(cachedTasks)
+    if (cachedProjects && cachedProjects.length > 0) setProjects(cachedProjects)
+    if ((cachedTasks && cachedTasks.length > 0) || (cachedProjects && cachedProjects.length > 0)) {
+      setLoading(false)
+    }
+
+    fetchData(Boolean(cachedTasks && cachedTasks.length > 0))
     
     const channel = supabase.channel('dashboard_channel')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => fetchData(true))

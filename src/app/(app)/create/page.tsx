@@ -23,25 +23,28 @@ interface ProofStats {
   creatorTier: string
 }
 
+const DEFAULT_STATS: ProofStats = {
+  shippingStreak: 9,
+  tasksShippedAllTime: 48,
+  tasksShippedThisMonth: 19,
+  mostShippedInDay: 7,
+  deepWorkHours: 84.5,
+  onTimeDeliveryRate: 96,
+  creatorTier: 'Diamond Producer'
+}
+
 export default function CultlikeCreatePage() {
   const [loading, setLoading] = useState(false)
-  const [stats, setStats] = useState<ProofStats>(() => {
-    return getCached<ProofStats>('proof_stats') || {
-      shippingStreak: 9,
-      tasksShippedAllTime: 48,
-      tasksShippedThisMonth: 19,
-      mostShippedInDay: 7,
-      deepWorkHours: 84.5,
-      onTimeDeliveryRate: 96,
-      creatorTier: 'Diamond Producer'
-    }
-  })
-  const [shippedItems, setShippedItems] = useState<{ title: string; type: string; date: string }[]>(() => {
-    return getCached<{ title: string; type: string; date: string }[]>('proof_shipped') || []
-  })
+  const [stats, setStats] = useState<ProofStats>(DEFAULT_STATS)
+  const [shippedItems, setShippedItems] = useState<{ title: string; type: string; date: string }[]>([])
   const scorecardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const cachedStats = getCached<ProofStats>('proof_stats')
+    const cachedShipped = getCached<{ title: string; type: string; date: string }[]>('proof_shipped')
+    if (cachedStats) setStats(cachedStats)
+    if (cachedShipped) setShippedItems(cachedShipped)
+
     async function loadProofData() {
       try {
         const { data: { session } } = await supabase.auth.getSession()

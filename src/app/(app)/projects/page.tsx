@@ -40,15 +40,10 @@ export default function ProjectsPage() {
   const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
   const [createInitialMasterProject, setCreateInitialMasterProject] = useState<string>('')
   
-  // Data States with Instant 0ms SWR Hydration
-  const [projects, setProjects] = useState<Project[]>(() => {
-    return getCached<Project[]>('projects_list') || []
-  })
+  // Data States
+  const [projects, setProjects] = useState<Project[]>([])
   const [masterProjects, setMasterProjects] = useState<MasterProjectInfo[]>([])
-  const [loading, setLoading] = useState<boolean>(() => {
-    const cached = getCached<Project[]>('projects_list')
-    return !cached || cached.length === 0
-  })
+  const [loading, setLoading] = useState<boolean>(true)
   const [searchQuery, setSearchQuery] = useState('')
   
   // Selected Master Project for the Command Hub Banner & Filter
@@ -217,7 +212,13 @@ export default function ProjectsPage() {
   }
 
   useEffect(() => {
-    fetchProjects(false)
+    const cached = getCached<Project[]>('projects_list')
+    if (cached && cached.length > 0) {
+      setProjects(cached)
+      setLoading(false)
+    }
+
+    fetchProjects(Boolean(cached && cached.length > 0))
 
     const channel = supabase.channel('projects_channel')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => fetchProjects(true))

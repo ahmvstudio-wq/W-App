@@ -18,11 +18,8 @@ import { CardSkeleton } from '@/components/ui/SkeletonPulse'
 import { triggerSyncStart, triggerSyncDone } from '@/components/NavigationProgressBar'
 
 export default function ContentVaultPage() {
-  const [items, setItems] = useState<ContentItem[]>(() => getCached<ContentItem[]>('content_items') || [])
-  const [loading, setLoading] = useState<boolean>(() => {
-    const cached = getCached<ContentItem[]>('content_items')
-    return !cached || cached.length === 0
-  })
+  const [items, setItems] = useState<ContentItem[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
   const [platformFilter, setPlatformFilter] = useState<'all' | ContentPlatform>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | ContentStatus>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -67,7 +64,13 @@ export default function ContentVaultPage() {
   }
 
   useEffect(() => {
-    fetchItems()
+    const cached = getCached<ContentItem[]>('content_items')
+    if (cached && cached.length > 0) {
+      setItems(cached)
+      setLoading(false)
+    }
+
+    fetchItems(Boolean(cached && cached.length > 0))
   }, [platformFilter, statusFilter])
 
   // Handle Media File Upload

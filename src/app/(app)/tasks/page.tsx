@@ -29,12 +29,8 @@ export default function TasksPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
   const [isExportModalOpen, setIsExportModalOpen] = useState(false)
-  // Instant 0ms SWR hydration
-  const [tasks, setTasks] = useState<Task[]>(() => getCached<Task[]>('tasks_list') || []) 
-  const [loading, setLoading] = useState<boolean>(() => {
-    const cached = getCached<Task[]>('tasks_list')
-    return !cached || cached.length === 0
-  })
+  const [tasks, setTasks] = useState<Task[]>([]) 
+  const [loading, setLoading] = useState<boolean>(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [priorityFilter, setPriorityFilter] = useState<string>('all')
   const [selectedDate, setSelectedDate] = useState<string>('')
@@ -102,7 +98,13 @@ export default function TasksPage() {
   }
 
   useEffect(() => {
-    fetchTasks(false)
+    const cached = getCached<Task[]>('tasks_list')
+    if (cached && cached.length > 0) {
+      setTasks(cached)
+      setLoading(false)
+    }
+
+    fetchTasks(Boolean(cached && cached.length > 0))
     
     const channel = supabase.channel('tasks_channel')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {

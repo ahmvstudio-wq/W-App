@@ -28,36 +28,11 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefin
 const ACTIVE_WS_STORAGE_KEY = 'focus_active_workspace_id'
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
-  // Synchronous 0ms instant hydration from SWR cache
-  const [workspaces, setWorkspaces] = useState<Workspace[]>(() => {
-    return getCached<Workspace[]>('workspaces') || []
-  })
-
-  const [currentWorkspace, setCurrentWorkspaceState] = useState<Workspace | null>(() => {
-    const list = getCached<Workspace[]>('workspaces') || []
-    if (typeof window !== 'undefined') {
-      const savedId = localStorage.getItem(ACTIVE_WS_STORAGE_KEY)
-      if (savedId) {
-        const found = list.find((w) => w.id === savedId)
-        if (found) return found
-      }
-    }
-    return list[0] || null
-  })
-
-  const [members, setMembers] = useState<WorkspaceMember[]>(() => {
-    const activeId = typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_WS_STORAGE_KEY) : null
-    return activeId ? getCached<WorkspaceMember[]>(`members_${activeId}`) || [] : []
-  })
-
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([])
+  const [currentWorkspace, setCurrentWorkspaceState] = useState<Workspace | null>(null)
+  const [members, setMembers] = useState<WorkspaceMember[]>([])
   const [userRole, setUserRole] = useState<WorkspaceRole | null>('owner')
-  
-  // If we have cached workspaces, never block rendering with a full-screen loading state!
-  const [loading, setLoading] = useState<boolean>(() => {
-    const cached = getCached<Workspace[]>('workspaces')
-    return !cached || cached.length === 0
-  })
-
+  const [loading, setLoading] = useState<boolean>(true)
   const [isRevalidating, setIsRevalidating] = useState(false)
   const isFetchingRef = useRef(false)
 
@@ -214,6 +189,21 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
   // Initial load on mount
   useEffect(() => {
+    // Immediate synchronous cache hydration after mount
+    const cachedWs = getCached<Workspace[]>('workspaces')
+    if (cachedWs && cachedWs.length > 0) {
+      setWorkspaces(cachedWs)
+      const savedId = typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_WS_STORAGE_KEY) : null
+      const matched = cachedWs.find((w) => w.id === savedId) || cachedWs[0]
+      setCurrentWorkspaceState(matched)
+      setLoading(false)
+
+      if (matched?.id) {
+        const cachedMembers = getCached<WorkspaceMember[]>(`members_${matched.id}`)
+        if (cachedMembers) setMembers(cachedMembers)
+      }
+    }
+
     refreshWorkspaces()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {

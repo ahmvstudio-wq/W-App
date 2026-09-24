@@ -33,13 +33,9 @@ const NAV: { href: string; label: string; icon?: LucideIcon }[] = [
 ]
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  // Synchronous 0ms user hydration from cache
-  const [user, setUser] = useState<User | null>(() => {
-    return getCached<User>('auth_user') || null
-  })
-  const [loading, setLoading] = useState<boolean>(() => {
-    return !getCached<User>('auth_user')
-  })
+  const [mounted, setMounted] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
@@ -50,11 +46,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isTutorialOpen, setIsTutorialOpen] = useState(false)
 
   useEffect(() => {
-    let mounted = true
+    setMounted(true)
+    const cachedUser = getCached<User>('auth_user')
+    if (cachedUser) {
+      setUser(cachedUser)
+      setLoading(false)
+    }
+
+    let isMounted = true
 
     async function checkUser() {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!mounted) return
+      if (!isMounted) return
 
       if (!session) {
         setUser(null)
@@ -76,7 +79,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     checkUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return
+      if (!isMounted) return
 
       if (event === 'SIGNED_OUT' || !session) {
         setUser(null)
@@ -96,7 +99,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     })
 
     return () => {
-      mounted = false
+      isMounted = false
       subscription.unsubscribe()
     }
   }, [router])
@@ -136,7 +139,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  if (loading) {
+  if (!mounted || loading) {
     return (
       <LoadingRadar 
         label="Initializing Cultlike OS" 
