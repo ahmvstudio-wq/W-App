@@ -1,7 +1,5 @@
 'use client'
 
-export const runtime = 'edge'
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { callGroq, buildWorkspaceContext } from '@/lib/groq/client'
@@ -27,7 +25,7 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState<boolean>(true)
-  const [brief, setBrief] = useState<string | null>(null)
+  const [brief, setBrief] = useState<string | null>(() => getCached<string>('dashboard_brief'))
   const [generatingBrief, setGeneratingBrief] = useState(false)
   const [userName, setUserName] = useState<string>('Founder')
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -38,8 +36,10 @@ export default function DashboardPage() {
   useEffect(() => {
     const cachedTasks = getCached<Task[]>('dashboard_tasks')
     const cachedProjects = getCached<Project[]>('dashboard_projects')
+    const cachedBrief = getCached<string>('dashboard_brief')
     if (cachedTasks && cachedTasks.length > 0) setTasks(cachedTasks)
     if (cachedProjects && cachedProjects.length > 0) setProjects(cachedProjects)
+    if (cachedBrief) setBrief(cachedBrief)
     if ((cachedTasks && cachedTasks.length > 0) || (cachedProjects && cachedProjects.length > 0)) {
       setLoading(false)
     }
@@ -52,30 +52,11 @@ export default function DashboardPage() {
       .subscribe()
 
     const handleWsChanged = () => fetchData(false)
-    const handleFocus = () => fetchData(true)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchData(true)
-      }
-    }
-
     window.addEventListener('workspace-changed', handleWsChanged)
-    window.addEventListener('focus', handleFocus)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    // Silent background poll every 15s to keep UI in sync with ChatGPT actions
-    const pollInterval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        fetchData(true)
-      }
-    }, 15000)
       
     return () => {
       supabase.removeChannel(channel)
       window.removeEventListener('workspace-changed', handleWsChanged)
-      window.removeEventListener('focus', handleFocus)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      clearInterval(pollInterval)
     }
   }, [])
 
@@ -153,8 +134,11 @@ export default function DashboardPage() {
         { role: 'user', content: `Top priority: ${topTask || 'None pending'}\nBlocker: ${biggestBlocker || 'Zero active blockers'}\nProject: ${slowProject || 'All on track'}` }
       ])
       setBrief(generated)
+      setCached('dashboard_brief', generated)
     } catch {
-      setBrief('• P0 Priority: Deliver core deliverables for the active sprint.\n• Zero critical blockers recorded across projects.\n• Maintain shipping velocity and daily output.')
+      const fallback = '• P0 Priority: Deliver core deliverables for the active sprint.\n• Zero critical blockers recorded across projects.\n• Maintain shipping velocity and daily output.'
+      setBrief(fallback)
+      setCached('dashboard_brief', fallback)
     }
     setGeneratingBrief(false)
   }

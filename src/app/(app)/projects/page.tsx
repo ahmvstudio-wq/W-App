@@ -1,7 +1,5 @@
 'use client'
 
-export const runtime = 'edge'
-
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { 
@@ -236,23 +234,11 @@ export default function ProjectsPage() {
 
     window.addEventListener('workspace-changed', handleWsChanged)
     window.addEventListener('open-create-master-modal', handleOpenCreateMaster)
-    window.addEventListener('focus', handleFocus)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    // Silent background poll every 15s to keep UI in sync with ChatGPT actions
-    const pollInterval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        fetchProjects(true)
-      }
-    }, 15000)
 
     return () => {
       supabase.removeChannel(channel)
       window.removeEventListener('workspace-changed', handleWsChanged)
       window.removeEventListener('open-create-master-modal', handleOpenCreateMaster)
-      window.removeEventListener('focus', handleFocus)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      clearInterval(pollInterval)
     }
   }, [])
 

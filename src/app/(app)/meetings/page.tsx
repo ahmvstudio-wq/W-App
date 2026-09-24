@@ -1,7 +1,5 @@
 'use client'
 
-export const runtime = 'edge'
-
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { 
   Video, Play, Sparkles, Clock, Calendar as CalendarIcon, Users, 

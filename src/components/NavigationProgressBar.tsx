@@ -5,35 +5,23 @@ import { usePathname } from 'next/navigation'
 
 export default function NavigationProgressBar() {
   const pathname = usePathname()
-  const [progress, setProgress] = useState(0)
-  const [visible, setVisible] = useState(false)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
-  const fadeTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'fading'>('idle')
+  const fadeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const startProgress = () => {
-    if (timerRef.current) clearInterval(timerRef.current)
-    if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current)
-    setVisible(true)
-    setProgress(15)
-
-    timerRef.current = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 85) {
-          if (timerRef.current) clearInterval(timerRef.current)
-          return 85
-        }
-        return prev + Math.floor(Math.random() * 12) + 6
-      })
-    }, 120)
+    if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current)
+    setStatus('loading')
   }
 
   const completeProgress = () => {
-    if (timerRef.current) clearInterval(timerRef.current)
-    setProgress(100)
-    fadeTimerRef.current = setTimeout(() => {
-      setVisible(false)
-      setTimeout(() => setProgress(0), 200)
-    }, 280)
+    setStatus('done')
+    if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current)
+    fadeTimeoutRef.current = setTimeout(() => {
+      setStatus('fading')
+      fadeTimeoutRef.current = setTimeout(() => {
+        setStatus('idle')
+      }, 200)
+    }, 150)
   }
 
   // Trigger on route changes
@@ -41,7 +29,7 @@ export default function NavigationProgressBar() {
     completeProgress()
   }, [pathname])
 
-  // Listen to custom async sync events across the entire application
+  // Listen to custom async sync events across the application
   useEffect(() => {
     const handleSyncStart = () => startProgress()
     const handleSyncDone = () => completeProgress()
@@ -49,7 +37,6 @@ export default function NavigationProgressBar() {
     window.addEventListener('cultlike-sync-start', handleSyncStart)
     window.addEventListener('cultlike-sync-done', handleSyncDone)
 
-    // Global click listener on internal links for instant tactile feedback
     const handleLinkClick = (e: MouseEvent) => {
       const target = (e.target as HTMLElement).closest('a')
       if (!target) return
@@ -67,12 +54,11 @@ export default function NavigationProgressBar() {
       window.removeEventListener('cultlike-sync-start', handleSyncStart)
       window.removeEventListener('cultlike-sync-done', handleSyncDone)
       document.removeEventListener('click', handleLinkClick)
-      if (timerRef.current) clearInterval(timerRef.current)
-      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current)
+      if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current)
     }
   }, [])
 
-  if (!visible && progress === 0) return null
+  if (status === 'idle') return null
 
   return (
     <div
@@ -84,17 +70,19 @@ export default function NavigationProgressBar() {
         height: '2.5px',
         zIndex: 99999,
         pointerEvents: 'none',
-        opacity: visible ? 1 : 0,
-        transition: 'opacity 0.25s ease-out',
+        opacity: status === 'fading' ? 0 : 1,
+        transition: 'opacity 0.2s ease-out',
       }}
     >
       <div
         style={{
           height: '100%',
-          width: `${progress}%`,
+          width: status === 'loading' ? '70%' : '100%',
           background: 'linear-gradient(90deg, #111827 0%, #2563eb 60%, #38bdf8 100%)',
           boxShadow: '0 0 10px rgba(56, 189, 248, 0.6), 0 0 4px rgba(37, 99, 235, 0.8)',
-          transition: progress === 100 ? 'width 0.2s ease-out' : 'width 0.3s cubic-bezier(0.1, 0.7, 0.1, 1)',
+          transition: status === 'loading' 
+            ? 'width 0.4s cubic-bezier(0.1, 0.7, 0.1, 1)' 
+            : 'width 0.15s ease-out',
         }}
       />
     </div>

@@ -1,7 +1,5 @@
 'use client'
 
-export const runtime = 'edge'
-
 import { useState, useEffect } from 'react'
 import { Plus, Search, Filter, Folder, FileText, Clock, AlertTriangle, MoreVertical, Trash2, BookOpen, Layers, CheckSquare, Sparkles } from 'lucide-react'
 import Link from 'next/link'
@@ -10,12 +8,13 @@ import type { Document } from '@/types'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { getCached, setCached } from '@/lib/cache/swrCache'
 
 export default function DocumentsPage() {
   const router = useRouter()
   const [activeFolder, setActiveFolder] = useState<string>('all')
-  const [docs, setDocs] = useState<Document[]>([])
-  const [loading, setLoading] = useState(true)
+  const [docs, setDocs] = useState<Document[]>(() => getCached<Document[]>('documents_list') || [])
+  const [loading, setLoading] = useState(() => !(getCached<Document[]>('documents_list')?.length))
   const [searchQuery, setSearchQuery] = useState('')
 
   async function fetchDocs() {
@@ -55,7 +54,10 @@ export default function DocumentsPage() {
       .eq('workspace_id', activeWsId)
       .order('updated_at', { ascending: false })
     
-    if (data) setDocs(data)
+    if (data) {
+      setDocs(data)
+      setCached('documents_list', data)
+    }
     setLoading(false)
   }
 

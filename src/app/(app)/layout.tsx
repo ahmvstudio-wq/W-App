@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -9,7 +9,7 @@ import { getInitials, cn } from '@/lib/utils'
 import {
   LayoutDashboard, FolderKanban, CheckSquare, FileText,
   Zap, Settings, LogOut, Plus, Search, Sparkles, Video, Target,
-  Layers, Activity,
+  Layers, Activity, ChevronDown,
   type LucideIcon
 } from 'lucide-react'
 import CommandPalette from '@/components/CommandPalette'
@@ -22,14 +22,29 @@ import NavigationProgressBar from '@/components/NavigationProgressBar'
 import LoadingRadar from '@/components/ui/LoadingRadar'
 import { getCached, setCached } from '@/lib/cache/swrCache'
 
-const NAV: { href: string; label: string; icon?: LucideIcon }[] = [
+const CORE_NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/projects', label: 'Projects', icon: FolderKanban },
   { href: '/tasks', label: 'Tasks', icon: CheckSquare },
-  { href: '/content', label: 'Content Vault', icon: Layers },
-  { href: '/create', label: 'Cultlike Create', icon: Activity },
-  { href: '/meetings', label: 'Meetings', icon: Video },
   { href: '/documents', label: 'Documents', icon: FileText },
+  { href: '/meetings', label: 'Meetings', icon: Video },
+]
+
+const CREATOR_TOOLS: { href: string; label: string; description: string; icon: LucideIcon; badge?: string }[] = [
+  { 
+    href: '/content', 
+    label: 'Content Vault', 
+    description: 'Multi-platform social scheduler & video hub',
+    icon: Layers,
+    badge: 'Hub'
+  },
+  { 
+    href: '/create', 
+    label: 'Cultlike Create', 
+    description: 'Proof of work scorecard & shipping streaks',
+    icon: Activity,
+    badge: 'Scorecard'
+  },
 ]
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -37,6 +52,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [creatorMenuOpen, setCreatorMenuOpen] = useState(false)
+  const creatorMenuRef = useRef<HTMLDivElement>(null)
+  const userMenuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -139,6 +157,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  // Auto-close menus on route change
+  useEffect(() => {
+    setCreatorMenuOpen(false)
+    setUserMenuOpen(false)
+  }, [pathname])
+
+  // Click outside to close menus
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (creatorMenuRef.current && !creatorMenuRef.current.contains(event.target as Node)) {
+        setCreatorMenuOpen(false)
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const isCreatorActive = pathname === '/content' || pathname?.startsWith('/content') || pathname === '/create' || pathname?.startsWith('/create')
+
   if (!mounted || loading) {
     return (
       <LoadingRadar 
@@ -170,7 +210,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* Center: Minimalist Navigation Pills */}
         <nav className="hidden md:flex items-center gap-1 bg-[#f5f5f7] border border-black/[0.04] p-1 rounded-2xl font-body">
-          {NAV.map(({ href, label, icon: Icon }) => {
+          {CORE_NAV.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href))
             return (
               <Link
@@ -184,19 +224,92 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     : 'text-[#6b7280] hover:text-black hover:bg-black/[0.02]'
                 )}
               >
-                {Icon && (
-                  <Icon
-                    size={14}
-                    className={cn(
-                      'transition-colors',
-                      active ? 'text-black' : 'text-[#9ca3af]'
-                    )}
-                  />
-                )}
+                <Icon
+                  size={14}
+                  className={cn(
+                    'transition-colors',
+                    active ? 'text-black' : 'text-[#9ca3af]'
+                  )}
+                />
                 <span>{label}</span>
               </Link>
             )
           })}
+
+          {/* Elegant subtle divider separating Core OS tools from Creator Suite */}
+          <div className="h-4 w-px bg-black/[0.08] mx-1" />
+
+          {/* Dedicated Creator Studio Dropdown */}
+          <div className="relative" ref={creatorMenuRef}>
+            <button
+              onClick={() => setCreatorMenuOpen(!creatorMenuOpen)}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all duration-150 relative font-light cursor-pointer select-none',
+                isCreatorActive
+                  ? 'bg-white text-black font-normal shadow-sm'
+                  : 'text-[#6b7280] hover:text-black hover:bg-black/[0.02]'
+              )}
+            >
+              <Sparkles
+                size={13}
+                className={cn(
+                  'transition-colors',
+                  isCreatorActive ? 'text-amber-500' : 'text-[#9ca3af]'
+                )}
+              />
+              <span>Creator Studio</span>
+              <ChevronDown
+                size={11}
+                className={cn(
+                  'transition-transform duration-200 text-[#9ca3af]',
+                  creatorMenuOpen && 'rotate-180'
+                )}
+              />
+            </button>
+
+            {creatorMenuOpen && (
+              <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-72 bg-white border border-black/[0.08] rounded-2xl shadow-xl p-2 z-50 animate-fadeIn font-body">
+                <div className="px-3 py-2 border-b border-black/[0.04] mb-1">
+                  <div className="text-[10px] uppercase tracking-wider font-semibold text-[#9ca3af]">Creator Studio</div>
+                  <div className="text-[11px] text-[#6b7280]">Dedicated tooling for media & brand creators</div>
+                </div>
+                {CREATOR_TOOLS.map((tool) => {
+                  const isToolActive = pathname === tool.href || pathname?.startsWith(tool.href)
+                  const ToolIcon = tool.icon
+                  return (
+                    <Link
+                      key={tool.href}
+                      href={tool.href}
+                      onClick={() => setCreatorMenuOpen(false)}
+                      onMouseEnter={() => router.prefetch(tool.href)}
+                      className={cn(
+                        'flex items-start gap-3 p-2.5 rounded-xl transition-all group',
+                        isToolActive ? 'bg-black/[0.04] text-black' : 'hover:bg-black/[0.02] text-[#4b5563] hover:text-black'
+                      )}
+                    >
+                      <div className={cn(
+                        'p-2 rounded-lg mt-0.5 transition-colors',
+                        isToolActive ? 'bg-black text-white' : 'bg-black/[0.04] text-black group-hover:bg-black group-hover:text-white'
+                      )}>
+                        <ToolIcon size={15} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-black">{tool.label}</span>
+                          {tool.badge && (
+                            <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-black/[0.05] text-[#4b5563]">
+                              {tool.badge}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-[#9ca3af] truncate mt-0.5">{tool.description}</div>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Right Actions & User Profile */}
@@ -243,7 +356,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </button>
 
           {/* User Profile Avatar with Dropdown */}
-          <div className="relative">
+          <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="w-8 h-8 rounded-full bg-black text-white font-medium text-xs flex items-center justify-center shadow-sm cursor-pointer hover:ring-2 hover:ring-black/10 transition-all"
@@ -297,31 +410,90 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Sleek Mobile Bottom Navigation Bar (iOS/Android Native Style) */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-black/[0.08] px-2 py-1.5 flex items-center justify-around shadow-lg font-body safe-area-bottom">
-        {NAV.map(({ href, label, icon: Icon }) => {
+        {CORE_NAV.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href))
           return (
             <Link
               key={href}
               href={href}
               className={cn(
-                'flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-150 relative min-w-[50px]',
+                'flex flex-col items-center justify-center py-1 px-1.5 rounded-xl transition-all duration-150 relative min-w-[45px]',
                 active
                   ? 'text-black font-semibold'
                   : 'text-[#8a8d95] hover:text-black'
               )}
             >
-              {Icon && (
-                <div className={cn(
-                  'p-1 rounded-lg transition-colors',
-                  active && 'bg-black text-white'
-                )}>
-                  <Icon size={16} />
-                </div>
-              )}
-              <span className="text-[10px] tracking-tight mt-0.5">{label}</span>
+              <div className={cn(
+                'p-1 rounded-lg transition-colors',
+                active && 'bg-black text-white'
+              )}>
+                <Icon size={15} />
+              </div>
+              <span className="text-[9px] tracking-tight mt-0.5">{label}</span>
             </Link>
           )
         })}
+
+        {/* Mobile Creator Tools Trigger */}
+        <div className="relative">
+          <button
+            onClick={() => setCreatorMenuOpen(!creatorMenuOpen)}
+            className={cn(
+              'flex flex-col items-center justify-center py-1 px-1.5 rounded-xl transition-all duration-150 relative min-w-[45px]',
+              isCreatorActive
+                ? 'text-black font-semibold'
+                : 'text-[#8a8d95] hover:text-black'
+            )}
+          >
+            <div className={cn(
+              'p-1 rounded-lg transition-colors',
+              isCreatorActive && 'bg-black text-white'
+            )}>
+              <Sparkles size={15} />
+            </div>
+            <span className="text-[9px] tracking-tight mt-0.5">Creator</span>
+          </button>
+
+          {creatorMenuOpen && (
+            <div className="fixed bottom-16 left-4 right-4 bg-white border border-black/[0.08] rounded-2xl shadow-2xl p-3 z-50 animate-fadeIn">
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-black/[0.04]">
+                <div>
+                  <div className="text-xs font-semibold text-black">Creator Studio</div>
+                  <div className="text-[10px] text-[#9ca3af]">Content Vault & Proof Scorecard</div>
+                </div>
+                <button 
+                  onClick={() => setCreatorMenuOpen(false)} 
+                  className="text-xs font-medium text-neutral-500 hover:text-black px-2 py-1 bg-neutral-100 rounded-lg"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="space-y-1">
+                {CREATOR_TOOLS.map((tool) => {
+                  const ToolIcon = tool.icon
+                  const isToolActive = pathname === tool.href || pathname?.startsWith(tool.href)
+                  return (
+                    <Link
+                      key={tool.href}
+                      href={tool.href}
+                      onClick={() => setCreatorMenuOpen(false)}
+                      className={cn(
+                        'flex items-center gap-3 p-2.5 rounded-xl text-xs transition-colors',
+                        isToolActive ? 'bg-black text-white' : 'text-neutral-700 hover:bg-neutral-100'
+                      )}
+                    >
+                      <ToolIcon size={16} />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium">{tool.label}</div>
+                        <div className={cn("text-[10px] truncate", isToolActive ? "text-neutral-300" : "text-neutral-400")}>{tool.description}</div>
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <NaturalLanguageInputModal
