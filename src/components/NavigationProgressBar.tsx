@@ -29,6 +29,41 @@ export default function NavigationProgressBar() {
     completeProgress()
   }, [pathname])
 
+  // Instant visual feedback the millisecond a route link is clicked
+  useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement)?.closest('a')
+      if (!target) return
+      
+      const href = target.getAttribute('href')
+      if (!href) return
+      
+      if (
+        href.startsWith('#') ||
+        href.startsWith('http://') ||
+        href.startsWith('https://') ||
+        href.startsWith('mailto:') ||
+        href.startsWith('tel:') ||
+        target.target === '_blank' ||
+        e.ctrlKey ||
+        e.metaKey ||
+        e.shiftKey ||
+        e.altKey
+      ) {
+        return
+      }
+
+      if (href === pathname) return
+
+      startProgress()
+    }
+
+    document.addEventListener('click', handleDocumentClick, { capture: true })
+    return () => {
+      document.removeEventListener('click', handleDocumentClick, { capture: true })
+    }
+  }, [pathname])
+
   // Listen to custom async sync events across the application
   useEffect(() => {
     const handleSyncStart = () => startProgress()

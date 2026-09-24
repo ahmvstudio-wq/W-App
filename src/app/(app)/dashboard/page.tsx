@@ -22,9 +22,26 @@ import TaskDetailDrawer from '@/components/TaskDetailDrawer'
 import { getCached, setCached } from '@/lib/cache/swrCache'
 
 export default function DashboardPage() {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    if (typeof window !== 'undefined') {
+      return getCached<Task[]>('dashboard_tasks') || []
+    }
+    return []
+  })
+  const [projects, setProjects] = useState<Project[]>(() => {
+    if (typeof window !== 'undefined') {
+      return getCached<Project[]>('dashboard_projects') || []
+    }
+    return []
+  })
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const cachedT = getCached<Task[]>('dashboard_tasks')
+      const cachedP = getCached<Project[]>('dashboard_projects')
+      return (!cachedT || cachedT.length === 0) && (!cachedP || cachedP.length === 0)
+    }
+    return true
+  })
   const [brief, setBrief] = useState<string | null>(() => getCached<string>('dashboard_brief'))
   const [generatingBrief, setGeneratingBrief] = useState(false)
   const [userName, setUserName] = useState<string>('Founder')

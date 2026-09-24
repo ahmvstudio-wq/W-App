@@ -27,8 +27,20 @@ export default function TasksPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
   const [isExportModalOpen, setIsExportModalOpen] = useState(false)
-  const [tasks, setTasks] = useState<Task[]>([]) 
-  const [loading, setLoading] = useState<boolean>(true)
+  // Data States (Instant 0ms initial paint from SWR cache)
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    if (typeof window !== 'undefined') {
+      return getCached<Task[]>('tasks_list') || []
+    }
+    return []
+  }) 
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = getCached<Task[]>('tasks_list')
+      return !cached || cached.length === 0
+    }
+    return true
+  })
   const [searchQuery, setSearchQuery] = useState('')
   const [priorityFilter, setPriorityFilter] = useState<string>('all')
   const [selectedDate, setSelectedDate] = useState<string>('')
