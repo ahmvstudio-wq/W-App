@@ -14,8 +14,7 @@ import { toast } from 'sonner'
 import { cn, getInitials } from '@/lib/utils'
 import { challengeTask } from '@/lib/groq/client'
 import type { Task, Priority, TaskStatus, Project } from '@/types'
-
-export const dynamic = 'force-dynamic'
+import { getCached, setCached } from '@/lib/cache/swrCache'
 
 interface MicroTask {
   id: string
@@ -29,23 +28,25 @@ export default function DedicatedTaskPage() {
   const router = useRouter()
   const taskId = params?.id as string
 
-  const [task, setTask] = useState<Task | null>(null)
-  const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState(true)
+  // Instant SWR Cache for 0ms Task Paint
+  const cachedInitialTask = getCached<Task>(`task_${taskId}`) || getCached<Task[]>('tasks_list')?.find(t => t.id === taskId) || null
+  const [task, setTask] = useState<Task | null>(cachedInitialTask)
+  const [projects, setProjects] = useState<Project[]>(() => getCached<Project[]>('projects_list') || [])
+  const [loading, setLoading] = useState<boolean>(!cachedInitialTask)
   const [saving, setSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Form State
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [outputDescription, setOutputDescription] = useState('')
-  const [priority, setPriority] = useState<Priority>('p1')
-  const [status, setStatus] = useState<TaskStatus>('todo')
-  const [timeBox, setTimeBox] = useState<number>(45)
-  const [dueDate, setDueDate] = useState('')
-  const [startTime, setStartTime] = useState('')
-  const [endTime, setEndTime] = useState('')
-  const [projectId, setProjectId] = useState('')
+  // Form State initialized from cache immediately
+  const [title, setTitle] = useState(cachedInitialTask?.title || '')
+  const [description, setDescription] = useState(cachedInitialTask?.description || '')
+  const [outputDescription, setOutputDescription] = useState(cachedInitialTask?.output_description || '')
+  const [priority, setPriority] = useState<Priority>(cachedInitialTask?.priority || 'p1')
+  const [status, setStatus] = useState<TaskStatus>(cachedInitialTask?.status || 'todo')
+  const [timeBox, setTimeBox] = useState<number>(cachedInitialTask?.time_box_minutes || 45)
+  const [dueDate, setDueDate] = useState(cachedInitialTask?.due_date ? cachedInitialTask.due_date.slice(0, 16) : '')
+  const [startTime, setStartTime] = useState(cachedInitialTask?.start_time ? cachedInitialTask.start_time.slice(0, 16) : '')
+  const [endTime, setEndTime] = useState(cachedInitialTask?.end_time ? cachedInitialTask.end_time.slice(0, 16) : '')
+  const [projectId, setProjectId] = useState(cachedInitialTask?.project_id || '')
 
   // Micro-Tasks State
   const [microtasks, setMicrotasks] = useState<MicroTask[]>([])
@@ -64,21 +65,30 @@ export default function DedicatedTaskPage() {
   const [auditingAi, setAuditingAi] = useState(false)
 
   async function fetchTaskData(silent = false) {
-    if (!silent) setLoading(true)
+    if (!silent && !task) setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*, project:projects(*), owner:profiles(*)')
-        .eq('id', taskId)
-        .single()
+      const [taskRes, projRes] = await Promise.all([
+        supabase
+          .from('tasks')
+          .select('*, project:projects(*), owner:profiles(*)')
+          .eq('id', taskId)
+          .single(),
+        projects.length === 0 
+          ? supabase.from('projects').select('*').order('name')
+          : Promise.resolve({ data: null, error: null })
+      ])
 
+      const { data, error } = taskRes
       if (error || !data) {
-        toast.error('Task not found')
-        router.push('/tasks')
+        if (!task) {
+          toast.error('Task not found')
+          router.push('/tasks')
+        }
         return
       }
 
       setTask(data)
+      setCached(`task_${taskId}`, data)
       setTitle(data.title || '')
       setDescription(data.description || '')
       setOutputDescription(data.output_description || '')
@@ -102,11 +112,12 @@ export default function DedicatedTaskPage() {
         setMicrotasks(getDefaultMicrotasks(data.status))
       }
 
-      // Fetch projects
-      const { data: projData } = await supabase.from('projects').select('*').order('name')
-      if (projData) setProjects(projData)
+      if (projRes.data) {
+        setProjects(projRes.data)
+        setCached('projects_list', projRes.data)
+      }
     } catch (err: any) {
-      toast.error(`Error loading task: ${err.message}`)
+      if (!task) toast.error(`Error loading task: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -123,7 +134,7 @@ export default function DedicatedTaskPage() {
 
   useEffect(() => {
     if (!taskId) return
-    fetchTaskData(false)
+    fetchTaskData(Boolean(task))
 
     const channel = supabase.channel(`task-${taskId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `id=eq.${taskId}` }, () => {
@@ -131,20 +142,8 @@ export default function DedicatedTaskPage() {
       })
       .subscribe()
 
-    const handleFocus = () => fetchTaskData(true)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchTaskData(true)
-      }
-    }
-
-    window.addEventListener('focus', handleFocus)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
     return () => {
       supabase.removeChannel(channel)
-      window.removeEventListener('focus', handleFocus)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [taskId])
 

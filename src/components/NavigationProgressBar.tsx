@@ -35,25 +35,9 @@ export default function NavigationProgressBar() {
     const handleSyncDone = () => completeProgress()
 
     window.addEventListener('cultlike-sync-start', handleSyncStart)
-    window.addEventListener('cultlike-sync-done', handleSyncDone)
-
-    const handleLinkClick = (e: MouseEvent) => {
-      const target = (e.target as HTMLElement).closest('a')
-      if (!target) return
-      const href = target.getAttribute('href')
-      if (href && href.startsWith('/') && !href.startsWith('//') && !target.getAttribute('target')) {
-        if (href !== window.location.pathname) {
-          startProgress()
-        }
-      }
-    }
-
-    document.addEventListener('click', handleLinkClick, { passive: true })
-
     return () => {
       window.removeEventListener('cultlike-sync-start', handleSyncStart)
       window.removeEventListener('cultlike-sync-done', handleSyncDone)
-      document.removeEventListener('click', handleLinkClick)
       if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current)
     }
   }, [])

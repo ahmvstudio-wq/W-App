@@ -8,28 +8,64 @@ import {
   Plus, Settings, Share2, MoreVertical, Trash2, Edit3, Building2
 } from 'lucide-react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { getProjectHealth, formatDateTime, getInitials, daysUntil, cn } from '@/lib/utils'
 import type { Project, Task } from '@/types'
+import { getCached, setCached } from '@/lib/cache/swrCache'
 
 // Component imports
-import ProjectAssets from './components/ProjectAssets'
-import ProjectWhiteboard from './components/ProjectWhiteboard'
-import ProjectCalendar from './components/ProjectCalendar'
 import ProjectOverview from './components/ProjectOverview'
 import CreateTaskModal from '@/components/CreateTaskModal'
 import TaskDetailDrawer from '@/components/TaskDetailDrawer'
 
-export const dynamic = 'force-dynamic'
+// Code-split heavy whiteboard (React Flow) and auxiliary tabs so initial page loads in <50ms
+const ProjectWhiteboard = dynamic(() => import('./components/ProjectWhiteboard'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[600px] flex items-center justify-center bg-white rounded-3xl border border-black/[0.08]">
+      <div className="text-xs font-mono text-neutral-400 animate-pulse">Initializing Whiteboard Canvas...</div>
+    </div>
+  )
+})
+
+const ProjectCalendar = dynamic(() => import('./components/ProjectCalendar'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[400px] flex items-center justify-center bg-white rounded-3xl border border-black/[0.08]">
+      <div className="text-xs font-mono text-neutral-400 animate-pulse">Loading Calendar...</div>
+    </div>
+  )
+})
+
+const ProjectAssets = dynamic(() => import('./components/ProjectAssets'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[300px] flex items-center justify-center bg-white rounded-3xl border border-black/[0.08]">
+      <div className="text-xs font-mono text-neutral-400 animate-pulse">Loading Assets...</div>
+    </div>
+  )
+})
 
 export default function SingleProjectPage() {
   const params = useParams()
   const router = useRouter()
   const projectId = params.id as string
   
-  const [project, setProject] = useState<Project | null>(null)
-  const [loading, setLoading] = useState(true)
+  // Instant 0ms paint from SWR cache
+  const [project, setProject] = useState<Project | null>(() => {
+    const cachedSingle = getCached<Project>(`project_${projectId}`)
+    if (cachedSingle) return cachedSingle
+    const cachedList = getCached<Project[]>('projects_list')
+    return cachedList?.find(p => p.id === projectId) || null
+  })
+  const [loading, setLoading] = useState<boolean>(() => {
+    const cachedSingle = getCached<Project>(`project_${projectId}`)
+    if (cachedSingle) return false
+    const cachedList = getCached<Project[]>('projects_list')
+    return !cachedList?.some(p => p.id === projectId)
+  })
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'whiteboard' | 'assets' | 'calendar'>('overview')
 
   async function deleteProject() {
@@ -54,7 +90,7 @@ export default function SingleProjectPage() {
     
     const { data, error } = await supabase
       .from('projects')
-      .select('*, tasks(*)')
+      .select('*, tasks(*), owner:profiles(*)')
       .eq('id', projectId)
       .single()
 
@@ -63,30 +99,20 @@ export default function SingleProjectPage() {
     }
 
     if (data) {
-      const { data: ownerData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.owner_id)
-        .single()
-
       const sortedTasks = data.tasks ? [...data.tasks].sort((a: any, b: any) => {
         const priorityOrder = { p0: 0, p1: 1, p2: 2, p3: 3 }
         return (priorityOrder[a.priority as keyof typeof priorityOrder] || 0) - (priorityOrder[b.priority as keyof typeof priorityOrder] || 0)
       }) : []
       
-      let masterName = data.master_project
-      if (data.workspace_id) {
-        const { data: wsRow } = await supabase.from('workspaces').select('settings, owner_id').eq('id', data.workspace_id).single()
-        masterName = wsRow?.settings?.project_master_map?.[data.id] || masterName || wsRow?.settings?.master_projects?.[0]?.name || ''
-      }
-      
-      setProject({ ...data, master_project: masterName, owner: ownerData, tasks: sortedTasks })
+      const fullProject = { ...data, tasks: sortedTasks }
+      setProject(fullProject)
+      setCached(`project_${projectId}`, fullProject)
     }
     setLoading(false)
   }
 
   useEffect(() => {
-    fetchProject(false)
+    fetchProject(Boolean(project))
     
     const channel = supabase.channel(`project-${projectId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'projects', filter: `id=eq.${projectId}` }, () => {
@@ -97,27 +123,8 @@ export default function SingleProjectPage() {
       })
       .subscribe()
       
-    const handleFocus = () => fetchProject(true)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchProject(true)
-      }
-    }
-
-    window.addEventListener('focus', handleFocus)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    const pollInterval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        fetchProject(true)
-      }
-    }, 15000)
-
     return () => {
       supabase.removeChannel(channel)
-      window.removeEventListener('focus', handleFocus)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      clearInterval(pollInterval)
     }
   }, [projectId])
 

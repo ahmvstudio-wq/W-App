@@ -13,6 +13,7 @@ import Link from 'next/link'
 import { cn, getInitials } from '@/lib/utils'
 import { challengeTask } from '@/lib/groq/client'
 import type { Task, Priority, TaskStatus, Project } from '@/types'
+import { getCached } from '@/lib/cache/swrCache'
 
 interface TaskDetailDrawerProps {
   task: Task | null
@@ -31,7 +32,7 @@ export default function TaskDetailDrawer({ task, onClose, onUpdate }: TaskDetail
   const [endTime, setEndTime] = useState<string>(task?.end_time ? task.end_time.slice(0, 16) : '')
   const [projectId, setProjectId] = useState<string>(task?.project_id || '')
   
-  const [projects, setProjects] = useState<Project[]>([])
+  const [projects, setProjects] = useState<Project[]>(() => getCached<Project[]>('projects_list') || [])
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [activeTab, setActiveTab] = useState<'details' | 'subtasks' | 'ai' | 'activity'>('details')
@@ -75,11 +76,13 @@ export default function TaskDetailDrawer({ task, onClose, onUpdate }: TaskDetail
 
   useEffect(() => {
     async function fetchProjects() {
-      const { data } = await supabase.from('projects').select('*').order('name')
-      if (data) setProjects(data)
+      if (projects.length === 0) {
+        const { data } = await supabase.from('projects').select('*').order('name')
+        if (data) setProjects(data)
+      }
     }
     fetchProjects()
-  }, [])
+  }, [projects.length])
 
   if (!task) return null
 

@@ -216,7 +216,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <Link
                 key={href}
                 href={href}
-                onMouseEnter={() => router.prefetch(href)}
                 className={cn(
                   'flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs transition-all duration-150 relative font-light',
                   active
@@ -282,7 +281,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       key={tool.href}
                       href={tool.href}
                       onClick={() => setCreatorMenuOpen(false)}
-                      onMouseEnter={() => router.prefetch(tool.href)}
                       className={cn(
                         'flex items-start gap-3 p-2.5 rounded-xl transition-all group',
                         isToolActive ? 'bg-black/[0.04] text-black' : 'hover:bg-black/[0.02] text-[#4b5563] hover:text-black'
