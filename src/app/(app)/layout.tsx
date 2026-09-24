@@ -19,7 +19,7 @@ import NaturalLanguageInputModal from '@/components/NaturalLanguageInputModal'
 import GameTutorialModal from '@/components/GameTutorialModal'
 import { WorkspaceProvider } from '@/context/WorkspaceContext'
 import NavigationProgressBar from '@/components/NavigationProgressBar'
-import LoadingRadar from '@/components/ui/LoadingRadar'
+import AppleLoadingScreen from '@/components/ui/AppleLoadingScreen'
 import { getCached, setCached } from '@/lib/cache/swrCache'
 
 const CORE_NAV: { href: string; label: string; icon: LucideIcon }[] = [
@@ -181,9 +181,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (!mounted || loading) {
     return (
-      <LoadingRadar 
+      <AppleLoadingScreen 
         label="Initializing Cultlike OS" 
-        sublabel="Zero Latency Workspace" 
+        sublabel="Zero Latency Workspace // Vision Core" 
         fullScreen 
       />
     )
