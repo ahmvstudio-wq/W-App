@@ -62,6 +62,7 @@ export default function MeetingsPage() {
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [activeModalTab, setActiveModalTab] = useState<'summary' | 'transcript' | 'actions'>('summary')
   const [convertedActionIds, setConvertedActionIds] = useState<Record<string, boolean>>({})
+  const [copiedType, setCopiedType] = useState<'summary' | 'transcript' | null>(null)
 
   // Fathom Enhanced Filters & Analytics State
   const [fathomDateRange, setFathomDateRange] = useState<FathomDateRange>('all')
@@ -244,6 +245,88 @@ export default function MeetingsPage() {
       } finally {
         setLoadingDetail(false)
       }
+    }
+  }
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text)
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = text
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+      }
+      toast.success(`${label} copied to clipboard!`)
+      return true
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err)
+      toast.error('Failed to copy to clipboard')
+      return false
+    }
+  }
+
+  const handleCopySummary = async (meeting: FathomMeeting) => {
+    const formattedSummary = [
+      `Meeting: ${meeting.title}`,
+      `Date: ${format(new Date(meeting.recorded_at || Date.now()), 'dd MMM yyyy, hh:mm a')}`,
+      meeting.duration_minutes ? `Duration: ${meeting.duration_minutes}m` : '',
+      meeting.attendees?.length ? `Attendees: ${meeting.attendees.map(a => a.name).join(', ')}` : '',
+      '',
+      '=== EXECUTIVE SUMMARY ===',
+      meeting.summary || 'No summary available.',
+      '',
+      ...(meeting.key_takeaways?.length ? [
+        '=== KEY TAKEAWAYS ===',
+        ...meeting.key_takeaways.map((t, i) => `${i + 1}. ${t}`),
+        ''
+      ] : []),
+      ...(meeting.action_items?.length ? [
+        '=== ACTION ITEMS ===',
+        ...meeting.action_items.map((a, i) => `[ ] ${a.text}${a.assignee ? ` (@${a.assignee})` : ''}`),
+        ''
+      ] : []),
+      meeting.share_url || meeting.video_url || meeting.meeting_url 
+        ? `Recording Link: ${meeting.share_url || meeting.video_url || meeting.meeting_url}` 
+        : ''
+    ].filter(Boolean).join('\n')
+
+    const success = await copyToClipboard(formattedSummary, 'Meeting summary')
+    if (success) {
+      setCopiedType('summary')
+      setTimeout(() => setCopiedType((c) => c === 'summary' ? null : c), 2500)
+    }
+  }
+
+  const handleCopyTranscript = async (meeting: FathomMeeting) => {
+    if (!meeting.transcript || meeting.transcript.length === 0) {
+      toast.error('No transcript available to copy')
+      return
+    }
+
+    const formattedTranscript = [
+      `Meeting: ${meeting.title}`,
+      `Date: ${format(new Date(meeting.recorded_at || Date.now()), 'dd MMM yyyy, hh:mm a')}`,
+      `Total Dialogue Turns: ${meeting.transcript.length}`,
+      '',
+      '=== FULL TRANSCRIPT ===',
+      '',
+      ...meeting.transcript.map(line => {
+        const time = line.timestamp ? `[${line.timestamp}] ` : ''
+        const speaker = line.speaker ? `${line.speaker}: ` : ''
+        return `${time}${speaker}${line.text}`
+      })
+    ].join('\n')
+
+    const success = await copyToClipboard(formattedTranscript, 'Full transcript')
+    if (success) {
+      setCopiedType('transcript')
+      setTimeout(() => setCopiedType((c) => c === 'transcript' ? null : c), 2500)
     }
   }
 
@@ -1414,9 +1497,18 @@ export default function MeetingsPage() {
                       </h3>
                     </div>
 
-                    <span className="p-2 rounded-xl bg-purple-50 text-purple-700 flex-shrink-0">
-                      <Play size={14} />
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => handleCopySummary(meeting)}
+                        className="p-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-black transition-colors cursor-pointer"
+                        title="Copy meeting summary at once"
+                      >
+                        <Copy size={13} />
+                      </button>
+                      <span className="p-2 rounded-xl bg-purple-50 text-purple-700">
+                        <Play size={14} />
+                      </span>
+                    </div>
                   </div>
 
                   <p className="text-xs text-[#4b5563] font-light line-clamp-2 leading-relaxed">
@@ -1590,26 +1682,82 @@ export default function MeetingsPage() {
             </div>
 
             {/* Modal Segmented Tab Header */}
-            <div className="flex items-center gap-2 px-6 py-3 border-b border-black/[0.04] bg-[#fafafa]">
-              {[
-                { id: 'summary', label: 'AI Executive Summary', icon: Sparkles },
-                { id: 'transcript', label: 'Full Transcript', icon: FileText },
-                { id: 'actions', label: 'Action Items & Deliverables', icon: CheckSquare },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveModalTab(tab.id as any)}
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer font-normal',
-                    activeModalTab === tab.id
-                      ? 'bg-black text-white font-medium shadow-xs'
-                      : 'text-[#6b7280] hover:text-black'
-                  )}
-                >
-                  <tab.icon size={13} />
-                  <span>{tab.label}</span>
-                </button>
-              ))}
+            <div className="flex items-center justify-between px-6 py-3 border-b border-black/[0.04] bg-[#fafafa]">
+              <div className="flex items-center gap-2">
+                {[
+                  { id: 'summary', label: 'AI Executive Summary', icon: Sparkles },
+                  { id: 'transcript', label: 'Full Transcript', icon: FileText },
+                  { id: 'actions', label: 'Action Items & Deliverables', icon: CheckSquare },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveModalTab(tab.id as any)}
+                    className={cn(
+                      'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer font-normal',
+                      activeModalTab === tab.id
+                        ? 'bg-black text-white font-medium shadow-xs'
+                        : 'text-[#6b7280] hover:text-black'
+                    )}
+                  >
+                    <tab.icon size={13} />
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Fast Copy Action Button for Active Tab */}
+              <div className="flex items-center gap-2">
+                {activeModalTab === 'summary' && (
+                  <button
+                    onClick={() => handleCopySummary(selectedMeeting)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer border shadow-2xs font-normal",
+                      copiedType === 'summary'
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-white hover:bg-neutral-50 text-[#374151] hover:text-black border-black/[0.08]"
+                    )}
+                    title="Copy full AI summary at once"
+                  >
+                    {copiedType === 'summary' ? (
+                      <>
+                        <Check size={13} className="text-emerald-600" />
+                        <span className="text-emerald-700 font-medium">Summary Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={13} className="text-neutral-500" />
+                        <span>Copy Summary</span>
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {activeModalTab === 'transcript' && (
+                  <button
+                    onClick={() => handleCopyTranscript(selectedMeeting)}
+                    disabled={!selectedMeeting.transcript || selectedMeeting.transcript.length === 0}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer border shadow-2xs font-normal disabled:opacity-40 disabled:cursor-not-allowed",
+                      copiedType === 'transcript'
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-white hover:bg-neutral-50 text-[#374151] hover:text-black border-black/[0.08]"
+                    )}
+                    title="Copy full transcript at once"
+                  >
+                    {copiedType === 'transcript' ? (
+                      <>
+                        <Check size={13} className="text-emerald-600" />
+                        <span className="text-emerald-700 font-medium">Transcript Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={13} className="text-neutral-500" />
+                        <span>Copy Full Transcript</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Modal Body */}
@@ -1626,12 +1774,32 @@ export default function MeetingsPage() {
                 <div className="space-y-4">
                   <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.04] space-y-4">
                     <div className="flex items-center justify-between border-b border-black/[0.04] pb-3">
-                      <h4 className="text-xs font-mono uppercase tracking-wider text-[#6b7280]">
-                        Official Fathom Meeting Intelligence (Direct API Source)
-                      </h4>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
-                        Fathom Enhanced Summary
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs font-mono uppercase tracking-wider text-[#6b7280]">
+                          Official Fathom Meeting Intelligence (Direct API Source)
+                        </h4>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                          Fathom Enhanced Summary
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => handleCopySummary(selectedMeeting)}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-all cursor-pointer"
+                        title="Copy full summary at once"
+                      >
+                        {copiedType === 'summary' ? (
+                          <>
+                            <Check size={12} className="text-emerald-600" />
+                            <span className="text-emerald-600 font-semibold">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={12} />
+                            <span>Copy All</span>
+                          </>
+                        )}
+                      </button>
                     </div>
 
                     <div className="space-y-3 text-xs text-[#374151] leading-relaxed">
@@ -1693,16 +1861,54 @@ export default function MeetingsPage() {
               {/* Transcript View */}
               {activeModalTab === 'transcript' && (
                 <div className="space-y-3">
+                  {selectedMeeting.transcript && selectedMeeting.transcript.length > 0 && (
+                    <div className="flex items-center justify-between p-3.5 rounded-2xl bg-neutral-50 border border-black/[0.04]">
+                      <div className="flex items-center gap-2 text-xs text-[#4b5563] font-light">
+                        <FileText size={14} className="text-purple-600" />
+                        <span>
+                          <strong className="text-black font-medium">{selectedMeeting.transcript.length}</strong> dialogue turns recorded with timestamped speakers
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => handleCopyTranscript(selectedMeeting)}
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-[11px] font-medium text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-all cursor-pointer"
+                        title="Copy full transcript at once"
+                      >
+                        {copiedType === 'transcript' ? (
+                          <>
+                            <Check size={12} className="text-emerald-600" />
+                            <span className="text-emerald-600 font-semibold">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={12} />
+                            <span>Copy All Transcript</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
                   {!selectedMeeting.transcript || selectedMeeting.transcript.length === 0 ? (
                     <div className="py-12 text-center text-xs text-[#9ca3af] font-light">
                       No timestamped transcript available for this call.
                     </div>
                   ) : (
                     selectedMeeting.transcript.map((line, idx) => (
-                      <div key={idx} className="p-3.5 rounded-2xl bg-[#fafafa] border border-black/[0.03] space-y-1">
+                      <div key={idx} className="group/line p-3.5 rounded-2xl bg-[#fafafa] border border-black/[0.03] space-y-1 relative">
                         <div className="flex items-center justify-between text-[10px] font-mono text-[#9ca3af]">
                           <span className="text-black font-semibold">{line.speaker}</span>
-                          <span>{line.timestamp}</span>
+                          <div className="flex items-center gap-2">
+                            <span>{line.timestamp}</span>
+                            <button
+                              onClick={() => copyToClipboard(`[${line.timestamp}] ${line.speaker}: ${line.text}`, 'Dialogue line')}
+                              className="opacity-0 group-hover/line:opacity-100 p-1 hover:text-black hover:bg-black/5 rounded transition-all cursor-pointer"
+                              title="Copy this line"
+                            >
+                              <Copy size={11} />
+                            </button>
+                          </div>
                         </div>
                         <p className="text-xs text-[#4b5563] font-light leading-relaxed">{line.text}</p>
                       </div>
