@@ -763,6 +763,10 @@ export default function ProjectsPage() {
                         <Link
                           key={p.id}
                           href={`/projects/${p.id}`}
+                          onClick={() => {
+                            setCached(`project_${p.id}`, p)
+                            triggerSyncStart()
+                          }}
                           className="p-4 rounded-2xl bg-[#f8f9fa] hover:bg-white border border-black/[0.08] hover:border-black/[0.22] hover:shadow-md transition-all block group space-y-2"
                         >
                           <div className="flex items-center justify-between gap-2">
@@ -959,6 +963,10 @@ export default function ProjectsPage() {
               <Link
                 href={`/projects/${project.id}`}
                 key={project.id}
+                onClick={() => {
+                  setCached(`project_${project.id}`, project)
+                  triggerSyncStart()
+                }}
                 className="group block rounded-3xl bg-white hover:bg-[#fafbff] border border-black/[0.08] hover:border-black/[0.18] shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col justify-between"
               >
                 <div className="p-6 space-y-4">

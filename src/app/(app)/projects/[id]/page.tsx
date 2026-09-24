@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 import { getProjectHealth, formatDateTime, getInitials, daysUntil, cn } from '@/lib/utils'
 import type { Project, Task } from '@/types'
 import { getCached, setCached } from '@/lib/cache/swrCache'
+import AppleLoadingScreen from '@/components/ui/AppleLoadingScreen'
 
 // Component imports
 import ProjectOverview from './components/ProjectOverview'
@@ -80,35 +81,32 @@ export default function SingleProjectPage() {
   }
 
   async function fetchProject(silent = false) {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      setLoading(false)
-      return
-    }
-
     if (!project && !silent) setLoading(true)
     
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*, tasks(*), owner:profiles(*)')
-      .eq('id', projectId)
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*, tasks(*), owner:profiles(*)')
+        .eq('id', projectId)
+        .single()
 
-    if (error) {
-      console.error('SUPABASE ERROR fetching project:', error)
-    }
+      if (error) {
+        console.error('SUPABASE ERROR fetching project:', error)
+      }
 
-    if (data) {
-      const sortedTasks = data.tasks ? [...data.tasks].sort((a: any, b: any) => {
-        const priorityOrder = { p0: 0, p1: 1, p2: 2, p3: 3 }
-        return (priorityOrder[a.priority as keyof typeof priorityOrder] || 0) - (priorityOrder[b.priority as keyof typeof priorityOrder] || 0)
-      }) : []
-      
-      const fullProject = { ...data, tasks: sortedTasks }
-      setProject(fullProject)
-      setCached(`project_${projectId}`, fullProject)
+      if (data) {
+        const sortedTasks = data.tasks ? [...data.tasks].sort((a: any, b: any) => {
+          const priorityOrder = { p0: 0, p1: 1, p2: 2, p3: 3 }
+          return (priorityOrder[a.priority as keyof typeof priorityOrder] || 0) - (priorityOrder[b.priority as keyof typeof priorityOrder] || 0)
+        }) : []
+        
+        const fullProject = { ...data, tasks: sortedTasks }
+        setProject(fullProject)
+        setCached(`project_${projectId}`, fullProject)
+      }
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -128,14 +126,8 @@ export default function SingleProjectPage() {
     }
   }, [projectId])
 
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-[#fbfbfd] font-sans">
-        <div className="text-center font-body">
-          <div className="text-xs text-[#9ca3af] font-mono tracking-wider">SYNCING INITIATIVE...</div>
-        </div>
-      </div>
-    )
+  if (loading && !project) {
+    return <AppleLoadingScreen fullScreen={false} />
   }
 
   if (!project) {
