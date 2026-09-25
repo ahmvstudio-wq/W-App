@@ -6,8 +6,16 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   try {
-    let accessToken = req.cookies.get('youtube_access_token')?.value
-    const refreshToken = req.cookies.get('youtube_refresh_token')?.value
+    let accessToken =
+      req.cookies.get('youtube_access_token')?.value ||
+      req.cookies.get('google_access_token')?.value ||
+      process.env.YOUTUBE_ACCESS_TOKEN ||
+      process.env.GOOGLE_ACCESS_TOKEN
+    const refreshToken =
+      req.cookies.get('youtube_refresh_token')?.value ||
+      req.cookies.get('google_refresh_token')?.value ||
+      process.env.YOUTUBE_REFRESH_TOKEN ||
+      process.env.GOOGLE_REFRESH_TOKEN
 
     if (!accessToken && refreshToken) {
       accessToken = (await refreshYouTubeToken(refreshToken)) || undefined
@@ -18,12 +26,13 @@ export async function GET(req: NextRequest) {
         success: true,
         connected: false,
         channel: null,
-        videos: []
+        videos: [],
+        authUrl: '/api/auth/google?service=youtube&return_to=/create'
       })
     }
 
     // 1. Fetch authenticated YouTube Channel Info & Uploads Playlist
-    const channelRes = await fetch(
+    let channelRes = await fetch(
       'https://www.googleapis.com/youtube/v3/channels?part=snippet,contentDetails,statistics&mine=true',
       {
         headers: { 'Authorization': `Bearer ${accessToken}` },
@@ -31,13 +40,28 @@ export async function GET(req: NextRequest) {
       }
     )
 
+    if (channelRes.status === 401 && refreshToken) {
+      const refreshed = await refreshYouTubeToken(refreshToken)
+      if (refreshed) {
+        accessToken = refreshed
+        channelRes = await fetch(
+          'https://www.googleapis.com/youtube/v3/channels?part=snippet,contentDetails,statistics&mine=true',
+          {
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            cache: 'no-store'
+          }
+        )
+      }
+    }
+
     if (!channelRes.ok) {
-      const errText = await channelRes.text()
       return NextResponse.json({
-        success: false,
-        connected: true,
-        error: `YouTube channel query failed: ${errText}`
-      }, { status: channelRes.status })
+        success: true,
+        connected: false,
+        channel: null,
+        videos: [],
+        authUrl: '/api/auth/google?service=youtube&return_to=/create'
+      })
     }
 
     const channelData = await channelRes.json()
