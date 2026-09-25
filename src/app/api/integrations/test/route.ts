@@ -157,6 +157,46 @@ export async function GET(req: NextRequest) {
     results.tests.supabase = { success: false, error: err.message }
   }
 
+  // 5. Test Instagram Graph API
+  try {
+    const igToken = req.cookies.get('meta_page_token')?.value || 
+                    req.cookies.get('meta_access_token')?.value || 
+                    process.env.INSTAGRAM_ACCESS_TOKEN || 
+                    process.env.META_ACCESS_TOKEN
+
+    if (!igToken) {
+      results.tests.instagram = {
+        success: false,
+        connected: false,
+        error: 'No active Instagram access token configured in environment or session.'
+      }
+    } else {
+      const igRes = await fetch(
+        `https://graph.instagram.com/me?fields=id,username,account_type,media_count&access_token=${igToken}`,
+        { cache: 'no-store' }
+      )
+      const igData = await igRes.json()
+      if (igRes.ok) {
+        results.tests.instagram = {
+          success: true,
+          connected: true,
+          username: `@${igData.username}`,
+          account_id: igData.id,
+          account_type: igData.account_type,
+          media_count: igData.media_count || 0
+        }
+      } else {
+        results.tests.instagram = {
+          success: false,
+          connected: true,
+          error: igData.error?.message || 'Instagram API query failed'
+        }
+      }
+    }
+  } catch (err: any) {
+    results.tests.instagram = { success: false, error: err.message }
+  }
+
   const allSuccess = Object.values(results.tests).every((t: any) => t.success)
 
   return NextResponse.json({
