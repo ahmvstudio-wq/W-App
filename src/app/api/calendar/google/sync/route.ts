@@ -2,6 +2,8 @@ export const runtime = 'edge'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+import { getValidGoogleAccessToken } from '@/lib/google/calendar'
+
 export const dynamic = 'force-dynamic'
 
 function getSupabase() {
@@ -13,7 +15,7 @@ function getSupabase() {
 export async function POST(req: NextRequest) {
   try {
     const supabase = getSupabase()
-    const accessToken = req.cookies.get('gcal_access_token')?.value
+    const accessToken = await getValidGoogleAccessToken(req)
 
     if (!accessToken) {
       return NextResponse.json({

@@ -86,29 +86,36 @@ export function generateIcsCalendar(tasks: Task[], calendarName = 'Cultlike OS T
  * Retrieve or refresh Google OAuth Access Token
  */
 export async function getValidGoogleAccessToken(req: NextRequest): Promise<string | null> {
-  const accessToken = req.cookies.get('gcal_access_token')?.value
+  const accessToken = req.cookies.get('google_access_token')?.value || req.cookies.get('gcal_access_token')?.value
   if (accessToken) return accessToken
 
-  const refreshToken = req.cookies.get('gcal_refresh_token')?.value
+  const refreshToken = req.cookies.get('google_refresh_token')?.value || req.cookies.get('gcal_refresh_token')?.value
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
 
   if (refreshToken && clientId && clientSecret) {
     try {
-      const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: clientId,
-          client_secret: clientSecret,
-          refresh_token: refreshToken,
-          grant_type: 'refresh_token',
-        }),
-      })
+      const secretsToTry = [
+        clientSecret.startsWith('LGOCSPX-') ? clientSecret.slice(1) : clientSecret,
+        clientSecret.startsWith('LGOCSPX-') ? clientSecret : (clientSecret.startsWith('GOCSPX-') ? `L${clientSecret}` : clientSecret)
+      ].filter((s, i, arr) => arr.indexOf(s) === i)
 
-      const data = await tokenRes.json()
-      if (data.access_token) {
-        return data.access_token
+      for (const secret of secretsToTry) {
+        const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: clientId,
+            client_secret: secret,
+            refresh_token: refreshToken,
+            grant_type: 'refresh_token',
+          }),
+        })
+
+        const data = await tokenRes.json()
+        if (data.access_token) {
+          return data.access_token
+        }
       }
     } catch (e) {
       console.error('[Google OAuth Refresh Error]', e)

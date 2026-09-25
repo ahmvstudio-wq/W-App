@@ -26,41 +26,71 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Exchange code for tokens
-    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        code,
-        client_id: clientId || '',
-        client_secret: clientSecret,
-        redirect_uri: redirectUri,
-        grant_type: 'authorization_code',
-      }),
+    // Determine secrets to try (handle potential typo or leading L)
+    const secretsToTry = [
+      clientSecret.startsWith('LGOCSPX-') ? clientSecret.slice(1) : clientSecret,
+      clientSecret.startsWith('LGOCSPX-') ? clientSecret : (clientSecret.startsWith('GOCSPX-') ? `L${clientSecret}` : clientSecret)
+    ].filter((s, i, arr) => arr.indexOf(s) === i)
+
+    let tokenData: any = null
+    let lastError = ''
+
+    for (const secret of secretsToTry) {
+      const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          client_id: clientId || '',
+          client_secret: secret,
+          redirect_uri: redirectUri,
+          grant_type: 'authorization_code',
+        }),
+      })
+
+      const data = await tokenRes.json()
+      if (data.access_token) {
+        tokenData = data
+        break
+      } else {
+        lastError = data.error_description || data.error || 'Token exchange failed'
+      }
+    }
+
+    if (!tokenData || !tokenData.access_token) {
+      return NextResponse.redirect(`${appBaseUrl}/settings?google_error=${encodeURIComponent(lastError)}`)
+    }
+
+    // Set cookies and redirect back to settings
+    const response = NextResponse.redirect(`${appBaseUrl}/settings?google_connected=true`)
+    
+    // Cookie options
+    const cookieOpts = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      path: '/',
+    }
+
+    // Set Google Calendar tokens
+    response.cookies.set('gcal_access_token', tokenData.access_token, {
+      ...cookieOpts,
+      maxAge: tokenData.expires_in || 3600,
+    })
+    // Set General Google Workspace & YouTube tokens
+    response.cookies.set('google_access_token', tokenData.access_token, {
+      ...cookieOpts,
+      maxAge: tokenData.expires_in || 3600,
     })
 
-    const tokenData = await tokenRes.json()
-
-    if (tokenData.error) {
-      return NextResponse.redirect(`${appBaseUrl}/settings?google_error=${encodeURIComponent(tokenData.error_description || tokenData.error)}`)
-    }
-
-    // Set cookie or pass status back to settings
-    const response = NextResponse.redirect(`${appBaseUrl}/settings?google_connected=true`)
-    if (tokenData.access_token) {
-      response.cookies.set('gcal_access_token', tokenData.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: tokenData.expires_in || 3600,
-        path: '/',
-      })
-    }
     if (tokenData.refresh_token) {
       response.cookies.set('gcal_refresh_token', tokenData.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        ...cookieOpts,
         maxAge: 60 * 60 * 24 * 30, // 30 days
-        path: '/',
+      })
+      response.cookies.set('google_refresh_token', tokenData.refresh_token, {
+        ...cookieOpts,
+        maxAge: 60 * 60 * 24 * 30, // 30 days
       })
     }
 

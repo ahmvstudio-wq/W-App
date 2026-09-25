@@ -76,6 +76,25 @@ export default function SettingsPage() {
   const googleConnected = searchParams.get('google_connected') === 'true'
   const googleError = searchParams.get('google_error')
   const googleMissingSecret = searchParams.get('google_status') === 'missing_secret'
+  const [isGoogleConnected, setIsGoogleConnected] = useState(false)
+  const [checkingGoogle, setCheckingGoogle] = useState(true)
+
+  useEffect(() => {
+    async function checkGoogleStatus() {
+      try {
+        const res = await fetch('/api/calendar/google/events')
+        const data = await res.json()
+        if (data.connected) {
+          setIsGoogleConnected(true)
+        }
+      } catch {
+        // ignore
+      } finally {
+        setCheckingGoogle(false)
+      }
+    }
+    checkGoogleStatus()
+  }, [googleConnected])
 
   useEffect(() => {
     const tabParam = searchParams.get('tab')
@@ -86,10 +105,11 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (googleConnected) {
-      toast.success('Google Calendar connected successfully!')
+      setIsGoogleConnected(true)
+      toast.success('Google Cloud services connected! (Calendar, Docs, Drive, YouTube)')
     }
     if (googleError) {
-      toast.error(`Google Calendar connection: ${googleError}`)
+      toast.error(`Google connection: ${googleError}`)
     }
   }, [googleConnected, googleError])
 
@@ -363,45 +383,71 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Optional Direct Sync */}
-                <div className="p-3.5 rounded-xl border border-black/[0.05] bg-black/[0.01] space-y-3">
+                {/* Direct Google Cloud Services & Account Sync */}
+                <div className="p-4 rounded-xl border border-black/[0.08] bg-[#fafafa] space-y-3">
                   <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-black">Google Cloud Integration</span>
+                      {isGoogleConnected ? (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
+                          <CheckCircle2 size={10} />
+                          Connected
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[10px] font-medium border border-neutral-200">
+                          Not Connected
+                        </span>
+                      )}
+                    </div>
                     <button
                       type="button"
                       onClick={() => setShowAdvancedOAuth(!showAdvancedOAuth)}
-                      className="text-xs text-[#6b7280] hover:text-black flex items-center gap-2 cursor-pointer font-light"
+                      className="text-xs text-[#6b7280] hover:text-black flex items-center gap-1 cursor-pointer font-light"
                     >
-                      <span>{showAdvancedOAuth ? '▾ Hide' : '▸ Optional:'} Direct Google Account Sync</span>
+                      <span>{showAdvancedOAuth ? '▾ Less details' : '▸ View permissions'}</span>
                     </button>
                   </div>
 
+                  <p className="text-xs text-[#6b7280] font-light leading-relaxed">
+                    Direct integration for Calendar event sync, Docs drafting, Drive file export, and YouTube publishing &amp; analytics.
+                  </p>
+
                   {showAdvancedOAuth && (
-                    <div className="space-y-3 pt-2 border-t border-black/[0.05] animate-in fade-in duration-150">
-                      <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-                        Authorize directly with your Google account to enable two-way event push. (The calendar feed above is already active and works with no setup required).
-                      </p>
-
-                      <div className="flex flex-wrap items-center gap-3 pt-1">
-                        <a
-                          href="/api/auth/google"
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#f5f5f7] border border-black/[0.1] rounded-xl text-xs font-normal text-black transition-all shadow-xs cursor-pointer"
-                        >
-                          <ExternalLink size={13} />
-                          <span>Connect Google Account</span>
-                        </a>
-
-                        <button
-                          type="button"
-                          onClick={handleSyncToGoogle}
-                          disabled={syncingGoogle}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all shadow-xs cursor-pointer disabled:opacity-50"
-                        >
-                          <RefreshCw size={13} className={cn(syncingGoogle && 'animate-spin')} />
-                          <span>{syncingGoogle ? 'Syncing...' : 'Sync Tasks to Google Calendar'}</span>
-                        </button>
+                    <div className="pt-2 pb-1 border-t border-black/[0.05] animate-in fade-in duration-150">
+                      <div className="text-[11px] text-[#6b7280] font-light space-y-1 mb-3">
+                        <div className="font-medium text-black">Active Google APIs enabled:</div>
+                        <ul className="list-disc list-inside space-y-0.5 text-[#4a4d52]">
+                          <li>Google Calendar API (2-way task scheduling &amp; sync)</li>
+                          <li>Google Docs API (Document creation &amp; synthesis exports)</li>
+                          <li>Google Drive API (Deliverable storage &amp; file attachments)</li>
+                          <li>YouTube Data API v3 (Direct video &amp; short uploads)</li>
+                          <li>YouTube Analytics API (Realtime viewer engagement &amp; reach)</li>
+                        </ul>
                       </div>
                     </div>
                   )}
+
+                  <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                    <a
+                      href="/api/auth/google"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#f5f5f7] border border-black/[0.1] rounded-xl text-xs font-normal text-black transition-all shadow-xs cursor-pointer"
+                    >
+                      <ExternalLink size={13} />
+                      <span>{isGoogleConnected ? 'Reconnect Google Account' : 'Connect Google Account'}</span>
+                    </a>
+
+                    {isGoogleConnected && (
+                      <button
+                        type="button"
+                        onClick={handleSyncToGoogle}
+                        disabled={syncingGoogle}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                      >
+                        <RefreshCw size={13} className={cn(syncingGoogle && 'animate-spin')} />
+                        <span>{syncingGoogle ? 'Syncing...' : 'Sync Tasks to Google Calendar'}</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 

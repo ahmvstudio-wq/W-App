@@ -24,11 +24,16 @@ export async function POST(req: NextRequest) {
 
     const mediaUrl = item.media_urls?.[0] || item.thumbnail_url || 'https://placehold.co/1920x1080.mp4'
 
+    const accessToken = req.cookies.get('google_access_token')?.value || req.cookies.get('gcal_access_token')?.value
+    const refreshToken = req.cookies.get('google_refresh_token')?.value || req.cookies.get('gcal_refresh_token')?.value
+
     const result = await publishToYouTube({
       title: item.title,
       description: item.caption,
       mediaUrl,
-      privacyStatus: 'public'
+      privacyStatus: 'public',
+      accessToken,
+      refreshToken,
     })
 
     if (!result.success) {

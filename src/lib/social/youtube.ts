@@ -22,24 +22,30 @@ export async function refreshYouTubeToken(refreshToken: string): Promise<string 
   }
 
   try {
-    const res = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        refresh_token: refreshToken,
-        grant_type: 'refresh_token'
-      })
-    })
+    const secretsToTry = [
+      clientSecret.startsWith('LGOCSPX-') ? clientSecret.slice(1) : clientSecret,
+      clientSecret.startsWith('LGOCSPX-') ? clientSecret : (clientSecret.startsWith('GOCSPX-') ? `L${clientSecret}` : clientSecret)
+    ].filter((s, i, arr) => arr.indexOf(s) === i)
 
-    if (!res.ok) {
-      console.error('[YouTube API] Token refresh failed:', await res.text())
-      return null
+    for (const secret of secretsToTry) {
+      const res = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: clientId,
+          client_secret: secret,
+          refresh_token: refreshToken,
+          grant_type: 'refresh_token'
+        })
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (data.access_token) return data.access_token
+      }
     }
 
-    const data = await res.json()
-    return data.access_token || null
+    return null
   } catch (err) {
     console.error('[YouTube API] Token refresh exception:', err)
     return null
