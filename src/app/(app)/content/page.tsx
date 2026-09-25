@@ -1,43 +1,75 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '@/lib/supabase/client'
 import type { ContentItem, ContentPlatform, ContentType, ContentStatus } from '@/types'
-import { 
-  Film, Video, Image as ImageIcon, Plus, Search, Filter, 
-  Calendar, Clock, CheckCircle2, AlertCircle, Share2, 
-  Trash2, ExternalLink, Play, Sparkles, Send, Upload,
-  Eye, ThumbsUp, MessageSquare, Repeat, X, Loader2, Layers
+import {
+  Film,
+  Video,
+  Plus,
+  Search,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  Trash2,
+  ExternalLink,
+  Sparkles,
+  Send,
+  Upload,
+  Eye,
+  ThumbsUp,
+  Repeat,
+  X,
+  Loader2,
+  Layers,
+  HardDrive,
+  Bot,
+  ArrowRight,
+  SlidersHorizontal,
+  CalendarDays,
+  Inbox,
+  Lightbulb,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { getCached, setCached } from '@/lib/cache/swrCache'
 import { CardSkeleton } from '@/components/ui/SkeletonPulse'
-import { triggerSyncStart, triggerSyncDone } from '@/components/NavigationProgressBar'
 import { cn } from '@/lib/utils'
+import { DriveImportModal } from './DriveImportModal'
+import { AssetInspectorModal } from './AssetInspectorModal'
+import { ContentCalendarView } from './ContentCalendarView'
 
 export default function ContentVaultPage() {
   const [items, setItems] = useState<ContentItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
+
+  // View Mode: 'inbox' | 'vault' | 'calendar'
+  const [activeTab, setActiveTab] = useState<'inbox' | 'vault' | 'calendar'>('inbox')
+
+  // Filters for Vault View
   const [platformFilter, setPlatformFilter] = useState<'all' | ContentPlatform>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | ContentStatus>('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [publishingId, setPublishingId] = useState<string | null>(null)
 
-  // Form State
+  // Modals state
+  const [isDriveModalOpen, setIsDriveModalOpen] = useState(false)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [inspectingItem, setInspectingItem] = useState<ContentItem | null>(null)
+  const [publishingId, setPublishingId] = useState<string | null>(null)
+  const [analyzingItemId, setAnalyzingItemId] = useState<string | null>(null)
+
+  // Manual create form state
   const [title, setTitle] = useState('')
   const [caption, setCaption] = useState('')
-  const [platform, setPlatform] = useState<ContentPlatform>('youtube')
-  const [contentType, setContentType] = useState<ContentType>('video')
+  const [platform, setPlatform] = useState<ContentPlatform>('instagram')
+  const [contentType, setContentType] = useState<ContentType>('reel')
   const [scheduledAt, setScheduledAt] = useState('')
   const [mediaUrls, setMediaUrls] = useState<string[]>([])
   const [thumbnailUrl, setThumbnailUrl] = useState('')
   const [uploading, setUploading] = useState(false)
   const [creating, setCreating] = useState(false)
-
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Connected accounts
   const [ytChannel, setYtChannel] = useState<{
     id: string
     title: string
@@ -54,23 +86,25 @@ export default function ContentVaultPage() {
     media_count?: number
   } | null>(null)
   const [syncingYt, setSyncingYt] = useState(false)
+  const [isAutoPlanning, setIsAutoPlanning] = useState(false)
 
-  // Fetch Items
+  // Fetch Items from Database and Social Feeds
   async function fetchItems(silent = false) {
     if (!silent && (!items || items.length === 0)) setLoading(true)
     try {
-      let wsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
-      
+      let wsId =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('focus_active_workspace_id')
+          : null
+
       const queryParams = new URLSearchParams()
       if (wsId) queryParams.set('workspace_id', wsId)
-      if (platformFilter !== 'all') queryParams.set('platform', platformFilter)
-      if (statusFilter !== 'all') queryParams.set('status', statusFilter)
 
       // Fetch staged database items, live YouTube uploads, and live Instagram feed in parallel
       const [dbRes, ytRes, igRes] = await Promise.allSettled([
-        fetch(`/api/content?${queryParams.toString()}`).then(r => r.json()),
-        fetch('/api/social/youtube/feed').then(r => r.json()),
-        fetch('/api/social/instagram/feed').then(r => r.json())
+        fetch(`/api/content?${queryParams.toString()}`).then((r) => r.json()),
+        fetch('/api/social/youtube/feed').then((r) => r.json()),
+        fetch('/api/social/instagram/feed').then((r) => r.json()),
       ])
 
       let dbItems: ContentItem[] = []
@@ -80,36 +114,25 @@ export default function ContentVaultPage() {
 
       let liveVideos: ContentItem[] = []
       if (ytRes.status === 'fulfilled' && ytRes.value?.success && ytRes.value?.connected) {
-        if (ytRes.value.channel) {
-          setYtChannel(ytRes.value.channel)
-        }
-        if (Array.isArray(ytRes.value.videos)) {
-          liveVideos = ytRes.value.videos
-        }
+        if (ytRes.value.channel) setYtChannel(ytRes.value.channel)
+        if (Array.isArray(ytRes.value.videos)) liveVideos = ytRes.value.videos
       }
 
       let liveInstagram: ContentItem[] = []
       if (igRes.status === 'fulfilled' && igRes.value?.success && igRes.value?.connected) {
-        if (igRes.value.account) {
-          setIgAccount(igRes.value.account)
-        }
-        if (Array.isArray(igRes.value.reels)) {
-          liveInstagram = igRes.value.reels
-        }
+        if (igRes.value.account) setIgAccount(igRes.value.account)
+        if (Array.isArray(igRes.value.reels)) liveInstagram = igRes.value.reels
       }
 
-      // Merge: real YouTube videos + real Instagram Reels + staged drafts (avoiding duplicate IDs)
+      // Merge: real YouTube videos + real Instagram Reels + staged drafts/inbox items
       let combined = [...dbItems]
       for (const item of [...liveVideos, ...liveInstagram]) {
-        if (!combined.some(i => i.external_post_id === item.external_post_id || i.id === item.id)) {
-          // Respect platform and status filters
-          if (platformFilter !== 'all' && item.platform !== platformFilter) continue
-          if (statusFilter !== 'all' && item.status !== statusFilter) continue
+        if (!combined.some((i) => i.external_post_id === item.external_post_id || i.id === item.id)) {
           combined.push(item)
         }
       }
 
-      // Sort by publish/creation date desc
+      // Sort: inbox items first, then by publish/schedule/creation desc
       combined.sort((a, b) => {
         const dateA = new Date(a.published_at || a.scheduled_at || a.created_at).getTime()
         const dateB = new Date(b.published_at || b.scheduled_at || b.created_at).getTime()
@@ -118,6 +141,12 @@ export default function ContentVaultPage() {
 
       setItems(combined)
       setCached('content_items', combined)
+
+      // Automatically switch to inbox if there are inbox items
+      const hasInbox = combined.some((i) => i.status === 'inbox')
+      if (hasInbox && !silent) {
+        setActiveTab('inbox')
+      }
     } catch (err) {
       console.error('Error fetching content items:', err)
     } finally {
@@ -143,9 +172,159 @@ export default function ContentVaultPage() {
     }
 
     fetchItems(Boolean(cached && cached.length > 0))
-  }, [platformFilter, statusFilter])
+  }, [])
 
-  // Handle Media File Upload
+  // Handle Quick AI Hook Generation for an Item
+  const handleQuickAiHook = async (item: ContentItem) => {
+    setAnalyzingItemId(item.id)
+    toast.info(`Groq 70B generating viral hooks for "${item.title}"...`)
+    try {
+      const res = await fetch('/api/content/ai/analyze-asset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: item.title,
+          transcript: item.transcript,
+          platform: item.platform,
+          content_type: item.content_type,
+        }),
+      })
+
+      const data = await res.json()
+      if (data.success && data.analysis) {
+        const topHook = data.analysis.hooks?.[0]?.hook || ''
+        const captionText =
+          item.platform === 'youtube'
+            ? data.analysis.caption_youtube || ''
+            : data.analysis.caption_instagram || ''
+
+        // Update database
+        await handleUpdateItem({
+          id: item.id,
+          hook: topHook,
+          caption: captionText,
+          angle: data.analysis.angle,
+          cta: data.analysis.cta,
+          tags: data.analysis.tags,
+        })
+
+        toast.success(`Generated viral hook: "${topHook.slice(0, 45)}..."`)
+      } else {
+        toast.error(data.error || 'Failed to generate hook')
+      }
+    } catch (err) {
+      console.error('AI Hook Error:', err)
+      toast.error('AI hook generation failed')
+    } finally {
+      setAnalyzingItemId(null)
+    }
+  }
+
+  // Auto-Plan 14-Day Sprint with AI
+  const handleAutoPlanSprint = async () => {
+    setIsAutoPlanning(true)
+    toast.info('Auto-distributing inbox deliverables across a 14-day publishing sprint...')
+    try {
+      const wsId =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('focus_active_workspace_id')
+          : null
+
+      const res = await fetch('/api/chatgpt/content/plan-sprint', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_KEY || 'cult_executive_key'}`,
+        },
+        body: JSON.stringify({
+          workspace_id: wsId,
+          sprint_days: 14,
+          items_per_day: 1,
+          platforms: ['instagram', 'youtube'],
+        }),
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        toast.success(data.message || '14-Day Sprint scheduled!')
+        await fetchItems(true)
+        setActiveTab('calendar')
+      } else {
+        toast.error(data.error || 'Failed to plan sprint')
+      }
+    } catch (err: any) {
+      console.error('Plan sprint error:', err)
+      toast.error('Sprint planning error')
+    } finally {
+      setIsAutoPlanning(false)
+    }
+  }
+
+  // Handle Updates
+  const handleUpdateItem = async (updates: Partial<ContentItem>) => {
+    if (!updates.id) return
+    try {
+      const res = await fetch(`/api/content/${updates.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      })
+
+      if (res.ok) {
+        setItems((prev) =>
+          prev.map((i) => (i.id === updates.id ? { ...i, ...updates } : i))
+        )
+      }
+    } catch (err) {
+      console.error('Update item error:', err)
+    }
+  }
+
+  // Trigger Immediate Publishing via Social Engine
+  const handlePublishNow = async (item: ContentItem) => {
+    setPublishingId(item.id)
+    toast.info(`Dispatching ${item.title} to ${item.platform.toUpperCase()}...`)
+
+    try {
+      const endpoint =
+        item.platform === 'youtube'
+          ? '/api/social/youtube/publish'
+          : '/api/social/instagram/publish'
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content_item_id: item.id }),
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        toast.success(`Shipped to ${item.platform.toUpperCase()}!`)
+        fetchItems(true)
+      } else {
+        toast.error(data.error || `Publishing to ${item.platform} failed.`)
+      }
+    } catch {
+      toast.error('Publishing request failed.')
+    } finally {
+      setPublishingId(null)
+    }
+  }
+
+  // Delete Content Item
+  const handleDelete = async (id: string) => {
+    try {
+      const res = await fetch(`/api/content/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setItems((prev) => prev.filter((item) => item.id !== id))
+        toast.success('Content item removed.')
+      }
+    } catch {
+      toast.error('Failed to delete content item.')
+    }
+  }
+
+  // Manual Upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
@@ -160,12 +339,12 @@ export default function ContentVaultPage() {
 
         const res = await fetch('/api/content/upload', {
           method: 'POST',
-          body: formData
+          body: formData,
         })
         const data = await res.json()
 
         if (data.success && data.url) {
-          setMediaUrls(prev => [...prev, data.url])
+          setMediaUrls((prev) => [...prev, data.url])
           if (!thumbnailUrl && file.type.startsWith('image/')) {
             setThumbnailUrl(data.url)
           }
@@ -182,8 +361,8 @@ export default function ContentVaultPage() {
     }
   }
 
-  // Handle Create Content Item
-  const handleCreate = async (submitStatus: ContentStatus = 'draft') => {
+  // Manual Create
+  const handleCreate = async (submitStatus: ContentStatus = 'inbox') => {
     if (!title.trim()) {
       toast.error('Please enter a content title.')
       return
@@ -191,7 +370,10 @@ export default function ContentVaultPage() {
 
     setCreating(true)
     try {
-      const wsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
+      const wsId =
+        typeof window !== 'undefined'
+          ? localStorage.getItem('focus_active_workspace_id')
+          : null
 
       const res = await fetch('/api/content', {
         method: 'POST',
@@ -205,16 +387,16 @@ export default function ContentVaultPage() {
           scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
           media_urls: mediaUrls,
           thumbnail_url: thumbnailUrl || mediaUrls[0] || null,
-          workspace_id: wsId
-        })
+          workspace_id: wsId,
+        }),
       })
 
       const data = await res.json()
       if (data.success) {
-        toast.success(submitStatus === 'scheduled' ? 'Content scheduled successfully!' : 'Content item created!')
-        setIsModalOpen(false)
+        toast.success('Content item staged successfully!')
+        setIsCreateModalOpen(false)
         resetForm()
-        fetchItems()
+        fetchItems(true)
       } else {
         toast.error(data.error || 'Failed to save content item.')
       }
@@ -226,510 +408,794 @@ export default function ContentVaultPage() {
     }
   }
 
-  // Trigger Immediate Publishing via Social Engine
-  const handlePublishNow = async (item: ContentItem) => {
-    setPublishingId(item.id)
-    toast.info(`Dispatching ${item.title} to ${item.platform.toUpperCase()}...`)
-
-    try {
-      const endpoint = item.platform === 'youtube' ? '/api/social/youtube/publish' : '/api/social/instagram/publish'
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content_item_id: item.id })
-      })
-
-      const data = await res.json()
-      if (data.success) {
-        toast.success(`Shipped to ${item.platform.toUpperCase()}!`)
-        fetchItems()
-      } else {
-        toast.error(data.error || `Publishing to ${item.platform} failed.`)
-      }
-    } catch {
-      toast.error('Publishing request failed.')
-    } finally {
-      setPublishingId(null)
-    }
-  }
-
-  // Delete Content Item
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this content item?')) return
-
-    try {
-      const res = await fetch(`/api/content/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        setItems(prev => prev.filter(item => item.id !== id))
-        toast.success('Content item deleted.')
-      }
-    } catch {
-      toast.error('Failed to delete content item.')
-    }
-  }
-
   const resetForm = () => {
     setTitle('')
     setCaption('')
-    setPlatform('youtube')
-    setContentType('video')
+    setPlatform('instagram')
+    setContentType('reel')
     setScheduledAt('')
     setMediaUrls([])
     setThumbnailUrl('')
   }
 
-  // Filtered Items
-  const filteredItems = items.filter(item => {
+  // Segment Items
+  const inboxItems = items.filter((i) => i.status === 'inbox')
+  const scheduledItems = items.filter((i) => i.status === 'scheduled')
+  const publishedItems = items.filter((i) => i.status === 'published')
+
+  const filteredVaultItems = items.filter((item) => {
+    if (platformFilter !== 'all' && item.platform !== platformFilter) return false
+    if (statusFilter !== 'all' && item.status !== statusFilter) return false
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
       const matchTitle = item.title?.toLowerCase().includes(q)
       const matchCaption = item.caption?.toLowerCase().includes(q)
-      if (!matchTitle && !matchCaption) return false
+      const matchHook = item.hook?.toLowerCase().includes(q)
+      if (!matchTitle && !matchCaption && !matchHook) return false
     }
     return true
   })
 
-  // Aggregated Stats
-  const totalCount = items.length
-  const scheduledCount = items.filter(i => i.status === 'scheduled').length
-  const publishedCount = items.filter(i => i.status === 'published').length
   const totalViews = items.reduce((acc, i) => acc + (i.metrics?.views || 0), 0)
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-16 font-body relative">
-      {/* Subtle Ambient Lighting Blooms (Executive & Modern) */}
+    <div className="space-y-7 max-w-7xl mx-auto pb-16 font-body relative">
+      {/* Ambient Lighting Glows */}
       <div className="absolute top-0 right-10 w-96 h-96 bg-gradient-to-br from-indigo-500/[0.07] via-purple-500/[0.04] to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="absolute top-96 left-0 w-80 h-80 bg-gradient-to-tr from-sky-500/[0.05] via-emerald-500/[0.03] to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-black/[0.06] pb-6">
+      {/* Top Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-black/[0.06] pb-6">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-700 font-mono text-[10px] font-medium tracking-wide">
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
               OMNICHANNEL PIPELINE
             </span>
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-700 font-mono text-[10px] font-medium">
+              <Bot size={11} />
+              AI HEADLESS ACTIVE
+            </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-light text-black tracking-tight">
-            Content Vault
+            Content Studio &amp; Dispatch OS
           </h1>
-          <p className="text-sm text-[#6b7280] font-light mt-1">
-            Visual pipeline for high-production distribution, scheduling, and multi-platform asset management.
+          <p className="text-xs sm:text-sm text-[#6b7280] font-light mt-1">
+            Google Drive video ingestion, Groq AI 70B viral hook engineering, and automated timeline scheduling.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2.5">
           <button
-            onClick={() => { resetForm(); setIsModalOpen(true) }}
-            className="px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-2 transition-all shadow-sm cursor-pointer"
+            onClick={() => setIsDriveModalOpen(true)}
+            className="px-4 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-medium flex items-center gap-2 shadow-sm transition-all cursor-pointer"
           >
-            <Plus size={14} className="text-white" />
+            <HardDrive size={15} />
+            <span>Import from Google Drive</span>
+          </button>
+
+          <button
+            onClick={() => {
+              resetForm()
+              setIsCreateModalOpen(true)
+            }}
+            className="px-4 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+          >
+            <Plus size={14} />
             <span>Create Content</span>
           </button>
         </div>
       </div>
 
-      {/* Live YouTube Channel Integration Banner */}
-      {ytChannel ? (
-        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-rose-500/[0.04] via-rose-500/[0.02] to-transparent border border-rose-500/20 backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            {ytChannel.thumbnail ? (
-              <img
-                src={ytChannel.thumbnail}
-                alt={ytChannel.title}
-                className="w-12 h-12 rounded-full border-2 border-white shadow-xs object-cover"
-              />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-semibold text-base">
-                YT
+      {/* Connected Channels & Accounts Strip */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Live Instagram Account Banner */}
+        {igAccount ? (
+          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-pink-500/[0.04] via-purple-500/[0.02] to-transparent border border-pink-500/20 backdrop-blur-sm flex items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                IG
               </div>
-            )}
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-medium text-black">{ytChannel.title}</h3>
-                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
-                  <CheckCircle2 size={10} />
-                  Live Sync Active
-                </span>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <h4 className="text-xs font-medium text-black">@{igAccount.username}</h4>
+                  <span className="flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 text-[9px] font-mono border border-emerald-200">
+                    <CheckCircle2 size={8} /> Live Reels
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#6b7280] font-light">
+                  Direct Reels Dispatch Enabled • {igAccount.account_type}
+                </p>
               </div>
-              <p className="text-xs text-[#6b7280] font-light">
-                {ytChannel.customUrl || 'Connected via YouTube Data API v3'} • {parseInt(ytChannel.subscriberCount || '0').toLocaleString()} subscribers • {parseInt(ytChannel.videoCount || '0').toLocaleString()} uploads • {parseInt(ytChannel.viewCount || '0').toLocaleString()} total views
-              </p>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleManualYtSync}
-              disabled={syncingYt}
-              className="px-3.5 py-1.5 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] rounded-xl text-xs font-normal flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
-            >
-              <Repeat size={12} className={cn(syncingYt && 'animate-spin')} />
-              <span>{syncingYt ? 'Syncing...' : 'Refresh Uploads'}</span>
-            </button>
-            <a
-              href={ytChannel.customUrl ? `https://youtube.com/${ytChannel.customUrl}` : `https://youtube.com/channel/${ytChannel.id}`}
-              target="_blank"
-              rel="noreferrer"
-              className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
-            >
-              <ExternalLink size={12} />
-              <span>Open Channel</span>
-            </a>
-          </div>
-        </div>
-      ) : (
-        <div className="p-3.5 rounded-2xl bg-[#fafafa] border border-black/[0.06] flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
-              <Video size={16} />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-black">YouTube Channel Not Connected</p>
-              <p className="text-[11px] text-[#6b7280] font-light">Connect your channel in Settings to automatically pull your real video feed &amp; statistics.</p>
-            </div>
-          </div>
-          <Link
-            href="/settings?tab=integrations"
-            className="px-3 py-1.5 bg-black text-white hover:bg-neutral-800 rounded-xl text-xs font-normal transition-all"
-          >
-            Connect Channel
-          </Link>
-        </div>
-      )}
-
-      {/* Live Instagram Account Integration Banner */}
-      {igAccount && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-pink-500/[0.05] via-purple-500/[0.03] to-transparent border border-pink-500/20 backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center font-bold text-base shadow-xs">
-              IG
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-medium text-black">@{igAccount.username}</h3>
-                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
-                  <CheckCircle2 size={10} />
-                  Live Sync Active
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[10px] font-medium border border-purple-200">
-                  {igAccount.account_type}
-                </span>
-              </div>
-              <p className="text-xs text-[#6b7280] font-light">
-                Connected via Instagram Graph API • {igAccount.media_count || 'Live'} Reels &amp; Posts in Vault
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
             <a
               href={`https://instagram.com/${igAccount.username}`}
               target="_blank"
               rel="noreferrer"
-              className="px-3.5 py-1.5 bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white rounded-xl text-xs font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              className="p-2 text-[#6b7280] hover:text-black rounded-xl hover:bg-neutral-100 transition-colors"
             >
-              <ExternalLink size={12} />
-              <span>Open Instagram</span>
+              <ExternalLink size={13} />
             </a>
           </div>
-        </div>
-      )}
-
-      {/* Metrics Row - Refined Ambient Tints */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-white/80 backdrop-blur-sm border border-black/[0.06] hover:border-violet-500/20 hover:shadow-xs rounded-2xl transition-all shadow-xs relative overflow-hidden group">
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-violet-500/[0.05] rounded-full blur-xl group-hover:bg-violet-500/[0.1] transition-all" />
-          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider font-light">
-            <span className="text-[#6b7280]">VAULT ASSETS</span>
-            <span className="w-5 h-5 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center">
-              <Layers size={11} />
-            </span>
+        ) : (
+          <div className="p-3.5 rounded-2xl bg-[#fafafa] border border-black/[0.06] flex items-center justify-between">
+            <span className="text-xs text-[#6b7280]">Instagram Graph API Disconnected</span>
+            <Link
+              href="/settings?tab=integrations"
+              className="text-xs text-indigo-600 hover:underline font-medium"
+            >
+              Connect
+            </Link>
           </div>
-          <div className="text-2xl font-light text-black mt-1.5">{totalCount}</div>
-          <div className="text-[11px] text-[#6b7280] mt-0.5">Media items staged</div>
-        </div>
+        )}
 
-        <div className="p-4 bg-white/80 backdrop-blur-sm border border-black/[0.06] hover:border-amber-500/20 hover:shadow-xs rounded-2xl transition-all shadow-xs relative overflow-hidden group">
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-amber-500/[0.05] rounded-full blur-xl group-hover:bg-amber-500/[0.1] transition-all" />
-          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider font-light">
-            <span className="text-[#6b7280]">SCHEDULED</span>
-            <span className="w-5 h-5 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Clock size={11} />
-            </span>
-          </div>
-          <div className="text-2xl font-light text-black mt-1.5">{scheduledCount}</div>
-          <div className="text-[11px] text-amber-700/80 mt-0.5">Awaiting dispatch</div>
-        </div>
-
-        <div className="p-4 bg-white/80 backdrop-blur-sm border border-black/[0.06] hover:border-emerald-500/20 hover:shadow-xs rounded-2xl transition-all shadow-xs relative overflow-hidden group">
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-emerald-500/[0.05] rounded-full blur-xl group-hover:bg-emerald-500/[0.1] transition-all" />
-          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider font-light">
-            <span className="text-[#6b7280]">PUBLISHED</span>
-            <span className="w-5 h-5 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <CheckCircle2 size={11} />
-            </span>
-          </div>
-          <div className="text-2xl font-light text-black mt-1.5">{publishedCount}</div>
-          <div className="text-[11px] text-emerald-700/80 mt-0.5">Live on social platforms</div>
-        </div>
-
-        <div className="p-4 bg-white/80 backdrop-blur-sm border border-black/[0.06] hover:border-sky-500/20 hover:shadow-xs rounded-2xl transition-all shadow-xs relative overflow-hidden group">
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-sky-500/[0.05] rounded-full blur-xl group-hover:bg-sky-500/[0.1] transition-all" />
-          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider font-light">
-            <span className="text-[#6b7280]">TOTAL REACH</span>
-            <span className="w-5 h-5 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
-              <Eye size={11} />
-            </span>
-          </div>
-          <div className="text-2xl font-light text-black mt-1.5 font-mono">{totalViews.toLocaleString()}</div>
-          <div className="text-[11px] text-sky-700/80 mt-0.5">Aggregated audience reach</div>
-        </div>
-      </div>
-
-      {/* Filter Tabs & Search */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/70 backdrop-blur-md p-2 rounded-2xl border border-black/[0.06] shadow-xs">
-        {/* Platform tabs */}
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setPlatformFilter('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-light transition-all cursor-pointer ${
-              platformFilter === 'all' 
-                ? 'bg-white text-black font-normal shadow-xs border border-black/[0.06]' 
-                : 'text-[#6b7280] hover:text-black'
-            }`}
-          >
-            All Platforms
-          </button>
-          <button
-            onClick={() => setPlatformFilter('youtube')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-light transition-all cursor-pointer flex items-center gap-1.5 ${
-              platformFilter === 'youtube' 
-                ? 'bg-rose-50 text-rose-700 font-medium shadow-xs border border-rose-200/60' 
-                : 'text-[#6b7280] hover:text-rose-600'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-            <span>YouTube</span>
-          </button>
-          <button
-            onClick={() => setPlatformFilter('instagram')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-light transition-all cursor-pointer flex items-center gap-1.5 ${
-              platformFilter === 'instagram' 
-                ? 'bg-fuchsia-50 text-fuchsia-700 font-medium shadow-xs border border-fuchsia-200/60' 
-                : 'text-[#6b7280] hover:text-fuchsia-600'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500" />
-            <span>Instagram</span>
-          </button>
-        </div>
-
-        {/* Status filter & search */}
-        <div className="flex items-center gap-2">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="px-3 py-1.5 bg-white border border-black/[0.08] rounded-xl text-xs text-black font-light outline-none"
-          >
-            <option value="all">All Statuses</option>
-            <option value="draft">Drafts</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="published">Published</option>
-          </select>
-
-          <div className="relative">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
-            <input
-              type="text"
-              placeholder="Search content..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-3 py-1.5 bg-white border border-black/[0.08] rounded-xl text-xs text-black font-light outline-none w-44 focus:w-60 transition-all"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Content Grid with Motion Shimmer Skeleton */}
-      {loading ? (
-        <CardSkeleton count={6} />
-      ) : filteredItems.length === 0 ? (
-        <div className="py-24 text-center bg-white border border-black/[0.06] rounded-3xl p-12">
-          <Film size={36} className="mx-auto text-[#9ca3af] mb-3 opacity-60" />
-          <h3 className="text-base font-normal text-black">No content deliverables found</h3>
-          <p className="text-xs text-[#6b7280] font-light mt-1 max-w-sm mx-auto">
-            Stage your YouTube videos, Shorts, Instagram Reels, and Carousels here for seamless scheduling and auto-publishing.
-          </p>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="mt-6 px-4 py-2 bg-black text-white rounded-xl text-xs font-medium cursor-pointer"
-          >
-            Create First Asset
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map(item => {
-            const isScheduled = item.status === 'scheduled'
-            const isPublished = item.status === 'published'
-
-            return (
-              <div 
-                key={item.id} 
-                className="bg-white/90 backdrop-blur-sm border border-black/[0.06] hover:border-black/[0.16] hover:shadow-lg hover:shadow-black/[0.04] hover:-translate-y-0.5 rounded-3xl overflow-hidden transition-all duration-200 shadow-xs flex flex-col group"
-              >
-                {/* Visual Preview / Thumbnail */}
-                <div className="aspect-video bg-[#111214] relative overflow-hidden flex items-center justify-center">
-                  {item.thumbnail_url || (item.media_urls && item.media_urls[0]) ? (
-                    <img 
-                      src={item.thumbnail_url || item.media_urls[0]} 
-                      alt={item.title} 
-                      className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center gap-1.5 text-neutral-500">
-                      <Film size={28} className="opacity-60" />
-                      <span className="text-[10px] font-mono uppercase tracking-wider font-light">No Media Uploaded</span>
-                    </div>
-                  )}
-
-                  {/* Gradient vignette */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-
-                  {/* Platform & Type Badge */}
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider backdrop-blur-md shadow-xs flex items-center gap-1 ${
-                      item.platform === 'youtube'
-                        ? 'bg-white/95 text-rose-600'
-                        : item.platform === 'instagram'
-                        ? 'bg-white/95 text-fuchsia-600'
-                        : 'bg-white/95 text-black'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        item.platform === 'youtube' ? 'bg-rose-500' : item.platform === 'instagram' ? 'bg-fuchsia-500' : 'bg-black'
-                      }`} />
-                      {item.platform}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-mono uppercase tracking-wider bg-black/75 backdrop-blur-xs text-white">
-                      {item.content_type}
-                    </span>
-                  </div>
-
-                  {/* Status Badge */}
-                  <div className="absolute top-3 right-3">
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider font-medium backdrop-blur-md shadow-xs flex items-center gap-1.5 ${
-                      isPublished 
-                        ? 'bg-emerald-500/90 text-white' 
-                        : isScheduled 
-                        ? 'bg-amber-500/90 text-white' 
-                        : 'bg-black/60 text-neutral-200'
-                    }`}>
-                      {isPublished && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
-                      {isScheduled && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
-                      {item.status}
-                    </span>
-                  </div>
+        {/* Live YouTube Channel Banner */}
+        {ytChannel ? (
+          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-rose-500/[0.04] via-rose-500/[0.02] to-transparent border border-rose-500/20 backdrop-blur-sm flex items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3">
+              {ytChannel.thumbnail ? (
+                <img
+                  src={ytChannel.thumbnail}
+                  alt={ytChannel.title}
+                  className="w-10 h-10 rounded-full border border-black/[0.08] object-cover"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-xs">
+                  YT
                 </div>
+              )}
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <h4 className="text-xs font-medium text-black">{ytChannel.title}</h4>
+                  <span className="flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 text-[9px] font-mono border border-emerald-200">
+                    <CheckCircle2 size={8} /> Live Uploads
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#6b7280] font-light">
+                  {parseInt(ytChannel.subscriberCount || '0').toLocaleString()} subs •{' '}
+                  {parseInt(ytChannel.videoCount || '0').toLocaleString()} uploads
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleManualYtSync}
+              disabled={syncingYt}
+              className="p-2 text-[#6b7280] hover:text-black rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              title="Refresh YouTube uploads"
+            >
+              <Repeat size={13} className={cn(syncingYt && 'animate-spin')} />
+            </button>
+          </div>
+        ) : (
+          <div className="p-3.5 rounded-2xl bg-[#fafafa] border border-black/[0.06] flex items-center justify-between">
+            <span className="text-xs text-[#6b7280]">YouTube Studio Disconnected</span>
+            <Link
+              href="/settings?tab=integrations"
+              className="text-xs text-rose-600 hover:underline font-medium"
+            >
+              Connect
+            </Link>
+          </div>
+        )}
+      </div>
 
-                {/* Content Body */}
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-black line-clamp-1 group-hover:text-neutral-700 transition-colors">
-                      {item.title}
-                    </h3>
-                    {item.caption && (
-                      <p className="text-xs text-[#6b7280] font-light mt-1.5 line-clamp-2 leading-relaxed">
-                        {item.caption}
-                      </p>
-                    )}
-                  </div>
+      {/* Main Studio View Switcher Tabs */}
+      <div className="flex items-center justify-between border-b border-black/[0.06] pb-3">
+        <div className="flex items-center gap-2">
+          {/* Unscheduled Inbox Tab */}
+          <button
+            onClick={() => setActiveTab('inbox')}
+            className={cn(
+              'px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-2',
+              activeTab === 'inbox'
+                ? 'bg-amber-50 text-amber-900 border border-amber-300 shadow-xs'
+                : 'text-[#6b7280] hover:text-black hover:bg-neutral-100'
+            )}
+          >
+            <Inbox size={14} className={activeTab === 'inbox' ? 'text-amber-600' : ''} />
+            <span>Unscheduled Inbox</span>
+            {inboxItems.length > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px] font-mono font-semibold">
+                {inboxItems.length}
+              </span>
+            )}
+          </button>
 
-                  {/* Schedule / Metadata Details */}
-                  <div className="pt-3 border-t border-black/[0.04] flex items-center justify-between text-[11px] text-[#9ca3af] font-light">
-                    <div className="flex items-center gap-1.5 font-mono">
-                      <Clock size={12} className={isScheduled ? 'text-amber-500' : ''} />
-                      <span className={isScheduled ? 'text-amber-700 font-medium' : ''}>
-                        {item.scheduled_at 
-                          ? `Scheduled: ${new Date(item.scheduled_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-                          : isPublished && item.published_at
-                          ? `Published: ${new Date(item.published_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}`
-                          : 'Draft'
-                        }
-                      </span>
-                    </div>
+          {/* Publishing Calendar Tab */}
+          <button
+            onClick={() => setActiveTab('calendar')}
+            className={cn(
+              'px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-2',
+              activeTab === 'calendar'
+                ? 'bg-indigo-50 text-indigo-900 border border-indigo-300 shadow-xs'
+                : 'text-[#6b7280] hover:text-black hover:bg-neutral-100'
+            )}
+          >
+            <CalendarDays size={14} className={activeTab === 'calendar' ? 'text-indigo-600' : ''} />
+            <span>Publishing Timeline</span>
+            {scheduledItems.length > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-indigo-600 text-white text-[10px] font-mono">
+                {scheduledItems.length}
+              </span>
+            )}
+          </button>
 
-                    {isPublished && item.metrics && (
-                      <div className="flex items-center gap-3 font-mono text-black font-normal">
-                        <span className="flex items-center gap-1 text-sky-600">
-                          <Eye size={11} className="text-sky-500" />
-                          {(item.metrics.views || 0).toLocaleString()}
-                        </span>
-                        <span className="flex items-center gap-1 text-rose-600">
-                          <ThumbsUp size={11} className="text-rose-500" />
-                          {(item.metrics.likes || 0).toLocaleString()}
+          {/* Vault Assets Tab */}
+          <button
+            onClick={() => setActiveTab('vault')}
+            className={cn(
+              'px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-2',
+              activeTab === 'vault'
+                ? 'bg-neutral-900 text-white shadow-xs'
+                : 'text-[#6b7280] hover:text-black hover:bg-neutral-100'
+            )}
+          >
+            <Layers size={14} />
+            <span>Vault All Deliverables</span>
+            <span className="text-[10px] font-mono opacity-80">({items.length})</span>
+          </button>
+        </div>
+
+        {/* Global Stats Counter */}
+        <div className="hidden sm:flex items-center gap-4 text-xs font-mono text-[#6b7280]">
+          <span>
+            Scheduled: <strong className="text-black font-semibold">{scheduledItems.length}</strong>
+          </span>
+          <span>
+            Live Published: <strong className="text-emerald-700 font-semibold">{publishedItems.length}</strong>
+          </span>
+          <span>
+            Reach: <strong className="text-sky-700 font-semibold">{totalViews.toLocaleString()}</strong>
+          </span>
+        </div>
+      </div>
+
+      {/* TAB 1: UNSCHEDULED INBOX */}
+      {activeTab === 'inbox' && (
+        <div className="space-y-6">
+          {/* Inbox Mission Banner */}
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/[0.07] via-orange-500/[0.04] to-transparent border border-amber-500/20 backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-600 flex items-center justify-center flex-shrink-0">
+                <HardDrive size={22} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-medium text-black">
+                    Unscheduled Video Deliverables Inbox
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-mono font-medium">
+                    {inboxItems.length} Videos Staged
+                  </span>
+                </div>
+                <p className="text-xs text-[#6b7280] font-light mt-0.5">
+                  Import finished video files from Google Drive, let Groq 70B AI generate viral hooks, and auto-plan your multi-platform sprint.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              {inboxItems.length > 0 && (
+                <button
+                  onClick={handleAutoPlanSprint}
+                  disabled={isAutoPlanning}
+                  className="px-4 py-2 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white rounded-xl text-xs font-medium flex items-center gap-2 shadow-xs transition-all cursor-pointer"
+                >
+                  {isAutoPlanning ? (
+                    <Loader2 size={13} className="animate-spin text-white" />
+                  ) : (
+                    <Sparkles size={13} className="text-amber-400" />
+                  )}
+                  <span>Auto-Plan 14-Day Sprint</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => setIsDriveModalOpen(true)}
+                className="px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] rounded-xl text-xs font-normal flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Plus size={13} />
+                <span>Import More from Drive</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Inbox Grid */}
+          {loading ? (
+            <CardSkeleton count={4} />
+          ) : inboxItems.length === 0 ? (
+            <div className="py-20 text-center bg-white border border-black/[0.06] rounded-3xl p-10 space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+                <Inbox size={28} />
+              </div>
+              <div className="max-w-md mx-auto">
+                <h3 className="text-base font-normal text-black">Your Unscheduled Inbox is Clear</h3>
+                <p className="text-xs text-[#6b7280] font-light mt-1">
+                  Connect your Google Drive and import finished video files to start generating viral hooks and dispatch schedules.
+                </p>
+              </div>
+              <div className="pt-2">
+                <button
+                  onClick={() => setIsDriveModalOpen(true)}
+                  className="px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium inline-flex items-center gap-2 cursor-pointer shadow-xs"
+                >
+                  <HardDrive size={14} />
+                  <span>Import Videos from Google Drive</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {inboxItems.map((item) => {
+                const isAnalyzing = analyzingItemId === item.id
+
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-white/90 backdrop-blur-sm border border-amber-500/20 hover:border-black/[0.18] hover:shadow-lg hover:-translate-y-0.5 rounded-3xl overflow-hidden transition-all duration-200 shadow-xs flex flex-col group"
+                  >
+                    {/* Thumbnail / Video Preview */}
+                    <div
+                      onClick={() => setInspectingItem(item)}
+                      className="aspect-video bg-[#111214] relative overflow-hidden flex items-center justify-center cursor-pointer"
+                    >
+                      {item.thumbnail_url || (item.media_urls && item.media_urls[0]) ? (
+                        <img
+                          src={item.thumbnail_url || item.media_urls[0]}
+                          alt={item.title}
+                          className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center gap-1.5 text-neutral-500">
+                          <Film size={26} className="opacity-60" />
+                          <span className="text-[9px] font-mono uppercase tracking-wider">
+                            Raw Deliverable
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Gradient vignette */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+
+                      {/* Platform & Format Tag */}
+                      <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                        <span
+                          className={cn(
+                            'px-2 py-0.5 rounded-md text-[9px] font-semibold uppercase tracking-wider backdrop-blur-md shadow-xs flex items-center gap-1',
+                            item.platform === 'instagram'
+                              ? 'bg-white/95 text-fuchsia-600'
+                              : 'bg-white/95 text-rose-600'
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              'w-1.5 h-1.5 rounded-full',
+                              item.platform === 'instagram' ? 'bg-fuchsia-500' : 'bg-rose-500'
+                            )}
+                          />
+                          {item.platform} {item.content_type}
                         </span>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Action Bar */}
-                  <div className="pt-2 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      {item.status !== 'published' && (
-                        <button
-                          onClick={() => handlePublishNow(item)}
-                          disabled={publishingId === item.id}
-                          className="px-3.5 py-1.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-all shadow-xs"
-                        >
-                          {publishingId === item.id ? (
-                            <Loader2 size={12} className="animate-spin text-white" />
-                          ) : (
-                            <Send size={11} className="text-white" />
-                          )}
-                          <span>Publish Now</span>
-                        </button>
-                      )}
+                      {/* Source Tag */}
+                      <div className="absolute top-3 right-3">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase bg-amber-500 text-white font-medium shadow-xs">
+                          Inbox
+                        </span>
+                      </div>
 
-                      {isPublished && item.external_post_url && (
-                        <a
-                          href={item.external_post_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/60 rounded-xl text-xs font-normal flex items-center gap-1.5 transition-colors shadow-xs"
-                        >
-                          <ExternalLink size={12} />
-                          <span>View Live</span>
-                        </a>
+                      {/* Duration */}
+                      {item.duration_seconds && (
+                        <div className="absolute bottom-2 right-2 bg-black/80 backdrop-blur-xs text-white px-1.5 py-0.5 rounded text-[10px] font-mono flex items-center gap-1">
+                          <Clock size={10} />
+                          <span>
+                            {Math.floor(item.duration_seconds / 60)}:
+                            {item.duration_seconds % 60 < 10 ? '0' : ''}
+                            {item.duration_seconds % 60}
+                          </span>
+                        </div>
                       )}
                     </div>
 
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="p-1.5 text-[#9ca3af] hover:text-black rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer"
-                      title="Delete Content Item"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    {/* Card Content Body */}
+                    <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                      <div className="space-y-2">
+                        <h4
+                          onClick={() => setInspectingItem(item)}
+                          className="text-sm font-medium text-black line-clamp-1 group-hover:text-indigo-600 transition-colors cursor-pointer"
+                        >
+                          {item.title}
+                        </h4>
+
+                        {/* Hook Preview or Prompt */}
+                        {item.hook ? (
+                          <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80">
+                            <div className="text-[10px] font-mono uppercase text-amber-800 font-semibold mb-0.5">
+                              Hook:
+                            </div>
+                            <p className="text-xs font-medium text-amber-950 line-clamp-2">
+                              "{item.hook}"
+                            </p>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleQuickAiHook(item)}
+                            disabled={isAnalyzing}
+                            className="w-full py-2 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border border-amber-200/70 rounded-xl text-xs font-medium text-amber-900 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                          >
+                            {isAnalyzing ? (
+                              <Loader2 size={12} className="animate-spin text-amber-700" />
+                            ) : (
+                              <Sparkles size={12} className="text-amber-500" />
+                            )}
+                            <span>{isAnalyzing ? 'Analyzing...' : 'Generate 3s Viral Hooks'}</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Action Bar */}
+                      <div className="pt-3 border-t border-black/[0.04] flex items-center justify-between gap-2">
+                        <button
+                          onClick={() => setInspectingItem(item)}
+                          className="px-3 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+                        >
+                          <SlidersHorizontal size={12} />
+                          <span>Inspect &amp; Schedule</span>
+                        </button>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handlePublishNow(item)}
+                            disabled={publishingId === item.id}
+                            className="p-1.5 text-neutral-500 hover:text-black hover:bg-neutral-100 rounded-lg transition-colors cursor-pointer"
+                            title="Instant Publish"
+                          >
+                            {publishingId === item.id ? (
+                              <Loader2 size={13} className="animate-spin text-black" />
+                            ) : (
+                              <Send size={13} />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            title="Delete"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            )
-          })}
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
 
-      {/* CREATE / SCHEDULE CONTENT MODAL */}
-      {isModalOpen && (
+      {/* TAB 2: PUBLISHING CALENDAR */}
+      {activeTab === 'calendar' && (
+        <ContentCalendarView
+          items={items}
+          inboxItems={inboxItems}
+          onInspectItem={(item) => setInspectingItem(item)}
+          onAutoPlanSprint={handleAutoPlanSprint}
+        />
+      )}
+
+      {/* TAB 3: ALL VAULT DELIVERABLES */}
+      {activeTab === 'vault' && (
+        <div className="space-y-6">
+          {/* Filter Bar */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/70 backdrop-blur-md p-2 rounded-2xl border border-black/[0.06] shadow-xs">
+            {/* Platform tabs */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPlatformFilter('all')}
+                className={cn(
+                  'px-3 py-1.5 rounded-xl text-xs font-light transition-all cursor-pointer',
+                  platformFilter === 'all'
+                    ? 'bg-white text-black font-normal shadow-xs border border-black/[0.06]'
+                    : 'text-[#6b7280] hover:text-black'
+                )}
+              >
+                All Platforms
+              </button>
+              <button
+                onClick={() => setPlatformFilter('youtube')}
+                className={cn(
+                  'px-3 py-1.5 rounded-xl text-xs font-light transition-all cursor-pointer flex items-center gap-1.5',
+                  platformFilter === 'youtube'
+                    ? 'bg-rose-50 text-rose-700 font-medium shadow-xs border border-rose-200/60'
+                    : 'text-[#6b7280] hover:text-rose-600'
+                )}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                <span>YouTube</span>
+              </button>
+              <button
+                onClick={() => setPlatformFilter('instagram')}
+                className={cn(
+                  'px-3 py-1.5 rounded-xl text-xs font-light transition-all cursor-pointer flex items-center gap-1.5',
+                  platformFilter === 'instagram'
+                    ? 'bg-fuchsia-50 text-fuchsia-700 font-medium shadow-xs border border-fuchsia-200/60'
+                    : 'text-[#6b7280] hover:text-fuchsia-600'
+                )}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500" />
+                <span>Instagram</span>
+              </button>
+            </div>
+
+            {/* Status filter & search */}
+            <div className="flex items-center gap-2">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="px-3 py-1.5 bg-white border border-black/[0.08] rounded-xl text-xs text-black font-light outline-none"
+              >
+                <option value="all">All Statuses</option>
+                <option value="inbox">Vault Inbox</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="published">Published</option>
+                <option value="draft">Drafts</option>
+              </select>
+
+              <div className="relative">
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+                <input
+                  type="text"
+                  placeholder="Search title or hook..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 bg-white border border-black/[0.08] rounded-xl text-xs text-black font-light outline-none w-44 focus:w-60 transition-all"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Grid of Filtered Items */}
+          {loading ? (
+            <CardSkeleton count={6} />
+          ) : filteredVaultItems.length === 0 ? (
+            <div className="py-20 text-center bg-white border border-black/[0.06] rounded-3xl p-10">
+              <Film size={32} className="mx-auto text-[#9ca3af] mb-2 opacity-60" />
+              <h3 className="text-base font-normal text-black">No deliverables matched your filter</h3>
+              <p className="text-xs text-[#6b7280] font-light mt-1">
+                Try switching platforms or import new finished clips from Google Drive.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredVaultItems.map((item) => {
+                const isScheduled = item.status === 'scheduled'
+                const isPublished = item.status === 'published'
+
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-white/90 backdrop-blur-sm border border-black/[0.06] hover:border-black/[0.16] hover:shadow-lg hover:-translate-y-0.5 rounded-3xl overflow-hidden transition-all duration-200 shadow-xs flex flex-col group"
+                  >
+                    {/* Visual Preview */}
+                    <div
+                      onClick={() => setInspectingItem(item)}
+                      className="aspect-video bg-[#111214] relative overflow-hidden flex items-center justify-center cursor-pointer"
+                    >
+                      {item.thumbnail_url || (item.media_urls && item.media_urls[0]) ? (
+                        <img
+                          src={item.thumbnail_url || item.media_urls[0]}
+                          alt={item.title}
+                          className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center gap-1.5 text-neutral-500">
+                          <Film size={28} className="opacity-60" />
+                          <span className="text-[10px] font-mono uppercase tracking-wider font-light">
+                            Vault Asset
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+
+                      {/* Platform badge */}
+                      <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                        <span
+                          className={cn(
+                            'px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider backdrop-blur-md shadow-xs flex items-center gap-1',
+                            item.platform === 'youtube'
+                              ? 'bg-white/95 text-rose-600'
+                              : 'bg-white/95 text-fuchsia-600'
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              'w-1.5 h-1.5 rounded-full',
+                              item.platform === 'youtube' ? 'bg-rose-500' : 'bg-fuchsia-500'
+                            )}
+                          />
+                          {item.platform}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-mono uppercase tracking-wider bg-black/75 backdrop-blur-xs text-white">
+                          {item.content_type}
+                        </span>
+                      </div>
+
+                      {/* Status badge */}
+                      <div className="absolute top-3 right-3">
+                        <span
+                          className={cn(
+                            'px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider font-medium backdrop-blur-md shadow-xs flex items-center gap-1.5',
+                            isPublished
+                              ? 'bg-emerald-500/90 text-white'
+                              : isScheduled
+                              ? 'bg-amber-500/90 text-white'
+                              : item.status === 'inbox'
+                              ? 'bg-orange-500/90 text-white'
+                              : 'bg-black/60 text-neutral-200'
+                          )}
+                        >
+                          {isPublished && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          {isScheduled && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                          )}
+                          {item.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Content Details */}
+                    <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                      <div>
+                        <h3
+                          onClick={() => setInspectingItem(item)}
+                          className="text-sm font-medium text-black line-clamp-1 group-hover:text-indigo-600 transition-colors cursor-pointer"
+                        >
+                          {item.title}
+                        </h3>
+                        {item.hook ? (
+                          <p className="text-xs text-amber-900 bg-amber-50/70 p-2 rounded-lg font-medium mt-2 line-clamp-2">
+                            "{item.hook}"
+                          </p>
+                        ) : item.caption ? (
+                          <p className="text-xs text-[#6b7280] font-light mt-1.5 line-clamp-2 leading-relaxed">
+                            {item.caption}
+                          </p>
+                        ) : null}
+                      </div>
+
+                      {/* Schedule / Metadata Details */}
+                      <div className="pt-3 border-t border-black/[0.04] flex items-center justify-between text-[11px] text-[#9ca3af] font-light">
+                        <div className="flex items-center gap-1.5 font-mono">
+                          <Clock size={12} className={isScheduled ? 'text-amber-500' : ''} />
+                          <span className={isScheduled ? 'text-amber-700 font-medium' : ''}>
+                            {item.scheduled_at
+                              ? `Scheduled: ${new Date(item.scheduled_at).toLocaleDateString([], {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}`
+                              : isPublished && item.published_at
+                              ? `Published: ${new Date(item.published_at).toLocaleDateString([], {
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}`
+                              : item.status === 'inbox'
+                              ? 'Vault Inbox'
+                              : 'Draft'}
+                          </span>
+                        </div>
+
+                        {isPublished && item.metrics && (
+                          <div className="flex items-center gap-3 font-mono text-black font-normal">
+                            <span className="flex items-center gap-1 text-sky-600">
+                              <Eye size={11} className="text-sky-500" />
+                              {(item.metrics.views || 0).toLocaleString()}
+                            </span>
+                            <span className="flex items-center gap-1 text-rose-600">
+                              <ThumbsUp size={11} className="text-rose-500" />
+                              {(item.metrics.likes || 0).toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action Bar */}
+                      <div className="pt-2 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setInspectingItem(item)}
+                            className="px-3 py-1.5 bg-[#f5f5f7] hover:bg-neutral-200 text-black rounded-xl text-xs font-normal flex items-center gap-1.5 cursor-pointer transition-colors"
+                          >
+                            <SlidersHorizontal size={12} />
+                            <span>Inspect</span>
+                          </button>
+
+                          {item.status !== 'published' && (
+                            <button
+                              onClick={() => handlePublishNow(item)}
+                              disabled={publishingId === item.id}
+                              className="px-3 py-1.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-all shadow-xs"
+                            >
+                              {publishingId === item.id ? (
+                                <Loader2 size={12} className="animate-spin text-white" />
+                              ) : (
+                                <Send size={11} className="text-white" />
+                              )}
+                              <span>Publish</span>
+                            </button>
+                          )}
+
+                          {isPublished && item.external_post_url && (
+                            <a
+                              href={item.external_post_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/60 rounded-xl text-xs font-normal flex items-center gap-1.5 transition-colors shadow-xs"
+                            >
+                              <ExternalLink size={12} />
+                              <span>View Live</span>
+                            </a>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="p-1.5 text-[#9ca3af] hover:text-black rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer"
+                          title="Delete Content Item"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* GOOGLE DRIVE INGESTION MODAL */}
+      <DriveImportModal
+        isOpen={isDriveModalOpen}
+        onClose={() => setIsDriveModalOpen(false)}
+        onImportSuccess={() => {
+          fetchItems(true)
+          setActiveTab('inbox')
+        }}
+      />
+
+      {/* DEEP ASSET INSPECTOR & STRATEGY MODAL */}
+      <AssetInspectorModal
+        item={inspectingItem}
+        isOpen={Boolean(inspectingItem)}
+        onClose={() => setInspectingItem(null)}
+        onUpdate={async (updates) => {
+          await handleUpdateItem(updates)
+          await fetchItems(true)
+        }}
+        onPublishNow={handlePublishNow}
+        onDelete={handleDelete}
+      />
+
+      {/* MANUAL CREATE CONTENT MODAL */}
+      {isCreateModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-black/[0.08] max-h-[90vh] overflow-y-auto space-y-6">
             <div className="flex items-center justify-between border-b border-black/[0.06] pb-4">
               <div>
                 <h3 className="text-lg font-light text-black">Stage Content Asset</h3>
-                <p className="text-xs text-[#6b7280] font-light">Set metadata, media files, and schedule automated dispatch</p>
+                <p className="text-xs text-[#6b7280] font-light">
+                  Set metadata, media files, and schedule automated dispatch
+                </p>
               </div>
-              <button 
-                onClick={() => setIsModalOpen(false)}
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
                 className="p-1.5 text-[#9ca3af] hover:text-black rounded-lg cursor-pointer"
               >
                 <X size={18} />
@@ -758,8 +1224,8 @@ export default function ContentVaultPage() {
                     onChange={(e) => setPlatform(e.target.value as ContentPlatform)}
                     className="w-full px-3.5 py-2.5 bg-[#fbfbfd] border border-black/[0.08] rounded-xl text-xs text-black outline-none font-light"
                   >
-                    <option value="youtube">YouTube</option>
                     <option value="instagram">Instagram</option>
+                    <option value="youtube">YouTube</option>
                   </select>
                 </div>
 
@@ -770,9 +1236,9 @@ export default function ContentVaultPage() {
                     onChange={(e) => setContentType(e.target.value as ContentType)}
                     className="w-full px-3.5 py-2.5 bg-[#fbfbfd] border border-black/[0.08] rounded-xl text-xs text-black outline-none font-light"
                   >
-                    <option value="video">Long-form Video</option>
-                    <option value="short">YouTube Short</option>
                     <option value="reel">Instagram Reel</option>
+                    <option value="short">YouTube Short</option>
+                    <option value="video">Long-form Video</option>
                     <option value="carousel">Carousel (Multi-image)</option>
                     <option value="post">Single Image Post</option>
                   </select>
@@ -781,8 +1247,10 @@ export default function ContentVaultPage() {
 
               {/* Media File Upload Area */}
               <div>
-                <label className="block text-xs font-medium text-black mb-1.5">Media Assets (Video / Images)</label>
-                <div 
+                <label className="block text-xs font-medium text-black mb-1.5">
+                  Media Assets (Video / Images)
+                </label>
+                <div
                   onClick={() => fileInputRef.current?.click()}
                   className="border-2 border-dashed border-black/[0.1] hover:border-black/[0.3] rounded-2xl p-6 text-center cursor-pointer transition-colors bg-[#fbfbfd]"
                 >
@@ -802,36 +1270,44 @@ export default function ContentVaultPage() {
                   ) : mediaUrls.length > 0 ? (
                     <div className="flex items-center justify-center gap-2 text-black font-medium text-xs">
                       <CheckCircle2 size={16} />
-                      <span>{mediaUrls.length} file(s) attached to vault deliverable</span>
+                      <span>{mediaUrls.length} file(s) attached to deliverable</span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-1.5 text-[#6b7280]">
                       <Upload size={22} className="text-[#9ca3af]" />
-                      <span className="text-xs font-medium text-black">Click or drag media files here</span>
-                      <span className="text-[11px] text-[#9ca3af] font-light">Supports MP4, MOV, WEBM, JPG, PNG (up to 500MB)</span>
+                      <span className="text-xs font-medium text-black">
+                        Click or drag media files here
+                      </span>
+                      <span className="text-[11px] text-[#9ca3af] font-light">
+                        Supports MP4, MOV, WEBM, JPG, PNG (up to 500MB)
+                      </span>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Caption / Description */}
+              {/* Caption */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-medium text-black">Caption & Description</label>
-                  <span className="text-[10px] text-[#9ca3af] font-mono">{caption.length} characters</span>
+                  <label className="text-xs font-medium text-black">Caption &amp; Description</label>
+                  <span className="text-[10px] text-[#9ca3af] font-mono">
+                    {caption.length} characters
+                  </span>
                 </div>
                 <textarea
                   rows={4}
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
-                  placeholder="Craft your description, hook, timestamps, and hashtags..."
+                  placeholder="Craft your description, hook, and hashtags..."
                   className="w-full px-3.5 py-2.5 bg-[#fbfbfd] border border-black/[0.08] rounded-xl text-xs text-black outline-none focus:border-black font-light resize-none leading-relaxed"
                 />
               </div>
 
               {/* Schedule Date & Time */}
               <div>
-                <label className="block text-xs font-medium text-black mb-1.5">Schedule Publication Time (Optional)</label>
+                <label className="block text-xs font-medium text-black mb-1.5">
+                  Schedule Publication Time (Optional)
+                </label>
                 <input
                   type="datetime-local"
                   value={scheduledAt}
@@ -845,27 +1321,27 @@ export default function ContentVaultPage() {
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-black/[0.06]">
               <button
                 type="button"
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => setIsCreateModalOpen(false)}
                 className="px-4 py-2 border border-black/[0.08] rounded-xl text-xs text-[#6b7280] hover:text-black font-light cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={() => handleCreate('draft')}
+                onClick={() => handleCreate('inbox')}
                 disabled={creating}
                 className="px-4 py-2 bg-[#f5f5f7] hover:bg-neutral-200 text-black rounded-xl text-xs font-medium cursor-pointer transition-colors"
               >
-                Save as Draft
+                Add to Inbox
               </button>
               <button
                 type="button"
-                onClick={() => handleCreate(scheduledAt ? 'scheduled' : 'draft')}
+                onClick={() => handleCreate(scheduledAt ? 'scheduled' : 'inbox')}
                 disabled={creating}
                 className="px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
               >
                 {creating && <Loader2 size={12} className="animate-spin text-white" />}
-                <span>{scheduledAt ? 'Schedule Dispatch' : 'Create Asset'}</span>
+                <span>{scheduledAt ? 'Schedule Dispatch' : 'Create Deliverable'}</span>
               </button>
             </div>
           </div>

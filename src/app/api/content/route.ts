@@ -60,7 +60,17 @@ export async function POST(req: NextRequest) {
       media_urls = [],
       thumbnail_url = null,
       scheduled_at = null,
-      workspace_id: bodyWsId
+      workspace_id: bodyWsId,
+      drive_file_id = null,
+      drive_web_view_link = null,
+      drive_download_link = null,
+      transcript = null,
+      hook = null,
+      angle = null,
+      cta = null,
+      tags = [],
+      duration_seconds = null,
+      file_size_bytes = null,
     } = body
 
     if (!title || !title.trim()) {
@@ -97,6 +107,16 @@ export async function POST(req: NextRequest) {
       status,
       media_urls,
       thumbnail_url: thumbnail_url || undefined,
+      drive_file_id: drive_file_id || undefined,
+      drive_web_view_link: drive_web_view_link || undefined,
+      drive_download_link: drive_download_link || undefined,
+      transcript: transcript || undefined,
+      hook: hook || undefined,
+      angle: angle || undefined,
+      cta: cta || undefined,
+      tags: tags || [],
+      duration_seconds: duration_seconds || undefined,
+      file_size_bytes: file_size_bytes || undefined,
       scheduled_at: scheduled_at ? new Date(scheduled_at).toISOString() : undefined,
       workspace_id: workspaceId,
       owner_id: userId

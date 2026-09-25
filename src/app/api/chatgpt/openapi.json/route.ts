@@ -725,6 +725,68 @@ export async function GET(req: NextRequest) {
           }
         }
       },
+      '/api/chatgpt/content/drive': {
+        get: {
+          operationId: 'listDriveVideoAssets',
+          summary: 'List finished video deliverables from Google Drive',
+          description: 'Discovers finished videos, short reels, and folders on Google Drive ready to be imported and scheduled.',
+          parameters: [
+            {
+              name: 'folder_id',
+              in: 'query',
+              required: false,
+              schema: { type: 'string' },
+              description: 'Optional Google Drive folder ID to inspect'
+            },
+            {
+              name: 'q',
+              in: 'query',
+              required: false,
+              schema: { type: 'string' },
+              description: 'Search query for filenames'
+            },
+            {
+              name: 'limit',
+              in: 'query',
+              required: false,
+              schema: { type: 'integer', default: 30 }
+            }
+          ],
+          responses: {
+            '200': { description: 'Drive videos retrieved successfully.' }
+          }
+        }
+      },
+      '/api/chatgpt/content/plan-sprint': {
+        post: {
+          operationId: 'planContentSprint',
+          summary: 'Auto-distribute unscheduled inbox assets across a 14/30 day sprint',
+          description: 'Schedules pending video deliverables across days with alternating platforms (Instagram Reels and YouTube Shorts) and optimal release time windows.',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    sprint_days: { type: 'integer', default: 14, description: 'Duration of the sprint in days.' },
+                    items_per_day: { type: 'integer', default: 1, description: 'Number of posts per day.' },
+                    platforms: {
+                      type: 'array',
+                      items: { type: 'string', enum: ['instagram', 'youtube'] },
+                      default: ['instagram', 'youtube']
+                    },
+                    start_date: { type: 'string', format: 'date', description: 'Starting date in YYYY-MM-DD format.' }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            '200': { description: 'Content sprint scheduled successfully.' }
+          }
+        }
+      },
       '/api/chatgpt/content/analytics': {
         get: {
           operationId: 'getContentAnalytics',

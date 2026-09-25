@@ -207,7 +207,7 @@ export interface Asset {
 
 export type ContentPlatform = 'youtube' | 'instagram' | 'tiktok' | 'twitter' | 'linkedin'
 export type ContentType = 'video' | 'short' | 'reel' | 'post' | 'carousel' | 'story'
-export type ContentStatus = 'draft' | 'scheduled' | 'publishing' | 'published' | 'failed'
+export type ContentStatus = 'inbox' | 'draft' | 'in_review' | 'scheduled' | 'publishing' | 'published' | 'failed'
 
 export interface ContentItem {
   id: string
@@ -220,6 +220,16 @@ export interface ContentItem {
   status: ContentStatus
   media_urls: string[]
   thumbnail_url?: string
+  drive_file_id?: string
+  drive_web_view_link?: string
+  drive_download_link?: string
+  transcript?: string
+  hook?: string
+  angle?: string
+  cta?: string
+  tags?: string[]
+  file_size_bytes?: number
+  duration_seconds?: number
   scheduled_at?: string
   published_at?: string
   external_post_id?: string
