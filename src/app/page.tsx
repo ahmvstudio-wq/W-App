@@ -5,10 +5,11 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { 
-  ArrowRight, X, ChevronDown, Plus, Menu as MenuIcon
+  ArrowRight, X, ChevronDown, Plus
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import LandingMenuModal from '@/components/LandingMenuModal'
 
 const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -185,8 +186,8 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white text-[#0c0d0f] selection:bg-black/10 relative">
 
       {/* ─── STICKY NAV ─── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-black/[0.06]">
-        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 h-16 flex items-center justify-between">
+      <nav className="fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-b border-black/[0.06]">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-10 h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2.5">
             <img 
@@ -197,86 +198,53 @@ export default function LandingPage() {
             <span className="text-sm font-semibold tracking-tight text-black hidden sm:inline">Cultlike OS</span>
           </div>
 
-          {/* Center: Menu Button (Reference Style) */}
-          <button 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="hidden md:flex items-center gap-2.5 px-5 py-2 rounded-full border border-black/[0.12] hover:border-black/[0.25] transition-colors cursor-pointer"
-          >
-            <MenuIcon size={14} strokeWidth={2} />
-            <span className="text-sm font-normal">Menu</span>
-          </button>
+          {/* Center: Iconic Pill Menu Button (Screenshot 1 Exact Match) */}
+          <div className="flex items-center justify-center">
+            <button 
+              onClick={() => setIsMenuOpen(true)}
+              type="button"
+              className="inline-flex items-center gap-2.5 px-5 py-1.5 sm:py-2 rounded-full border border-neutral-200/90 bg-white hover:bg-neutral-50 active:scale-[0.98] text-neutral-900 text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all cursor-pointer select-none"
+              title="Open Navigation Menu"
+            >
+              {/* 2 horizontal bars from Screenshot 1 */}
+              <svg className="w-4 h-2.5 text-neutral-900" viewBox="0 0 16 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <line x1="1" y1="2" x2="15" y2="2" />
+                <line x1="1" y1="8" x2="15" y2="8" />
+              </svg>
+              <span>Menu</span>
+            </button>
+          </div>
 
-          {/* Right: CTA */}
-          <button
-            onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
-            className="px-5 py-2.5 rounded-full bg-black hover:bg-neutral-800 text-white text-sm font-normal transition-all cursor-pointer"
-          >
-            Get Started
-          </button>
+          {/* Right: CTA & Auth */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={() => { setMode('login'); setConfirmationSent(false); setIsAuthOpen(true) }}
+              type="button"
+              className="hidden sm:inline-block text-xs font-medium text-neutral-600 hover:text-black px-3 py-1.5 transition-colors cursor-pointer"
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
+              type="button"
+              className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-black hover:bg-neutral-800 text-white text-xs sm:text-sm font-normal shadow-xs transition-all cursor-pointer"
+            >
+              Get Started
+            </button>
+          </div>
         </div>
-
-        {/* Menu Dropdown */}
-        <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.98 }}
-            transition={{ ease: [0.22, 1, 0.36, 1], duration: 0.4 }}
-            className="absolute top-20 left-4 right-4 sm:left-auto sm:right-10 sm:w-[600px] bg-[#fbfbfd] border border-black/[0.08] shadow-2xl rounded-3xl overflow-hidden z-50"
-          >
-            <div className="p-4 border-b border-black/[0.06] flex justify-center">
-              <button onClick={() => setIsMenuOpen(false)} className="flex items-center gap-2 text-sm text-black hover:text-neutral-500 transition-colors cursor-pointer font-medium">
-                <X size={16} />
-                <span>Close</span>
-              </button>
-            </div>
-            
-            <div className="p-10 grid grid-cols-2 gap-12">
-              <div className="flex flex-col h-full justify-between space-y-12">
-                <div>
-                  <h4 className="text-[11px] font-semibold text-neutral-400 mb-6 tracking-widest uppercase">Product</h4>
-                  <div className="space-y-4">
-                    <a href="#features" onClick={() => setIsMenuOpen(false)} className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors">Home</a>
-                    <a href="#showcase" onClick={() => setIsMenuOpen(false)} className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors">Search</a>
-                    <a href="#pricing" onClick={() => setIsMenuOpen(false)} className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors">Pricing</a>
-                    <a href="#faq" onClick={() => setIsMenuOpen(false)} className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors">FAQ</a>
-                    <a href="#changelog" onClick={() => setIsMenuOpen(false)} className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors">Changelog</a>
-                  </div>
-                </div>
-
-                <div className="pt-8 border-t border-black/[0.06]">
-                  <h4 className="text-[11px] font-semibold text-neutral-400 mb-4 tracking-widest uppercase">Social Media</h4>
-                  <div className="flex flex-wrap gap-5 text-sm font-medium text-black">
-                    <a href="#" className="hover:text-neutral-500 transition-colors">X</a>
-                    <a href="#" className="hover:text-neutral-500 transition-colors">GitHub</a>
-                    <a href="#" className="hover:text-neutral-500 transition-colors">LinkedIn</a>
-                    <a href="#" className="hover:text-neutral-500 transition-colors">Contact</a>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="text-[11px] font-semibold text-neutral-400 mb-6 tracking-widest uppercase">Solutions</h4>
-                <div className="space-y-6">
-                  <div>
-                    <a href="#" className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors mb-3">Industries</a>
-                    <div className="space-y-2.5 pl-0.5">
-                      <a href="#" className="block text-[15px] font-medium text-neutral-500 hover:text-black transition-colors">Film, video & audio</a>
-                      <a href="#" className="block text-[15px] font-medium text-neutral-500 hover:text-black transition-colors">Knowledge work</a>
-                      <a href="#" className="block text-[15px] font-medium text-neutral-500 hover:text-black transition-colors">AEC</a>
-                      <a href="#" className="block text-[15px] font-medium text-neutral-500 hover:text-black transition-colors">Games & 3D</a>
-                    </div>
-                  </div>
-                  <a href="#" className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors">Developers</a>
-                  <a href="#" className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors">Enterprise</a>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-        </AnimatePresence>
       </nav>
+
+      {/* Minimalist Multi-Column Menu Modal matching Screenshot 2 */}
+      <LandingMenuModal
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        onOpenAuth={(authMode) => {
+          setMode(authMode)
+          setConfirmationSent(false)
+          setIsAuthOpen(true)
+        }}
+      />
 
 
       {/* ─── HERO SECTION ─── */}
