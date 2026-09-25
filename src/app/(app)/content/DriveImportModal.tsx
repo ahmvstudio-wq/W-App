@@ -460,7 +460,7 @@ export function DriveImportModal({ isOpen, onClose, onImportSuccess }: DriveImpo
                     <ArrowRight size={13} className="text-white" />
                   )}
                   <span>
-                    Import {selectedIds.size > 0 ? `${selectedIds.size} Video(s)` : ''} to Vault Inbox
+                    Import {selectedIds.size > 0 ? `${selectedIds.size} Video(s)` : ''} as {targetPlatform === 'youtube' ? 'YouTube Shorts' : 'Instagram Reels'}
                   </span>
                 </button>
               </div>

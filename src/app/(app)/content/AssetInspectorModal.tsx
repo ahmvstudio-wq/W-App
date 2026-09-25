@@ -112,8 +112,27 @@ export function AssetInspectorModal({
   const handleInstantPublish = async () => {
     setPublishing(true)
     try {
-      await onPublishNow(item)
+      const updatedItem: ContentItem = {
+        ...item,
+        title,
+        platform,
+        content_type: contentType,
+        status: 'publishing',
+        scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
+        caption,
+        hook,
+        angle,
+        cta,
+        transcript,
+        tags,
+      }
+
+      await onUpdate(updatedItem)
+      await onPublishNow(updatedItem)
       onClose()
+    } catch (err: any) {
+      console.error('Instant publish error:', err)
+      toast.error('Publishing failed')
     } finally {
       setPublishing(false)
     }
@@ -418,14 +437,14 @@ export function AssetInspectorModal({
               type="button"
               onClick={handleInstantPublish}
               disabled={publishing}
-              className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-xs cursor-pointer transition-all"
+              className="px-4 py-2 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-xs cursor-pointer transition-all"
             >
               {publishing ? (
                 <Loader2 size={12} className="animate-spin text-white" />
               ) : (
                 <Send size={12} className="text-white" />
               )}
-              <span>Publish Now</span>
+              <span>Publish Now to {platform === 'youtube' ? 'YouTube' : 'Instagram'}</span>
             </button>
 
             {/* Save & Schedule */}

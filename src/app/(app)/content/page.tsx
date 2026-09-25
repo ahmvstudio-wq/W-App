@@ -243,9 +243,12 @@ export default function ContentVaultPage() {
       })
 
       if (res.ok) {
-        setItems((prev) =>
-          prev.map((i) => (i.id === updates.id ? { ...i, ...updates } : i))
-        )
+        setItems((prev) => {
+          const updated = prev.map((i) => (i.id === updates.id ? { ...i, ...updates } : i))
+          setCached('content_items', updated)
+          return updated
+        })
+        setInspectingItem((prev) => (prev && prev.id === updates.id ? { ...prev, ...updates } : prev))
       }
     } catch (err) {
       console.error('Update item error:', err)
@@ -735,6 +738,47 @@ export default function ContentVaultPage() {
             </div>
           </div>
 
+          {/* Inbox Platform Filter Pills */}
+          {inboxItems.length > 0 && (
+            <div className="flex items-center gap-1.5 bg-white/70 backdrop-blur-md p-1.5 rounded-2xl border border-black/[0.06] shadow-xs w-fit">
+              <button
+                onClick={() => setPlatformFilter('all')}
+                className={cn(
+                  'px-3 py-1.5 rounded-xl text-xs font-light transition-all cursor-pointer',
+                  platformFilter === 'all'
+                    ? 'bg-black text-white font-medium shadow-xs'
+                    : 'text-[#6b7280] hover:text-black'
+                )}
+              >
+                All Platforms ({inboxItems.length})
+              </button>
+              <button
+                onClick={() => setPlatformFilter('youtube')}
+                className={cn(
+                  'px-3 py-1.5 rounded-xl text-xs font-light transition-all cursor-pointer flex items-center gap-1.5',
+                  platformFilter === 'youtube'
+                    ? 'bg-rose-50 text-rose-700 font-medium shadow-xs border border-rose-200/60'
+                    : 'text-[#6b7280] hover:text-rose-600'
+                )}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                <span>YouTube Shorts ({inboxItems.filter((i) => i.platform === 'youtube').length})</span>
+              </button>
+              <button
+                onClick={() => setPlatformFilter('instagram')}
+                className={cn(
+                  'px-3 py-1.5 rounded-xl text-xs font-light transition-all cursor-pointer flex items-center gap-1.5',
+                  platformFilter === 'instagram'
+                    ? 'bg-fuchsia-50 text-fuchsia-700 font-medium shadow-xs border border-fuchsia-200/60'
+                    : 'text-[#6b7280] hover:text-fuchsia-600'
+                )}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500" />
+                <span>Instagram Reels ({inboxItems.filter((i) => i.platform === 'instagram').length})</span>
+              </button>
+            </div>
+          )}
+
           {/* Inbox Grid */}
           {loading ? (
             <CardSkeleton count={4} />
@@ -761,7 +805,9 @@ export default function ContentVaultPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {inboxItems.map((item) => {
+              {inboxItems
+                .filter((i) => platformFilter === 'all' || i.platform === platformFilter)
+                .map((item) => {
                 return (
                   <div
                     key={item.id}
@@ -1243,7 +1289,15 @@ export default function ContentVaultPage() {
                   <label className="block text-xs font-medium text-black mb-1.5">Target Platform</label>
                   <select
                     value={platform}
-                    onChange={(e) => setPlatform(e.target.value as ContentPlatform)}
+                    onChange={(e) => {
+                      const newPlat = e.target.value as ContentPlatform
+                      setPlatform(newPlat)
+                      if (newPlat === 'youtube' && (contentType === 'reel' || contentType === 'carousel' || contentType === 'post')) {
+                        setContentType('short')
+                      } else if (newPlat === 'instagram' && contentType === 'short') {
+                        setContentType('reel')
+                      }
+                    }}
                     className="w-full px-3.5 py-2.5 bg-[#fbfbfd] border border-black/[0.08] rounded-xl text-xs text-black outline-none font-light"
                   >
                     <option value="instagram">Instagram</option>

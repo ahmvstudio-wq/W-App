@@ -58,7 +58,9 @@ export async function POST(req: NextRequest) {
         rawItem.content_type === 'short'
 
       const platform = rawItem.platform || (isShortVertical ? 'instagram' : 'youtube')
-      const contentType = rawItem.content_type || (isShortVertical ? 'reel' : 'video')
+      const contentType = platform === 'youtube'
+        ? (rawItem.content_type === 'video' ? 'video' : 'short')
+        : (rawItem.content_type || (isShortVertical ? 'reel' : 'video'))
 
       const saved = await saveContentItem(client, {
         title: cleanTitle,
