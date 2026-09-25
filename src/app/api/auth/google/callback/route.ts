@@ -93,24 +93,20 @@ export async function GET(req: NextRequest) {
         ...cookieOpts,
         maxAge: tokenData.expires_in || 3600,
       })
+      response.cookies.set('google_access_token', tokenData.access_token, {
+        ...cookieOpts,
+        maxAge: tokenData.expires_in || 3600,
+      })
       if (tokenData.refresh_token) {
         response.cookies.set('gcal_refresh_token', tokenData.refresh_token, {
           ...cookieOpts,
           maxAge: 60 * 60 * 24 * 30, // 30 days
         })
+        response.cookies.set('google_refresh_token', tokenData.refresh_token, {
+          ...cookieOpts,
+          maxAge: 60 * 60 * 24 * 30, // 30 days
+        })
       }
-    }
-
-    // Set unified google access token
-    response.cookies.set('google_access_token', tokenData.access_token, {
-      ...cookieOpts,
-      maxAge: tokenData.expires_in || 3600,
-    })
-    if (tokenData.refresh_token) {
-      response.cookies.set('google_refresh_token', tokenData.refresh_token, {
-        ...cookieOpts,
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-      })
     }
 
     return response

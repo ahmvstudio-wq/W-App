@@ -86,10 +86,10 @@ export function generateIcsCalendar(tasks: Task[], calendarName = 'Cultlike OS T
  * Retrieve or refresh Google OAuth Access Token
  */
 export async function getValidGoogleAccessToken(req: NextRequest): Promise<string | null> {
-  const accessToken = req.cookies.get('google_access_token')?.value || req.cookies.get('gcal_access_token')?.value
+  const accessToken = req.cookies.get('gcal_access_token')?.value || req.cookies.get('google_access_token')?.value
   if (accessToken) return accessToken
 
-  const refreshToken = req.cookies.get('google_refresh_token')?.value || req.cookies.get('gcal_refresh_token')?.value
+  const refreshToken = req.cookies.get('gcal_refresh_token')?.value || req.cookies.get('google_refresh_token')?.value
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
 
