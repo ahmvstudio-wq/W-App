@@ -81,10 +81,10 @@ export function AssetInspectorModal({
     toast.success('Copied to clipboard!')
   }
 
-  // Trigger Groq AI Analysis
+  // Trigger AI Viral Analysis
   const handleAnalyzeWithAI = async () => {
     setAnalyzing(true)
-    toast.info('Groq AI Llama-3.3-70B analyzing video hooks and strategy...')
+    toast.info('AI analyzing video hooks and viral strategy...')
     try {
       const res = await fetch('/api/content/ai/analyze-asset', {
         method: 'POST',
@@ -342,7 +342,7 @@ export function AssetInspectorModal({
                     <Sparkles size={13} />
                   </div>
                   <span className="text-xs font-medium text-black">AI Viral Hook & Strategy Engine</span>
-                  <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-black text-white">Groq 70B</span>
+                  <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-black text-white">Claude AI</span>
                 </div>
 
                 <button
@@ -443,7 +443,7 @@ export function AssetInspectorModal({
                 rows={4}
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
-                placeholder="Write caption or use the Groq AI generated copy..."
+                placeholder="Write caption or use the AI generated copy..."
                 className="w-full px-3 py-2 bg-[#fbfbfd] border border-black/[0.08] rounded-xl text-xs text-black outline-none focus:border-black font-light leading-relaxed resize-none"
               />
             </div>

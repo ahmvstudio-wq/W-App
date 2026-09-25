@@ -177,7 +177,7 @@ export default function ContentVaultPage() {
   // Handle Quick AI Hook Generation for an Item
   const handleQuickAiHook = async (item: ContentItem) => {
     setAnalyzingItemId(item.id)
-    toast.info(`Groq 70B generating viral hooks for "${item.title}"...`)
+    toast.info(`Generating viral hooks for "${item.title}"...`)
     try {
       const res = await fetch('/api/content/ai/analyze-asset', {
         method: 'POST',
@@ -461,7 +461,7 @@ export default function ContentVaultPage() {
             Content Studio &amp; Dispatch OS
           </h1>
           <p className="text-xs sm:text-sm text-[#6b7280] font-light mt-1">
-            Google Drive video ingestion, Groq AI 70B viral hook engineering, and automated timeline scheduling.
+            Google Drive video ingestion, AI viral hook engineering, and automated timeline scheduling.
           </p>
         </div>
 
@@ -670,7 +670,7 @@ export default function ContentVaultPage() {
                   </span>
                 </div>
                 <p className="text-xs text-[#6b7280] font-light mt-0.5">
-                  Import finished video files from Google Drive, let Groq 70B AI generate viral hooks, and auto-plan your multi-platform sprint.
+                  Import finished video files from Google Drive, let AI generate viral hooks, and auto-plan your multi-platform sprint.
                 </p>
               </div>
             </div>

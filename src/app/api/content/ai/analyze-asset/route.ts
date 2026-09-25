@@ -18,7 +18,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Title is required' }, { status: 400 })
     }
 
-    const groqApiKey = process.env.GROQ_API_KEY
     const anthropicApiKey = process.env.ANTHROPIC_API_KEY
 
     const userPrompt = `
@@ -57,92 +56,47 @@ Respond with valid JSON matching EXACTLY this structure:
 }
 `
 
-    // 1. Try Groq (openai/gpt-oss-120b or qwen/qwen3.8-27b)
-    if (groqApiKey) {
-      const groqModels = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b']
-      for (const groqModel of groqModels) {
+    // 1. Anthropic Claude Engine
+    if (anthropicApiKey) {
+      const modelsToTry = ['claude-3-5-sonnet-20241022', 'claude-3-haiku-20240307']
+      for (const modelName of modelsToTry) {
         try {
-          const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
-              Authorization: `Bearer ${groqApiKey}`,
+              'x-api-key': anthropicApiKey,
+              'anthropic-version': '2023-06-01',
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              model: groqModel,
-              messages: [
-                {
-                  role: 'system',
-                  content:
-                    'You are Cultlike OS Viral Content Strategist. You specialize in short-form video retention (Instagram Reels, YouTube Shorts, TikTok) for high-agency entrepreneurs, founders, and creators. Always return valid JSON matching the schema without commentary or code fences.',
-                },
-                {
-                  role: 'user',
-                  content: userPrompt,
-                },
-              ],
-              response_format: { type: 'json_object' },
-              temperature: 0.6,
+              model: modelName,
               max_tokens: 1500,
+              system:
+                'You are Cultlike OS Viral Content Strategist. You specialize in short-form video retention (Instagram Reels, YouTube Shorts, TikTok) for high-agency entrepreneurs, founders, and creators. Always respond with raw valid JSON only matching the schema without markdown formatting or code fences.',
+              messages: [{ role: 'user', content: userPrompt }],
             }),
           })
 
-          if (groqRes.ok) {
-            const groqData = await groqRes.json()
-            const rawText = groqData.choices?.[0]?.message?.content
-            if (rawText) {
-              const parsed = JSON.parse(rawText)
+          if (anthropicRes.ok) {
+            const data = await anthropicRes.json()
+            const rawText = data.content?.[0]?.text || ''
+            const match = rawText.match(/\{[\s\S]*\}/)
+            if (match) {
+              const parsed = JSON.parse(match[0])
               return NextResponse.json({
                 success: true,
-                engine: `groq-${groqModel}`,
+                engine: modelName,
                 analysis: parsed,
               })
             }
           }
-        } catch (groqErr) {
-          console.warn(`[AI Analyze Asset] Groq error on ${groqModel}, trying next:`, groqErr)
+        } catch (anthropicErr) {
+          console.warn(`[AI Analyze Asset] Claude ${modelName} error, trying next:`, anthropicErr)
         }
       }
     }
 
-    // 2. Try Anthropic fallback
-    if (anthropicApiKey) {
-      try {
-        const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'x-api-key': anthropicApiKey,
-            'anthropic-version': '2023-06-01',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'claude-3-haiku-20240307',
-            max_tokens: 1500,
-            system:
-              'You are Cultlike OS Viral Content Strategist. Always respond with raw valid JSON only.',
-            messages: [{ role: 'user', content: userPrompt }],
-          }),
-        })
-
-        if (anthropicRes.ok) {
-          const data = await anthropicRes.json()
-          const rawText = data.content?.[0]?.text || ''
-          const match = rawText.match(/\{[\s\S]*\}/)
-          if (match) {
-            const parsed = JSON.parse(match[0])
-            return NextResponse.json({
-              success: true,
-              engine: 'claude-3-haiku',
-              analysis: parsed,
-            })
-          }
-        }
-      } catch (anthropicErr) {
-        console.warn('[AI Analyze Asset] Anthropic error, falling back:', anthropicErr)
-      }
-    }
-
-    // 3. High-Quality Heuristic Engine (Guaranteed zero-failure fallback)
+    // 2. High-Quality Heuristic Engine (Guaranteed zero-failure fallback)
     const cleanWord = title.replace(/[^a-zA-Z0-9 ]/g, '').trim()
     return NextResponse.json({
       success: true,
