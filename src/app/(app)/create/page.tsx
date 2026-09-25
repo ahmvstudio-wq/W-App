@@ -266,7 +266,7 @@ export default function CultlikeCreatePage() {
           caption: planCaption.trim(),
           platform: planPlatform,
           content_type: planType,
-          status: planScheduledAt ? 'scheduled' : 'draft',
+          status: planScheduledAt ? 'scheduled' : 'inbox',
           scheduled_at: planScheduledAt || null,
           workspace_id: wsId
         })
