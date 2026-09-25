@@ -10,10 +10,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Google Client ID is not configured' }, { status: 400 })
   }
 
-  // Derive redirect URI dynamically based on current host
-  const host = req.headers.get('host') || 'localhost:3000'
-  const protocol = host.includes('localhost') ? 'http' : 'https'
-  const redirectUri = `${protocol}://${host}/api/auth/google/callback`
+  // Derive redirect URI dynamically based on configured app URL or current host
+  const appBase = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL
+  let redirectUri = `${appBase}/api/auth/google/callback`
+  if (!appBase) {
+    const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'localhost:3000'
+    const protocol = req.headers.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https')
+    redirectUri = `${protocol}://${host}/api/auth/google/callback`
+  }
 
   // Extract requested service target (workspace | calendar | youtube)
   const service = req.nextUrl.searchParams.get('service') || 'workspace'

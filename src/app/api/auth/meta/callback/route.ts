@@ -9,9 +9,13 @@ export async function GET(req: NextRequest) {
   const errorReason = searchParams.get('error_reason') || searchParams.get('error_description')
   const state = searchParams.get('state')
 
-  const host = req.headers.get('host') || 'localhost:3000'
-  const protocol = host.includes('localhost') ? 'http' : 'https'
-  const appBaseUrl = `${protocol}://${host}`
+  const appBase = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL
+  let appBaseUrl = appBase || ''
+  if (!appBaseUrl) {
+    const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'localhost:3000'
+    const protocol = req.headers.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https')
+    appBaseUrl = `${protocol}://${host}`
+  }
   const returnTo = state ? decodeURIComponent(state) : '/settings'
 
   if (error || !code) {
