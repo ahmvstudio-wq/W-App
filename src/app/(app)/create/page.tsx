@@ -6,7 +6,7 @@ import {
   Flame, Trophy, Zap, Share2, Download, Copy, CheckCircle2, 
   Sparkles, Calendar, TrendingUp, Clock, ShieldCheck, ArrowUpRight,
   Plus, Video, Layers, Eye, Heart, MessageSquare, Send, ExternalLink,
-  Check, Repeat, Play, BarChart3, Target, Compass
+  Check, Repeat, Play, BarChart3, Target, Compass, HardDrive
 } from 'lucide-react'
 import { toPng } from 'html-to-image'
 import { toast } from 'sonner'
@@ -60,23 +60,39 @@ export default function CultlikeCreatePage() {
 
   // Active View Tab
   const [activeTab, setActiveTab] = useState<'overview' | 'plan' | 'analytics' | 'scorecard'>('overview')
+  const [isDriveConnected, setIsDriveConnected] = useState<boolean | null>(null)
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      if (urlParams.get('google_connected') === 'true') {
+        toast.success('Google Drive connected successfully!')
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+    }
+
     async function loadRealData() {
       setLoading(true)
       try {
         let wsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
 
-        // Parallel fetch: Tasks, Vault Content, YouTube Feed, Instagram Feed
-        const [tasksRes, contentRes, ytRes, igRes] = await Promise.allSettled([
+        // Parallel fetch: Tasks, Vault Content, YouTube Feed, Instagram Feed, Google Drive
+        const [tasksRes, contentRes, ytRes, igRes, driveRes] = await Promise.allSettled([
           supabase
             .from('tasks')
             .select('id, title, status, updated_at, created_at, time_box_minutes, due_date')
             .order('updated_at', { ascending: false }),
           fetch(`/api/content${wsId ? `?workspace_id=${wsId}` : ''}`).then(r => r.json()),
           fetch('/api/social/youtube/feed').then(r => r.json()),
-          fetch('/api/social/instagram/feed').then(r => r.json())
+          fetch('/api/social/instagram/feed').then(r => r.json()),
+          fetch('/api/content/drive/files?limit=1').then(r => r.json())
         ])
+
+        if (driveRes.status === 'fulfilled' && driveRes.value) {
+          setIsDriveConnected(driveRes.value.connected === true)
+        } else {
+          setIsDriveConnected(false)
+        }
 
         // 1. Process Tasks
         const tasks = tasksRes.status === 'fulfilled' && tasksRes.value.data ? tasksRes.value.data : []
@@ -347,6 +363,25 @@ export default function CultlikeCreatePage() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          {/* Google Drive Status & Quick Ingest */}
+          {isDriveConnected ? (
+            <Link
+              href="/content?open_drive=true"
+              className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+            >
+              <HardDrive size={13} />
+              <span>Drive Ready</span>
+            </Link>
+          ) : (
+            <a
+              href="/api/auth/google?service=workspace&return_to=/create"
+              className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+            >
+              <HardDrive size={13} />
+              <span>Connect Drive</span>
+            </a>
+          )}
+
           <Link
             href="/content"
             className="px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
@@ -590,6 +625,42 @@ export default function CultlikeCreatePage() {
               <p className="text-xs text-[#6b7280] font-light mt-1">
                 Plan your next content sprint, write the 3-second hook and caption, and stage it directly into your Content Vault in 1 click.
               </p>
+            </div>
+
+            {/* Google Drive Ingestion Callout Banner */}
+            <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-amber-500/[0.08] border border-amber-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center flex-shrink-0">
+                  <HardDrive size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-black">
+                    {isDriveConnected ? 'Google Drive Asset Repository Connected' : 'Connect Google Drive Asset Repository'}
+                  </h3>
+                  <p className="text-xs text-[#6b7280] font-light mt-0.5">
+                    {isDriveConnected 
+                      ? 'Finished video deliverables from your Drive can be browsed and staged into the Content Vault.'
+                      : 'Authorize your Drive to pull finished video deliverables directly into the Vault without manual upload.'}
+                  </p>
+                </div>
+              </div>
+              {isDriveConnected ? (
+                <Link
+                  href="/content?open_drive=true"
+                  className="px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 whitespace-nowrap shadow-xs transition-all"
+                >
+                  <HardDrive size={13} />
+                  <span>Browse Drive Videos &rarr;</span>
+                </Link>
+              ) : (
+                <a
+                  href="/api/auth/google?service=workspace&return_to=/create"
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 whitespace-nowrap shadow-xs transition-all"
+                >
+                  <HardDrive size={13} />
+                  <span>Connect Google Drive</span>
+                </a>
+              )}
             </div>
 
             <form onSubmit={handleStageToVault} className="mt-6 space-y-5 max-w-2xl">

@@ -29,7 +29,7 @@ interface DriveImportModalProps {
 export function DriveImportModal({ isOpen, onClose, onImportSuccess }: DriveImportModalProps) {
   const [loading, setLoading] = useState(true)
   const [connected, setConnected] = useState(true)
-  const [authUrl, setAuthUrl] = useState('/api/auth/google?service=workspace')
+  const [authUrl, setAuthUrl] = useState('/api/auth/google?service=workspace&return_to=/content')
   const [videos, setVideos] = useState<DriveVideoFile[]>([])
   const [folders, setFolders] = useState<DriveFolder[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())

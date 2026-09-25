@@ -87,6 +87,7 @@ export default function ContentVaultPage() {
   } | null>(null)
   const [syncingYt, setSyncingYt] = useState(false)
   const [isAutoPlanning, setIsAutoPlanning] = useState(false)
+  const [isDriveConnected, setIsDriveConnected] = useState<boolean | null>(null)
 
   // Fetch Items from Database and Social Feeds
   async function fetchItems(silent = false) {
@@ -100,12 +101,19 @@ export default function ContentVaultPage() {
       const queryParams = new URLSearchParams()
       if (wsId) queryParams.set('workspace_id', wsId)
 
-      // Fetch staged database items, live YouTube uploads, and live Instagram feed in parallel
-      const [dbRes, ytRes, igRes] = await Promise.allSettled([
+      // Fetch staged database items, live YouTube uploads, live Instagram feed, and Drive status in parallel
+      const [dbRes, ytRes, igRes, driveRes] = await Promise.allSettled([
         fetch(`/api/content?${queryParams.toString()}`).then((r) => r.json()),
         fetch('/api/social/youtube/feed').then((r) => r.json()),
         fetch('/api/social/instagram/feed').then((r) => r.json()),
+        fetch('/api/content/drive/files?limit=1').then((r) => r.json()),
       ])
+
+      if (driveRes.status === 'fulfilled' && driveRes.value) {
+        setIsDriveConnected(driveRes.value.connected === true)
+      } else {
+        setIsDriveConnected(false)
+      }
 
       let dbItems: ContentItem[] = []
       if (dbRes.status === 'fulfilled' && dbRes.value?.success && Array.isArray(dbRes.value?.items)) {
@@ -172,6 +180,18 @@ export default function ContentVaultPage() {
     }
 
     fetchItems(Boolean(cached && cached.length > 0))
+
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      if (urlParams.get('google_connected') === 'true') {
+        toast.success('Google Drive connected successfully! Opening Video Explorer...')
+        setIsDriveModalOpen(true)
+        window.history.replaceState({}, '', window.location.pathname)
+      } else if (urlParams.get('open_drive') === 'true') {
+        setIsDriveModalOpen(true)
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+    }
   }, [])
 
   // Handle Quick AI Hook Generation for an Item
@@ -489,23 +509,66 @@ export default function ContentVaultPage() {
       </div>
 
       {/* Connected Channels & Accounts Strip */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Google Drive Video Storage */}
+        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/[0.04] via-orange-500/[0.02] to-transparent border border-amber-500/20 backdrop-blur-sm flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
+              <HardDrive size={18} />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-xs font-medium text-black">Google Drive</h4>
+                {isDriveConnected ? (
+                  <span className="flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 text-[9px] font-mono border border-emerald-200">
+                    <CheckCircle2 size={8} /> Connected
+                  </span>
+                ) : (
+                  <span className="px-1.5 py-0.2 rounded-full bg-neutral-100 text-neutral-600 text-[9px] font-mono border border-neutral-200">
+                    Not Connected
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-[#6b7280] font-light truncate">
+                {isDriveConnected ? 'Finished Video Scanner Ready' : 'Authorize to scan finished clips'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {isDriveConnected ? (
+              <button
+                onClick={() => setIsDriveModalOpen(true)}
+                className="px-2.5 py-1 bg-black hover:bg-neutral-800 text-white rounded-lg text-[11px] font-medium transition-all shadow-xs cursor-pointer"
+              >
+                Browse
+              </button>
+            ) : (
+              <a
+                href="/api/auth/google?service=workspace&return_to=/content"
+                className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[11px] font-medium transition-all shadow-xs whitespace-nowrap"
+              >
+                Connect
+              </a>
+            )}
+          </div>
+        </div>
+
         {/* Live Instagram Account Banner */}
         {igAccount ? (
           <div className="p-3.5 rounded-2xl bg-gradient-to-r from-pink-500/[0.04] via-purple-500/[0.02] to-transparent border border-pink-500/20 backdrop-blur-sm flex items-center justify-between gap-3 shadow-xs">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
                 IG
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <h4 className="text-xs font-medium text-black">@{igAccount.username}</h4>
-                  <span className="flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 text-[9px] font-mono border border-emerald-200">
-                    <CheckCircle2 size={8} /> Live Reels
+                  <h4 className="text-xs font-medium text-black truncate">@{igAccount.username}</h4>
+                  <span className="flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 text-[9px] font-mono border border-emerald-200 flex-shrink-0">
+                    <CheckCircle2 size={8} /> Live
                   </span>
                 </div>
-                <p className="text-[11px] text-[#6b7280] font-light">
-                  Direct Reels Dispatch Enabled • {igAccount.account_type}
+                <p className="text-[11px] text-[#6b7280] font-light truncate">
+                  Reels Dispatch • {igAccount.account_type}
                 </p>
               </div>
             </div>
@@ -513,14 +576,14 @@ export default function ContentVaultPage() {
               href={`https://instagram.com/${igAccount.username}`}
               target="_blank"
               rel="noreferrer"
-              className="p-2 text-[#6b7280] hover:text-black rounded-xl hover:bg-neutral-100 transition-colors"
+              className="p-2 text-[#6b7280] hover:text-black rounded-xl hover:bg-neutral-100 transition-colors flex-shrink-0"
             >
               <ExternalLink size={13} />
             </a>
           </div>
         ) : (
           <div className="p-3.5 rounded-2xl bg-[#fafafa] border border-black/[0.06] flex items-center justify-between">
-            <span className="text-xs text-[#6b7280]">Instagram Graph API Disconnected</span>
+            <span className="text-xs text-[#6b7280]">Instagram Disconnected</span>
             <Link
               href="/settings?tab=integrations"
               className="text-xs text-indigo-600 hover:underline font-medium"
@@ -533,35 +596,34 @@ export default function ContentVaultPage() {
         {/* Live YouTube Channel Banner */}
         {ytChannel ? (
           <div className="p-3.5 rounded-2xl bg-gradient-to-r from-rose-500/[0.04] via-rose-500/[0.02] to-transparent border border-rose-500/20 backdrop-blur-sm flex items-center justify-between gap-3 shadow-xs">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               {ytChannel.thumbnail ? (
                 <img
                   src={ytChannel.thumbnail}
                   alt={ytChannel.title}
-                  className="w-10 h-10 rounded-full border border-black/[0.08] object-cover"
+                  className="w-10 h-10 rounded-full border border-black/[0.08] object-cover flex-shrink-0"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-xs">
+                <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
                   YT
                 </div>
               )}
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <h4 className="text-xs font-medium text-black">{ytChannel.title}</h4>
-                  <span className="flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 text-[9px] font-mono border border-emerald-200">
-                    <CheckCircle2 size={8} /> Live Uploads
+                  <h4 className="text-xs font-medium text-black truncate">{ytChannel.title}</h4>
+                  <span className="flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 text-[9px] font-mono border border-emerald-200 flex-shrink-0">
+                    <CheckCircle2 size={8} /> Live
                   </span>
                 </div>
-                <p className="text-[11px] text-[#6b7280] font-light">
-                  {parseInt(ytChannel.subscriberCount || '0').toLocaleString()} subs •{' '}
-                  {parseInt(ytChannel.videoCount || '0').toLocaleString()} uploads
+                <p className="text-[11px] text-[#6b7280] font-light truncate">
+                  {parseInt(ytChannel.subscriberCount || '0').toLocaleString()} subs
                 </p>
               </div>
             </div>
             <button
               onClick={handleManualYtSync}
               disabled={syncingYt}
-              className="p-2 text-[#6b7280] hover:text-black rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+              className="p-2 text-[#6b7280] hover:text-black rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer flex-shrink-0"
               title="Refresh YouTube uploads"
             >
               <Repeat size={13} className={cn(syncingYt && 'animate-spin')} />
@@ -569,7 +631,7 @@ export default function ContentVaultPage() {
           </div>
         ) : (
           <div className="p-3.5 rounded-2xl bg-[#fafafa] border border-black/[0.06] flex items-center justify-between">
-            <span className="text-xs text-[#6b7280]">YouTube Studio Disconnected</span>
+            <span className="text-xs text-[#6b7280]">YouTube Disconnected</span>
             <Link
               href="/settings?tab=integrations"
               className="text-xs text-rose-600 hover:underline font-medium"
@@ -654,6 +716,30 @@ export default function ContentVaultPage() {
       {/* TAB 1: UNSCHEDULED INBOX */}
       {activeTab === 'inbox' && (
         <div className="space-y-6">
+          {/* Drive Connection Callout if Disconnected */}
+          {isDriveConnected === false && (
+            <div className="p-4 sm:p-5 rounded-3xl bg-amber-500/[0.08] border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-700 flex items-center justify-center flex-shrink-0">
+                  <HardDrive size={24} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-black">Connect Google Drive to Ingest Video Deliverables</h4>
+                  <p className="text-xs text-[#6b7280] font-light mt-0.5">
+                    Link your Google Drive account with 1 click to pull finished video deliverables directly into this Unscheduled Inbox.
+                  </p>
+                </div>
+              </div>
+              <a
+                href="/api/auth/google?service=workspace&return_to=/content"
+                className="px-4 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-2 whitespace-nowrap shadow-sm transition-all"
+              >
+                <ExternalLink size={13} />
+                <span>Connect Google Drive</span>
+              </a>
+            </div>
+          )}
+
           {/* Inbox Mission Banner */}
           <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/[0.07] via-orange-500/[0.04] to-transparent border border-amber-500/20 backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-start sm:items-center gap-3.5">

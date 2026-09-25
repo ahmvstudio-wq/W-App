@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { 
   User, Settings as SettingsIcon, LogOut, Bell, Calendar, 
   Video, Copy, Check, ExternalLink, RefreshCw, CheckCircle2, AlertCircle, Bot, Target,
-  Share2, Globe
+  Share2, Globe, HardDrive
 } from 'lucide-react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -90,10 +91,16 @@ export default function SettingsPage() {
   useEffect(() => {
     async function checkGoogleStatus() {
       try {
-        const res = await fetch('/api/calendar/google/events')
-        const data = await res.json()
-        if (data.connected) {
+        const driveRes = await fetch('/api/content/drive/files?limit=1')
+        const driveData = await driveRes.json()
+        if (driveData.connected) {
           setIsGoogleConnected(true)
+        } else {
+          const calRes = await fetch('/api/calendar/google/events')
+          const calData = await calRes.json()
+          if (calData.connected) {
+            setIsGoogleConnected(true)
+          }
         }
       } catch {
         // ignore
@@ -102,6 +109,22 @@ export default function SettingsPage() {
       }
     }
     checkGoogleStatus()
+
+    async function checkYouTubeStatus() {
+      try {
+        const ytRes = await fetch('/api/social/youtube/feed')
+        const ytData = await ytRes.json()
+        if (ytData.connected) {
+          setIsYouTubeConnected(true)
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('focus_youtube_connected', 'true')
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    checkYouTubeStatus()
 
     if (typeof window !== 'undefined') {
       if (localStorage.getItem('focus_youtube_connected') === 'true') {
@@ -112,7 +135,7 @@ export default function SettingsPage() {
         setInstagramUser(localStorage.getItem('cultlike_ig_user') || '')
       }
     }
-  }, [googleConnected])
+  }, [googleConnected, youtubeConnected])
 
   useEffect(() => {
     const tabParam = searchParams.get('tab')
@@ -355,162 +378,244 @@ export default function SettingsPage() {
           {/* Integrations Tab */}
           {activeTab === 'integrations' && (
             <div className="space-y-8">
-              <div>
-                <h2 className="text-lg font-normal text-black">Calendar &amp; Meeting Sync</h2>
-                <p className="text-xs text-[#6b7280] font-light mt-0.5">
-                  Connect your calendar and meeting tools to keep tasks and notes updated automatically.
-                </p>
-              </div>
-
-              {/* Calendar Sync Box */}
-              <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white border border-black/[0.08] flex items-center justify-center shadow-xs">
-                      <Calendar size={20} className="text-black" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-normal text-black">Calendar Subscription</h3>
-                      <p className="text-xs text-[#6b7280] font-light">
-                        Subscribe from Google Calendar, Apple Calendar, or Outlook to see your task deadlines.
-                      </p>
-                    </div>
-                  </div>
-
-                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-normal border border-emerald-200">
-                    <CheckCircle2 size={12} />
-                    <span>Active</span>
-                  </span>
-                </div>
-
-                {/* 1-Click Calendar Subscription */}
-                <div className="p-4 rounded-xl bg-white border border-black/[0.06] space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-black">
-                      Your Calendar Feed URL
-                    </span>
-                    <span className="text-[11px] text-[#8a8d95]">
-                      Works with any calendar app
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-                    Tasks with due dates and deadlines will automatically show up on your schedule.
+              {/* SECTION 1: GOOGLE DRIVE & ASSET REPOSITORY */}
+              <div className="space-y-3">
+                <div>
+                  <h2 className="text-lg font-normal text-black">Google Drive &amp; Video Repository</h2>
+                  <p className="text-xs text-[#6b7280] font-light mt-0.5">
+                    Connect your Google Drive account with 1 click to ingest finished video deliverables directly into Cultlike OS.
                   </p>
-
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <input
-                      type="text"
-                      readOnly
-                      value={getCalendarFeedUrl()}
-                      className="flex-1 min-w-[220px] px-3.5 py-2 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-xs font-mono text-black outline-none select-all"
-                    />
-                    <button
-                      type="button"
-                      onClick={copyFeedUrl}
-                      className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] rounded-xl text-xs font-normal transition-all cursor-pointer shadow-2xs whitespace-nowrap"
-                    >
-                      {copiedFeed ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
-                      <span>{copiedFeed ? 'Copied' : 'Copy Link'}</span>
-                    </button>
-                    <a
-                      href={`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(getCalendarFeedUrl())}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs whitespace-nowrap"
-                    >
-                      <Calendar size={13} />
-                      <span>Add to Google Calendar ↗</span>
-                    </a>
-                  </div>
                 </div>
 
-                {/* Direct Google Cloud Services & Account Sync */}
-                <div className="p-4 rounded-xl border border-black/[0.08] bg-[#fafafa] space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-xs font-medium text-black">Google Cloud Integrations</h4>
-                      <p className="text-[11px] text-[#6b7280] font-light mt-0.5">
-                        Google prohibits bundling Drive and YouTube in the same authorization prompt. Connect each service individually below.
-                      </p>
+                <div className="p-6 rounded-2xl bg-[#fafafa] border border-amber-500/20 space-y-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-600 flex items-center justify-center shadow-xs flex-shrink-0">
+                        <HardDrive size={22} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-medium text-black">Google Drive &amp; Workspace</h3>
+                          {isGoogleConnected ? (
+                            <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-mono border border-emerald-200">
+                              <CheckCircle2 size={10} /> Connected
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[10px] font-mono border border-neutral-200">
+                              Not Connected
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-[#6b7280] font-light mt-1">
+                          Direct video ingestion for Content Studio, two-way task calendar sync, and meeting docs drafting.
+                        </p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* 1. Google Calendar, Docs & Drive */}
-                  <div className="p-3.5 rounded-xl bg-white border border-black/[0.06] space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-black">Google Calendar &amp; Workspace</span>
-                        {isGoogleConnected ? (
-                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
-                            <CheckCircle2 size={10} />
-                            Connected
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[10px] font-medium border border-neutral-200">
-                            Not Connected
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-[#8a8d95] font-light">Calendar, Docs &amp; Drive</span>
+                  <div className="p-4 rounded-xl bg-white border border-black/[0.06] flex flex-wrap items-center justify-between gap-3">
+                    <div className="text-xs text-[#6b7280] font-light">
+                      {isGoogleConnected 
+                        ? 'Google Drive is authorized. Finished video deliverables can be browsed and staged into your inbox.'
+                        : 'Authorize Cultlike OS with 1 click to read finished video exports from your Google Drive folder.'}
                     </div>
 
-                    <p className="text-[11px] text-[#6b7280] font-light leading-relaxed">
-                      Two-way calendar task scheduling, meeting agenda docs drafting, and deliverable file exports.
-                    </p>
-
-                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <div className="flex flex-wrap items-center gap-2">
                       <a
-                        href="/api/auth/google?service=workspace"
-                        className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white hover:bg-[#f5f5f7] border border-black/[0.1] rounded-xl text-xs font-normal text-black transition-all shadow-xs cursor-pointer"
+                        href="/api/auth/google?service=workspace&return_to=/settings"
+                        className={cn(
+                          "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer",
+                          isGoogleConnected
+                            ? "bg-white hover:bg-neutral-50 text-black border border-black/[0.1]"
+                            : "bg-black hover:bg-neutral-800 text-white"
+                        )}
                       >
-                        <ExternalLink size={12} />
-                        <span>{isGoogleConnected ? 'Reconnect Workspace' : 'Connect Calendar & Workspace'}</span>
+                        <ExternalLink size={13} />
+                        <span>{isGoogleConnected ? 'Reconnect Google Drive' : 'Connect Google Drive'}</span>
                       </a>
 
                       {isGoogleConnected && (
-                        <button
-                          type="button"
-                          onClick={handleSyncToGoogle}
-                          disabled={syncingGoogle}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all shadow-xs cursor-pointer disabled:opacity-50"
-                        >
-                          <RefreshCw size={12} className={cn(syncingGoogle && 'animate-spin')} />
-                          <span>{syncingGoogle ? 'Syncing...' : 'Sync Tasks Now'}</span>
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={handleSyncToGoogle}
+                            disabled={syncingGoogle}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] rounded-xl text-xs font-normal transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                          >
+                            <RefreshCw size={12} className={cn(syncingGoogle && 'animate-spin')} />
+                            <span>{syncingGoogle ? 'Syncing...' : 'Sync Tasks'}</span>
+                          </button>
+                          <Link
+                            href="/content"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 border border-amber-500/20 rounded-xl text-xs font-medium transition-all cursor-pointer"
+                          >
+                            <HardDrive size={13} />
+                            <span>Open Content Vault &rarr;</span>
+                          </Link>
+                        </>
                       )}
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  {/* 2. YouTube Channel & Analytics */}
-                  <div className="p-3.5 rounded-xl bg-white border border-black/[0.06] space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-black">YouTube Channel &amp; Analytics</span>
-                        {isYouTubeConnected ? (
-                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
-                            <CheckCircle2 size={10} />
-                            Connected
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[10px] font-medium border border-neutral-200">
-                            Not Connected
-                          </span>
-                        )}
+              {/* SECTION 2: SOCIAL CHANNELS & DIRECT PUBLISHING */}
+              <div className="space-y-4 pt-2">
+                <div>
+                  <h2 className="text-lg font-normal text-black">Social Channels &amp; Direct Publishing</h2>
+                  <p className="text-xs text-[#6b7280] font-light mt-0.5">
+                    Connect your YouTube and Instagram accounts to publish Reels and Shorts directly from the Content Vault.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* YouTube Channel */}
+                  <div className="p-5 rounded-2xl bg-[#fafafa] border border-black/[0.06] flex flex-col justify-between space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-black">YouTube Channel &amp; Shorts</span>
+                          {isYouTubeConnected ? (
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
+                              <CheckCircle2 size={10} /> Live
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[10px] font-medium border border-neutral-200">
+                              Disconnected
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <span className="text-[10px] text-[#8a8d95] font-light">Data API v3 &amp; Analytics</span>
+                      <p className="text-[11px] text-[#6b7280] font-light leading-relaxed">
+                        Publish video deliverables and YouTube Shorts directly, plus monitor subscribers and view count.
+                      </p>
                     </div>
 
-                    <p className="text-[11px] text-[#6b7280] font-light leading-relaxed">
-                      Publish video deliverables and YouTube Shorts directly from the Content Studio, plus view viewer reach.
-                    </p>
-
-                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <div className="pt-2">
                       <a
-                        href="/api/auth/google?service=youtube"
+                        href="/api/auth/google?service=youtube&return_to=/settings"
                         className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white hover:bg-[#f5f5f7] border border-black/[0.1] rounded-xl text-xs font-normal text-black transition-all shadow-xs cursor-pointer"
                       >
                         <ExternalLink size={12} />
                         <span>{isYouTubeConnected ? 'Reconnect YouTube' : 'Connect YouTube Channel'}</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Instagram Professional */}
+                  <div className="p-5 rounded-2xl bg-[#fafafa] border border-black/[0.06] flex flex-col justify-between space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-black">Instagram Professional</span>
+                          {isMetaConnected ? (
+                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
+                              <CheckCircle2 size={10} /> {instagramUser ? `@${instagramUser}` : 'Live'}
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[10px] font-medium border border-neutral-200">
+                              Disconnected
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-[#6b7280] font-light leading-relaxed">
+                        Publish Instagram Reels, Carousels, and single images with automated caption &amp; hashtag dispatch.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 pt-2">
+                      <a
+                        href="/api/auth/meta?returnTo=/settings"
+                        className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer"
+                      >
+                        <ExternalLink size={12} />
+                        <span>{isMetaConnected ? 'Reconnect Instagram' : 'Connect Instagram'}</span>
+                      </a>
+
+                      {isMetaConnected && (
+                        <button
+                          onClick={() => {
+                            if (typeof window !== 'undefined') {
+                              localStorage.removeItem('cultlike_meta_connected')
+                              localStorage.removeItem('cultlike_ig_user')
+                              document.cookie = 'meta_access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+                              document.cookie = 'meta_page_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+                              document.cookie = 'instagram_account_id=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+                              document.cookie = 'instagram_username=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+                            }
+                            setIsMetaConnected(false)
+                            setInstagramUser('')
+                            toast.success('Instagram account disconnected.')
+                          }}
+                          className="px-2.5 py-1.5 bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-xl text-xs font-normal transition-all shadow-xs cursor-pointer"
+                        >
+                          Disconnect
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: CALENDAR & MEETING SYNC */}
+              <div className="space-y-4 pt-2">
+                <div>
+                  <h2 className="text-lg font-normal text-black">Calendar &amp; Meeting Sync</h2>
+                  <p className="text-xs text-[#6b7280] font-light mt-0.5">
+                    Connect your calendar and meeting tools to keep tasks and notes updated automatically.
+                  </p>
+                </div>
+
+                {/* Calendar Subscription Feed */}
+                <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-white border border-black/[0.08] flex items-center justify-center shadow-xs">
+                        <Calendar size={20} className="text-black" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-normal text-black">Universal Calendar Subscription</h3>
+                        <p className="text-xs text-[#6b7280] font-light">
+                          Subscribe from Google Calendar, Apple Calendar, or Outlook to see your task deadlines.
+                        </p>
+                      </div>
+                    </div>
+
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-normal border border-emerald-200">
+                      <CheckCircle2 size={12} />
+                      <span>Active</span>
+                    </span>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-white border border-black/[0.06] space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-black">Your Calendar Feed URL</span>
+                      <span className="text-[11px] text-[#8a8d95]">Works with any calendar app</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <input
+                        type="text"
+                        readOnly
+                        value={getCalendarFeedUrl()}
+                        className="flex-1 min-w-[220px] px-3.5 py-2 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-xs font-mono text-black outline-none select-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={copyFeedUrl}
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] rounded-xl text-xs font-normal transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+                      >
+                        {copiedFeed ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                        <span>{copiedFeed ? 'Copied' : 'Copy Link'}</span>
+                      </button>
+                      <a
+                        href={`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(getCalendarFeedUrl())}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1.5 px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                      >
+                        <Calendar size={13} />
+                        <span>Add to Google Calendar ↗</span>
                       </a>
                     </div>
                   </div>
