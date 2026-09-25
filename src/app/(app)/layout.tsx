@@ -273,8 +273,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           onClose={() => setIsMenuModalOpen(false)}
           user={user}
           onOpenSearch={() => setIsCommandPaletteOpen(true)}
-          onOpenSynthesize={() => setIsSynthesizeOpen(true)}
-          onOpenTutorial={() => setIsTutorialOpen(true)}
           onOpenCreateTask={() => setIsCreateTaskOpen(true)}
           onLogout={handleLogout}
         />

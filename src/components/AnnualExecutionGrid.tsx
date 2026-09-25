@@ -501,16 +501,9 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
           <span>across all active projects</span>
         </div>
 
-        <div className="flex items-center gap-3 text-[#6b7280]">
-          <div className="flex items-center gap-1.5">
-            <Flame size={14} className="text-amber-500" />
-            <span className="font-semibold text-black">{realStreak} DAY STREAK</span>
-          </div>
-          <span>•</span>
-          <div className="flex items-center gap-1.5">
-            <Clock size={13} className="text-indigo-600" />
-            <span>{totalFocusHours} Tracked Work Hours</span>
-          </div>
+        <div className="flex items-center gap-1.5 text-[#6b7280]">
+          <Clock size={13} className="text-indigo-600" />
+          <span>{totalFocusHours} Tracked Work Hours</span>
         </div>
       </div>
 

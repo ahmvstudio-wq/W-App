@@ -208,7 +208,6 @@ export default function DashboardPage() {
 
   const totalHours = (totalFocusMinutes / 60).toFixed(1)
   const completionRate = tasks.length > 0 ? Math.round((shippedTasks.length / tasks.length) * 100) : 0
-  const realStreak = shippedTasks.length > 0 ? 1 : 0
 
   const todayKey = format(new Date(), 'yyyy-MM-dd')
   const tomorrowKey = format(addDays(new Date(), 1), 'yyyy-MM-dd')
@@ -283,11 +282,6 @@ export default function DashboardPage() {
             <RefreshCw size={13} className={cn(generatingBrief && 'animate-spin')} />
             <span>Refresh Summary</span>
           </button>
-          
-          <div className="px-3.5 py-1.5 rounded-xl bg-black text-white text-xs font-mono flex items-center gap-2 shadow-sm">
-            <Flame size={13} className="text-[#c8f135]" />
-            <span>{realStreak} DAY STREAK</span>
-          </div>
         </div>
       </div>
 
@@ -586,6 +580,17 @@ export default function DashboardPage() {
 
                     {/* Quick Action Status Controls */}
                     <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => window.dispatchEvent(new CustomEvent('toggle-focus-timer', {
+                          detail: { taskId: task.id, taskTitle: task.title, timeBox: task.time_box_minutes || 25 }
+                        }))}
+                        className="px-2.5 py-1.5 bg-[#f5f5f7] hover:bg-[#eaeaed] text-neutral-800 rounded-xl text-xs font-normal transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs font-body"
+                        title="Start custom focus timer with brown noise"
+                      >
+                        <Clock size={12} className="text-neutral-500" />
+                        <span>Focus</span>
+                      </button>
+
                       {task.status === 'todo' ? (
                         <button
                           onClick={() => updateTaskStatus(task.id, 'in_progress')}

@@ -201,8 +201,6 @@ export default function CultlikeCreatePage() {
               break
             }
           }
-        } else if (sortedDates.length > 0) {
-          streak = 1 // Baseline active streak from latest deliverables
         }
 
         // Peak Velocity (Max in single day)
@@ -211,21 +209,22 @@ export default function CultlikeCreatePage() {
           const day = new Date(item.date).toISOString().slice(0, 10)
           countsByDay[day] = (countsByDay[day] || 0) + 1
         })
-        const peakVelocity = Math.max(1, ...Object.values(countsByDay), 0)
+        const peakVelocity = Object.values(countsByDay).length > 0 ? Math.max(...Object.values(countsByDay)) : 0
 
         // Creator Tier Dynamic Calculation
-        let tier = 'Founding Creator'
+        let tier = 'New Operator'
         if (totalShipped >= 30) tier = 'Diamond Producer'
         else if (totalShipped >= 15) tier = 'High-Velocity Operator'
         else if (totalShipped >= 5) tier = 'Rising Creator'
+        else if (totalShipped >= 1) tier = 'Active Creator'
 
         setStats({
-          shippingStreak: streak || 1,
-          totalShipped: Math.max(totalShipped, 1),
-          shippedThisMonth: Math.max(shippedThisMonth, 1),
+          shippingStreak: streak,
+          totalShipped,
+          shippedThisMonth,
           peakVelocity,
-          deepWorkHours: Math.max(deepWorkHours, 12),
-          onTimeDeliveryRate: 98,
+          deepWorkHours,
+          onTimeDeliveryRate: totalShipped > 0 ? 100 : 0,
           creatorTier: tier
         })
 

@@ -12,8 +12,6 @@ interface MinimalMenuModalProps {
   onClose: () => void
   user: User | null
   onOpenSearch: () => void
-  onOpenSynthesize: () => void
-  onOpenTutorial: () => void
   onOpenCreateTask: () => void
   onLogout: () => void
 }
@@ -23,8 +21,6 @@ export default function MinimalMenuModal({
   onClose,
   user,
   onOpenSearch,
-  onOpenSynthesize,
-  onOpenTutorial,
   onOpenCreateTask,
   onLogout,
 }: MinimalMenuModalProps) {
@@ -227,35 +223,11 @@ export default function MinimalMenuModal({
                 </div>
               </div>
 
-              {/* Synthesize One-Input Engine */}
-              <button
-                type="button"
-                onClick={() => {
-                  onClose()
-                  onOpenSynthesize()
-                }}
-                className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 hover:text-neutral-400 transition-colors text-left cursor-pointer pt-1"
-              >
-                Synthesize
-              </button>
-
-              {/* System Guide */}
-              <button
-                type="button"
-                onClick={() => {
-                  onClose()
-                  onOpenTutorial()
-                }}
-                className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 hover:text-neutral-400 transition-colors text-left cursor-pointer"
-              >
-                Guide
-              </button>
-
               {/* Settings */}
               <Link
                 href="/settings"
                 onClick={onClose}
-                className={`text-2xl sm:text-3xl font-bold tracking-tight transition-colors ${
+                className={`text-2xl sm:text-3xl font-bold tracking-tight transition-colors pt-2 ${
                   pathname === '/settings' ? 'text-black' : 'text-neutral-900 hover:text-neutral-400'
                 }`}
               >

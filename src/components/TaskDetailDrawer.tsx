@@ -206,7 +206,19 @@ export default function TaskDetailDrawer({ task, onClose, onUpdate }: TaskDetail
           <span className="text-xs font-mono text-[#9ca3af]">TASK-{task.id.slice(0, 6).toUpperCase()}</span>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('toggle-focus-timer', {
+              detail: { taskId: task.id, taskTitle: task.title, timeBox: timeBox || 25 }
+            }))}
+            className="px-3 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+            title="Start custom focus timer with brown noise"
+          >
+            <Clock size={13} />
+            <span>Focus Timer</span>
+          </button>
+
           <Link
             href={`/tasks/${task.id}`}
             className="p-1.5 text-[#9ca3af] hover:text-black hover:bg-black/[0.04] rounded-xl transition-colors cursor-pointer flex items-center gap-1 text-xs"

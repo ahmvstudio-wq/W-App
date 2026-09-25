@@ -796,9 +796,25 @@ export default function TasksPage() {
                             <span className="text-[10px] font-mono text-[#6b7280]">{task.time_box_minutes || 45}m</span>
                           </div>
 
-                          <div className="flex items-center gap-2 text-[10px] font-body text-[#9ca3af]">
-                            <Edit3 size={11} className="text-[#9ca3af] group-hover:text-black transition-colors" />
-                            <span>Edit details</span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                window.dispatchEvent(new CustomEvent('toggle-focus-timer', {
+                                  detail: { taskId: task.id, taskTitle: task.title, timeBox: task.time_box_minutes || 25 }
+                                }))
+                              }}
+                              className="px-2 py-0.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-[10px] font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                              title="Start custom focus timer with brown noise"
+                            >
+                              <Clock size={10} className="text-neutral-500" />
+                              <span>Focus</span>
+                            </button>
+
+                            <div className="flex items-center gap-1 text-[10px] font-body text-[#9ca3af]">
+                              <Edit3 size={11} className="text-[#9ca3af] group-hover:text-black transition-colors" />
+                            </div>
                           </div>
                         </div>
                       </div>
