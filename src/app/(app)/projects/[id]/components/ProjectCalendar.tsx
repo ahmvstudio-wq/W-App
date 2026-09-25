@@ -15,6 +15,7 @@ import {
 import { PRIORITY_CONFIG, cn } from '@/lib/utils'
 import type { Task, CalendarEvent } from '@/types'
 import CreateTaskModal from '@/components/CreateTaskModal'
+import { toast } from 'sonner'
 
 interface ProjectCalendarProps {
   projectId: string
@@ -27,7 +28,9 @@ export default function ProjectCalendar({ projectId, workspaceId }: ProjectCalen
   const [view, setView] = useState<CalendarView>('month')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [tasks, setTasks] = useState<Task[]>([])
+  const [googleEvents, setGoogleEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [syncingGoogle, setSyncingGoogle] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
@@ -48,13 +51,33 @@ export default function ProjectCalendar({ projectId, workspaceId }: ProjectCalen
   async function fetchData(silent = false) {
     if (!silent) setLoading(true)
     
-    // Fetch all tasks and calendar events (which are now tasks) for this project
+    // 1. Fetch all tasks and calendar events for this project
     const { data: tasksData } = await supabase
       .from('tasks')
       .select('*')
       .eq('project_id', projectId)
 
     if (tasksData) setTasks(tasksData as Task[])
+
+    // 2. Fetch live Google Calendar events
+    try {
+      const gRes = await fetch('/api/calendar/google/events')
+      const gData = await gRes.json()
+      if (gData.success && gData.connected && Array.isArray(gData.events)) {
+        const mapped = gData.events.map((e: any) => ({
+          id: `gcal_${e.id}`,
+          title: `[GCal] ${e.title}`,
+          start_time: e.start,
+          due_date: e.start,
+          color: '#4285F4',
+          is_google_event: true,
+          htmlLink: e.htmlLink,
+          event_type: 'meeting'
+        }))
+        setGoogleEvents(mapped)
+      }
+    } catch {}
+
     setLoading(false)
   }
 
@@ -94,6 +117,35 @@ export default function ProjectCalendar({ projectId, workspaceId }: ProjectCalen
               </button>
             ))}
           </div>
+          <button 
+            onClick={async () => {
+              setSyncingGoogle(true)
+              try {
+                const res = await fetch('/api/calendar/google/sync', { method: 'POST' })
+                const data = await res.json()
+                if (data.success) {
+                  toast.success(`Synced ${data.syncedCount} tasks to Google Calendar!`)
+                  fetchData(true)
+                } else {
+                  toast.error(data.error || 'Sync failed. Connect Google Calendar in Settings.')
+                }
+              } catch {
+                toast.error('Sync failed')
+              } finally {
+                setSyncingGoogle(false)
+              }
+            }} 
+            disabled={syncingGoogle}
+            style={{ 
+              padding: '8px 14px', borderRadius: '6px', border: '1px solid #252729', 
+              background: '#1c1e22', color: '#f0ede8', display: 'flex', alignItems: 'center', 
+              gap: '6px', fontSize: '12px', cursor: 'pointer' 
+            }}
+          >
+            <CalendarIcon size={14} className={syncingGoogle ? 'animate-spin' : ''} />
+            <span>{syncingGoogle ? 'Syncing...' : 'Sync to GCal'}</span>
+          </button>
+
           <button onClick={() => setIsModalOpen(true)} className="btn-accent" style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
             <Plus size={16} /> New Event
           </button>
@@ -106,7 +158,7 @@ export default function ProjectCalendar({ projectId, workspaceId }: ProjectCalen
           <MonthView 
             currentDate={currentDate} 
             tasks={tasks.filter(t => t.due_date && !t.start_time)} 
-            events={tasks.filter(t => t.start_time) as any} 
+            events={[...(tasks.filter(t => t.start_time) as any), ...googleEvents]} 
             onDateClick={(date: Date) => { setSelectedDate(date); setIsModalOpen(true); }} 
           />
         )}
@@ -114,14 +166,14 @@ export default function ProjectCalendar({ projectId, workspaceId }: ProjectCalen
           <WeekView 
             currentDate={currentDate} 
             tasks={tasks.filter(t => t.due_date && !t.start_time)} 
-            events={tasks.filter(t => t.start_time) as any} 
+            events={[...(tasks.filter(t => t.start_time) as any), ...googleEvents]} 
           />
         )}
         {view === 'day' && (
           <DayView 
             currentDate={currentDate} 
             tasks={tasks.filter(t => t.due_date && !t.start_time)} 
-            events={tasks.filter(t => t.start_time) as any} 
+            events={[...(tasks.filter(t => t.start_time) as any), ...googleEvents]} 
           />
         )}
       </div>

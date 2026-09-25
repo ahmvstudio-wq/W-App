@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { getCached, setCached } from '@/lib/cache/swrCache'
 import { CardSkeleton } from '@/components/ui/SkeletonPulse'
 import { triggerSyncStart, triggerSyncDone } from '@/components/NavigationProgressBar'
+import { cn } from '@/lib/utils'
 
 export default function ContentVaultPage() {
   const [items, setItems] = useState<ContentItem[]>([])
@@ -37,6 +38,17 @@ export default function ContentVaultPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [ytChannel, setYtChannel] = useState<{
+    id: string
+    title: string
+    customUrl?: string | null
+    thumbnail: string
+    subscriberCount: string
+    videoCount: string
+    viewCount: string
+  } | null>(null)
+  const [syncingYt, setSyncingYt] = useState(false)
+
   // Fetch Items
   async function fetchItems(silent = false) {
     if (!silent && (!items || items.length === 0)) setLoading(true)
@@ -48,16 +60,61 @@ export default function ContentVaultPage() {
       if (platformFilter !== 'all') queryParams.set('platform', platformFilter)
       if (statusFilter !== 'all') queryParams.set('status', statusFilter)
 
-      const res = await fetch(`/api/content?${queryParams.toString()}`)
-      const data = await res.json()
-      if (data.success && data.items) {
-        setItems(data.items)
-        setCached('content_items', data.items)
+      // Fetch staged database items and live YouTube channel uploads in parallel
+      const [dbRes, ytRes] = await Promise.allSettled([
+        fetch(`/api/content?${queryParams.toString()}`).then(r => r.json()),
+        fetch('/api/social/youtube/feed').then(r => r.json())
+      ])
+
+      let dbItems: ContentItem[] = []
+      if (dbRes.status === 'fulfilled' && dbRes.value?.success && Array.isArray(dbRes.value?.items)) {
+        dbItems = dbRes.value.items
       }
+
+      let liveVideos: ContentItem[] = []
+      if (ytRes.status === 'fulfilled' && ytRes.value?.success && ytRes.value?.connected) {
+        if (ytRes.value.channel) {
+          setYtChannel(ytRes.value.channel)
+        }
+        if (Array.isArray(ytRes.value.videos)) {
+          liveVideos = ytRes.value.videos
+        }
+      }
+
+      // Merge: real YouTube videos + staged drafts (avoiding duplicate IDs)
+      let combined = [...dbItems]
+      for (const lv of liveVideos) {
+        if (!combined.some(i => i.external_post_id === lv.external_post_id || i.id === lv.id)) {
+          // Respect platform and status filters
+          if (platformFilter !== 'all' && lv.platform !== platformFilter) continue
+          if (statusFilter !== 'all' && lv.status !== statusFilter) continue
+          combined.push(lv)
+        }
+      }
+
+      // Sort by publish/creation date desc
+      combined.sort((a, b) => {
+        const dateA = new Date(a.published_at || a.scheduled_at || a.created_at).getTime()
+        const dateB = new Date(b.published_at || b.scheduled_at || b.created_at).getTime()
+        return dateB - dateA
+      })
+
+      setItems(combined)
+      setCached('content_items', combined)
     } catch (err) {
       console.error('Error fetching content items:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleManualYtSync = async () => {
+    setSyncingYt(true)
+    try {
+      await fetchItems(true)
+      toast.success('Synced live YouTube channel uploads & analytics!')
+    } finally {
+      setSyncingYt(false)
     }
   }
 
@@ -254,6 +311,75 @@ export default function ContentVaultPage() {
           </button>
         </div>
       </div>
+
+      {/* Live YouTube Channel Integration Banner */}
+      {ytChannel ? (
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-rose-500/[0.04] via-rose-500/[0.02] to-transparent border border-rose-500/20 backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            {ytChannel.thumbnail ? (
+              <img
+                src={ytChannel.thumbnail}
+                alt={ytChannel.title}
+                className="w-12 h-12 rounded-full border-2 border-white shadow-xs object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-semibold text-base">
+                YT
+              </div>
+            )}
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-medium text-black">{ytChannel.title}</h3>
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
+                  <CheckCircle2 size={10} />
+                  Live Sync Active
+                </span>
+              </div>
+              <p className="text-xs text-[#6b7280] font-light">
+                {ytChannel.customUrl || 'Connected via YouTube Data API v3'} • {parseInt(ytChannel.subscriberCount || '0').toLocaleString()} subscribers • {parseInt(ytChannel.videoCount || '0').toLocaleString()} uploads • {parseInt(ytChannel.viewCount || '0').toLocaleString()} total views
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleManualYtSync}
+              disabled={syncingYt}
+              className="px-3.5 py-1.5 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] rounded-xl text-xs font-normal flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+            >
+              <Repeat size={12} className={cn(syncingYt && 'animate-spin')} />
+              <span>{syncingYt ? 'Syncing...' : 'Refresh Uploads'}</span>
+            </button>
+            <a
+              href={ytChannel.customUrl ? `https://youtube.com/${ytChannel.customUrl}` : `https://youtube.com/channel/${ytChannel.id}`}
+              target="_blank"
+              rel="noreferrer"
+              className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            >
+              <ExternalLink size={12} />
+              <span>Open Channel</span>
+            </a>
+          </div>
+        </div>
+      ) : (
+        <div className="p-3.5 rounded-2xl bg-[#fafafa] border border-black/[0.06] flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+              <Video size={16} />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-black">YouTube Channel Not Connected</p>
+              <p className="text-[11px] text-[#6b7280] font-light">Connect your channel in Settings to automatically pull your real video feed &amp; statistics.</p>
+            </div>
+          </div>
+          <Link
+            href="/settings?tab=integrations"
+            className="px-3 py-1.5 bg-black text-white hover:bg-neutral-800 rounded-xl text-xs font-normal transition-all"
+          >
+            Connect Channel
+          </Link>
+        </div>
+      )}
 
       {/* Metrics Row - Refined Ambient Tints */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
