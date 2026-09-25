@@ -4,7 +4,6 @@ import { useState } from 'react'
 import type { ContentItem, ContentPlatform, ContentType, ContentStatus } from '@/types'
 import {
   X,
-  Sparkles,
   Send,
   Calendar,
   Clock,
@@ -15,7 +14,6 @@ import {
   Video,
   Loader2,
   HardDrive,
-  Lightbulb,
   FileText,
   Sliders,
   CheckCircle2,
@@ -58,18 +56,6 @@ export function AssetInspectorModal({
   const [tags, setTags] = useState<string[]>(item.tags || [])
   const [tagInput, setTagInput] = useState('')
 
-  // AI analysis state
-  const [analyzing, setAnalyzing] = useState(false)
-  const [aiResult, setAiResult] = useState<{
-    hooks?: Array<{ type: string; hook: string; rationale: string }>
-    angle?: string
-    caption_instagram?: string
-    caption_youtube?: string
-    cta?: string
-    tags?: string[]
-    best_posting_slot?: string
-  } | null>(null)
-
   const [saving, setSaving] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [copiedField, setCopiedField] = useState<string | null>(null)
@@ -81,51 +67,7 @@ export function AssetInspectorModal({
     toast.success('Copied to clipboard!')
   }
 
-  // Trigger AI Viral Analysis
-  const handleAnalyzeWithAI = async () => {
-    setAnalyzing(true)
-    toast.info('AI analyzing video hooks and viral strategy...')
-    try {
-      const res = await fetch('/api/content/ai/analyze-asset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          transcript,
-          platform,
-          content_type: contentType,
-        }),
-      })
 
-      const data = await res.json()
-      if (data.success && data.analysis) {
-        setAiResult(data.analysis)
-        if (data.analysis.angle && !angle) setAngle(data.analysis.angle)
-        if (data.analysis.cta && !cta) setCta(data.analysis.cta)
-        if (data.analysis.tags && (!tags || tags.length === 0)) setTags(data.analysis.tags)
-        toast.success('AI Viral Strategy generated!')
-      } else {
-        toast.error(data.error || 'AI analysis failed')
-      }
-    } catch (err: any) {
-      console.error('Analysis error:', err)
-      toast.error('Failed to run AI analysis')
-    } finally {
-      setAnalyzing(false)
-    }
-  }
-
-  // Apply chosen hook
-  const applyHook = (selectedHook: string) => {
-    setHook(selectedHook)
-    toast.success('Applied hook to deliverable!')
-  }
-
-  // Apply AI Caption
-  const applyCaption = (text: string) => {
-    setCaption(text)
-    toast.success('Applied caption!')
-  }
 
   // Quick schedule presets
   const applySchedulePreset = (offsetDays: number, hour: number = 18, minute: number = 30) => {
@@ -204,9 +146,9 @@ export function AssetInspectorModal({
               className={cn(
                 'px-2 py-0.5 rounded-full text-[10px] font-mono uppercase font-medium border',
                 item.status === 'inbox'
-                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                  ? 'bg-neutral-100 text-neutral-800 border-black/[0.08]'
                   : item.status === 'scheduled'
-                  ? 'bg-sky-50 text-sky-700 border-sky-200'
+                  ? 'bg-neutral-900 text-white border-neutral-900'
                   : item.status === 'published'
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                   : 'bg-neutral-100 text-neutral-600 border-neutral-200'
@@ -295,7 +237,7 @@ export function AssetInspectorModal({
               {item.drive_file_id && (
                 <div className="flex items-center justify-between text-[#6b7280]">
                   <span>Source Ingestion</span>
-                  <span className="font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-[10px]">
+                  <span className="font-mono text-neutral-800 bg-neutral-100 border border-black/[0.06] px-1.5 py-0.5 rounded text-[10px]">
                     Google Drive Connected
                   </span>
                 </div>
@@ -334,75 +276,9 @@ export function AssetInspectorModal({
               />
             </div>
 
-            {/* AI Viral Hook Engine Trigger */}
-            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/[0.06] via-purple-500/[0.04] to-indigo-500/[0.05] border border-amber-500/20 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-600 flex items-center justify-center">
-                    <Sparkles size={13} />
-                  </div>
-                  <span className="text-xs font-medium text-black">AI Viral Hook & Strategy Engine</span>
-                  <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-black text-white">Claude AI</span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleAnalyzeWithAI}
-                  disabled={analyzing}
-                  className="px-3 py-1.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
-                >
-                  {analyzing ? (
-                    <Loader2 size={12} className="animate-spin text-white" />
-                  ) : (
-                    <Sparkles size={12} className="text-amber-400" />
-                  )}
-                  <span>{analyzing ? 'Engineering Hooks...' : 'Generate 3s Hooks'}</span>
-                </button>
-              </div>
-
-              {/* Display Generated Hooks */}
-              {aiResult?.hooks && (
-                <div className="space-y-2 pt-1 border-t border-amber-500/10">
-                  <div className="text-[11px] font-medium text-black flex items-center gap-1">
-                    <Lightbulb size={12} className="text-amber-500" />
-                    <span>Select Scroll-Stopping Hook:</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2">
-                    {aiResult.hooks.map((h, i) => (
-                      <div
-                        key={i}
-                        className={cn(
-                          'p-2.5 rounded-xl border transition-all text-xs flex flex-col justify-between gap-1.5',
-                          hook === h.hook
-                            ? 'bg-amber-50 border-amber-300 ring-1 ring-amber-400/40'
-                            : 'bg-white hover:bg-neutral-50 border-black/[0.08]'
-                        )}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-mono uppercase font-semibold text-amber-700 bg-amber-100/70 px-1.5 py-0.5 rounded">
-                            {h.type}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => applyHook(h.hook)}
-                            className="text-[11px] text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer flex items-center gap-1"
-                          >
-                            <Check size={11} />
-                            <span>{hook === h.hook ? 'Selected' : 'Use Hook'}</span>
-                          </button>
-                        </div>
-                        <p className="font-medium text-black text-xs leading-snug">"{h.hook}"</p>
-                        <p className="text-[10px] text-[#6b7280] font-light italic">{h.rationale}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Active Hook Input */}
             <div>
-              <label className="block text-xs font-medium text-black mb-1">Active 3-Second Hook</label>
+              <label className="block text-xs font-medium text-black mb-1">3-Second Hook</label>
               <input
                 type="text"
                 value={hook}
@@ -416,28 +292,6 @@ export function AssetInspectorModal({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-medium text-black">Caption & Post Copy</label>
-                {aiResult && (
-                  <div className="flex items-center gap-1.5">
-                    {aiResult.caption_instagram && (
-                      <button
-                        type="button"
-                        onClick={() => applyCaption(aiResult.caption_instagram!)}
-                        className="text-[10px] text-fuchsia-700 hover:underline font-mono"
-                      >
-                        + Use IG Reel Caption
-                      </button>
-                    )}
-                    {aiResult.caption_youtube && (
-                      <button
-                        type="button"
-                        onClick={() => applyCaption(aiResult.caption_youtube!)}
-                        className="text-[10px] text-rose-700 hover:underline font-mono"
-                      >
-                        + Use YT Short Caption
-                      </button>
-                    )}
-                  </div>
-                )}
               </div>
               <textarea
                 rows={4}

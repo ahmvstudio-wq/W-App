@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   Trash2,
   ExternalLink,
-  Sparkles,
   Send,
   Upload,
   Eye,
@@ -22,12 +21,10 @@ import {
   Loader2,
   Layers,
   HardDrive,
-  Bot,
   ArrowRight,
   SlidersHorizontal,
   CalendarDays,
   Inbox,
-  Lightbulb,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -55,7 +52,6 @@ export default function ContentVaultPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [inspectingItem, setInspectingItem] = useState<ContentItem | null>(null)
   const [publishingId, setPublishingId] = useState<string | null>(null)
-  const [analyzingItemId, setAnalyzingItemId] = useState<string | null>(null)
 
   // Manual create form state
   const [title, setTitle] = useState('')
@@ -194,51 +190,7 @@ export default function ContentVaultPage() {
     }
   }, [])
 
-  // Handle Quick AI Hook Generation for an Item
-  const handleQuickAiHook = async (item: ContentItem) => {
-    setAnalyzingItemId(item.id)
-    toast.info(`Generating viral hooks for "${item.title}"...`)
-    try {
-      const res = await fetch('/api/content/ai/analyze-asset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: item.title,
-          transcript: item.transcript,
-          platform: item.platform,
-          content_type: item.content_type,
-        }),
-      })
 
-      const data = await res.json()
-      if (data.success && data.analysis) {
-        const topHook = data.analysis.hooks?.[0]?.hook || ''
-        const captionText =
-          item.platform === 'youtube'
-            ? data.analysis.caption_youtube || ''
-            : data.analysis.caption_instagram || ''
-
-        // Update database
-        await handleUpdateItem({
-          id: item.id,
-          hook: topHook,
-          caption: captionText,
-          angle: data.analysis.angle,
-          cta: data.analysis.cta,
-          tags: data.analysis.tags,
-        })
-
-        toast.success(`Generated viral hook: "${topHook.slice(0, 45)}..."`)
-      } else {
-        toast.error(data.error || 'Failed to generate hook')
-      }
-    } catch (err) {
-      console.error('AI Hook Error:', err)
-      toast.error('AI hook generation failed')
-    } finally {
-      setAnalyzingItemId(null)
-    }
-  }
 
   // Auto-Plan 14-Day Sprint with AI
   const handleAutoPlanSprint = async () => {
@@ -468,20 +420,16 @@ export default function ContentVaultPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-black/[0.06] pb-6">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-700 font-mono text-[10px] font-medium tracking-wide">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-neutral-100 border border-black/[0.08] text-neutral-800 font-mono text-[10px] font-medium tracking-wide">
+              <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
               OMNICHANNEL PIPELINE
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-700 font-mono text-[10px] font-medium">
-              <Bot size={11} />
-              AI HEADLESS ACTIVE
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-light text-black tracking-tight">
             Content Studio &amp; Dispatch OS
           </h1>
           <p className="text-xs sm:text-sm text-[#6b7280] font-light mt-1">
-            Google Drive video ingestion, AI viral hook engineering, and automated timeline scheduling.
+            Google Drive video ingestion, multi-platform publishing, and automated timeline scheduling.
           </p>
         </div>
 
@@ -489,7 +437,7 @@ export default function ContentVaultPage() {
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => setIsDriveModalOpen(true)}
-            className="px-4 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-medium flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+            className="px-4 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-2 shadow-sm transition-all cursor-pointer"
           >
             <HardDrive size={15} />
             <span>Import from Google Drive</span>
@@ -500,7 +448,7 @@ export default function ContentVaultPage() {
               resetForm()
               setIsCreateModalOpen(true)
             }}
-            className="px-4 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+            className="px-4 py-2.5 bg-white hover:bg-neutral-50 text-black border border-black/[0.1] rounded-xl text-xs font-medium flex items-center gap-2 shadow-xs transition-all cursor-pointer"
           >
             <Plus size={14} />
             <span>Create Content</span>
@@ -511,9 +459,9 @@ export default function ContentVaultPage() {
       {/* Connected Channels & Accounts Strip */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Google Drive Video Storage */}
-        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/[0.04] via-orange-500/[0.02] to-transparent border border-amber-500/20 backdrop-blur-sm flex items-center justify-between gap-3 shadow-xs">
+        <div className="p-3.5 rounded-2xl bg-white border border-black/[0.08] backdrop-blur-sm flex items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-neutral-100 text-neutral-800 flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
               <HardDrive size={18} />
             </div>
             <div className="min-w-0">
@@ -545,7 +493,7 @@ export default function ContentVaultPage() {
             ) : (
               <a
                 href="/api/auth/google?service=workspace&return_to=/content"
-                className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[11px] font-medium transition-all shadow-xs whitespace-nowrap"
+                className="px-3 py-1 bg-black hover:bg-neutral-800 text-white rounded-lg text-[11px] font-medium transition-all shadow-xs whitespace-nowrap"
               >
                 Connect
               </a>
@@ -555,9 +503,9 @@ export default function ContentVaultPage() {
 
         {/* Live Instagram Account Banner */}
         {igAccount ? (
-          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-pink-500/[0.04] via-purple-500/[0.02] to-transparent border border-pink-500/20 backdrop-blur-sm flex items-center justify-between gap-3 shadow-xs">
+          <div className="p-3.5 rounded-2xl bg-white border border-black/[0.08] backdrop-blur-sm flex items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 via-rose-500 to-pink-500 text-white flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
                 IG
               </div>
               <div className="min-w-0">
@@ -651,14 +599,14 @@ export default function ContentVaultPage() {
             className={cn(
               'px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-2',
               activeTab === 'inbox'
-                ? 'bg-amber-50 text-amber-900 border border-amber-300 shadow-xs'
+                ? 'bg-black text-white shadow-xs'
                 : 'text-[#6b7280] hover:text-black hover:bg-neutral-100'
             )}
           >
-            <Inbox size={14} className={activeTab === 'inbox' ? 'text-amber-600' : ''} />
+            <Inbox size={14} className={activeTab === 'inbox' ? 'text-white' : ''} />
             <span>Unscheduled Inbox</span>
             {inboxItems.length > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px] font-mono font-semibold">
+              <span className="px-1.5 py-0.2 rounded-full bg-neutral-800 text-white text-[10px] font-mono font-medium">
                 {inboxItems.length}
               </span>
             )}
@@ -718,9 +666,9 @@ export default function ContentVaultPage() {
         <div className="space-y-6">
           {/* Drive Connection Callout if Disconnected */}
           {isDriveConnected === false && (
-            <div className="p-4 sm:p-5 rounded-3xl bg-amber-500/[0.08] border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-4 sm:p-5 rounded-3xl bg-[#fafafa] border border-black/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-700 flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-neutral-100 text-neutral-800 flex items-center justify-center flex-shrink-0">
                   <HardDrive size={24} />
                 </div>
                 <div>
@@ -741,9 +689,9 @@ export default function ContentVaultPage() {
           )}
 
           {/* Inbox Mission Banner */}
-          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/[0.07] via-orange-500/[0.04] to-transparent border border-amber-500/20 backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="p-4 sm:p-5 rounded-3xl bg-[#fafafa] border border-black/[0.08] backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-start sm:items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-600 flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-neutral-100 text-neutral-800 flex items-center justify-center flex-shrink-0">
                 <HardDrive size={22} />
               </div>
               <div>
@@ -751,12 +699,12 @@ export default function ContentVaultPage() {
                   <h3 className="text-sm font-medium text-black">
                     Unscheduled Video Deliverables Inbox
                   </h3>
-                  <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-mono font-medium">
+                  <span className="px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-800 text-[10px] font-mono font-medium">
                     {inboxItems.length} Videos Staged
                   </span>
                 </div>
                 <p className="text-xs text-[#6b7280] font-light mt-0.5">
-                  Import finished video files from Google Drive, let AI generate viral hooks, and auto-plan your multi-platform sprint.
+                  Import finished video files from Google Drive and schedule them across your channels.
                 </p>
               </div>
             </div>
@@ -771,7 +719,7 @@ export default function ContentVaultPage() {
                   {isAutoPlanning ? (
                     <Loader2 size={13} className="animate-spin text-white" />
                   ) : (
-                    <Sparkles size={13} className="text-amber-400" />
+                    <Calendar size={13} className="text-white" />
                   )}
                   <span>Auto-Plan 14-Day Sprint</span>
                 </button>
@@ -792,13 +740,13 @@ export default function ContentVaultPage() {
             <CardSkeleton count={4} />
           ) : inboxItems.length === 0 ? (
             <div className="py-20 text-center bg-white border border-black/[0.06] rounded-3xl p-10 space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-neutral-100 text-neutral-800 flex items-center justify-center mx-auto">
                 <Inbox size={28} />
               </div>
               <div className="max-w-md mx-auto">
                 <h3 className="text-base font-normal text-black">Your Unscheduled Inbox is Clear</h3>
                 <p className="text-xs text-[#6b7280] font-light mt-1">
-                  Connect your Google Drive and import finished video files to start generating viral hooks and dispatch schedules.
+                  Connect your Google Drive and import finished video files to start dispatch schedules.
                 </p>
               </div>
               <div className="pt-2">
@@ -814,12 +762,10 @@ export default function ContentVaultPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {inboxItems.map((item) => {
-                const isAnalyzing = analyzingItemId === item.id
-
                 return (
                   <div
                     key={item.id}
-                    className="bg-white/90 backdrop-blur-sm border border-amber-500/20 hover:border-black/[0.18] hover:shadow-lg hover:-translate-y-0.5 rounded-3xl overflow-hidden transition-all duration-200 shadow-xs flex flex-col group"
+                    className="bg-white border border-black/[0.08] hover:border-black/[0.2] hover:shadow-md hover:-translate-y-0.5 rounded-3xl overflow-hidden transition-all duration-200 shadow-xs flex flex-col group"
                   >
                     {/* Thumbnail / Video Preview */}
                     <div
@@ -866,7 +812,7 @@ export default function ContentVaultPage() {
 
                       {/* Source Tag */}
                       <div className="absolute top-3 right-3">
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase bg-amber-500 text-white font-medium shadow-xs">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase bg-neutral-900 text-white font-medium shadow-xs">
                           Inbox
                         </span>
                       </div>
@@ -894,31 +840,21 @@ export default function ContentVaultPage() {
                           {item.title}
                         </h4>
 
-                        {/* Hook Preview or Prompt */}
+                        {/* Hook or Caption Preview */}
                         {item.hook ? (
-                          <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80">
-                            <div className="text-[10px] font-mono uppercase text-amber-800 font-semibold mb-0.5">
+                          <div className="p-2.5 rounded-xl bg-neutral-50 border border-black/[0.06]">
+                            <div className="text-[10px] font-mono uppercase text-neutral-500 font-semibold mb-0.5">
                               Hook:
                             </div>
-                            <p className="text-xs font-medium text-amber-950 line-clamp-2">
+                            <p className="text-xs font-medium text-black line-clamp-2">
                               "{item.hook}"
                             </p>
                           </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleQuickAiHook(item)}
-                            disabled={isAnalyzing}
-                            className="w-full py-2 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border border-amber-200/70 rounded-xl text-xs font-medium text-amber-900 flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
-                          >
-                            {isAnalyzing ? (
-                              <Loader2 size={12} className="animate-spin text-amber-700" />
-                            ) : (
-                              <Sparkles size={12} className="text-amber-500" />
-                            )}
-                            <span>{isAnalyzing ? 'Analyzing...' : 'Generate 3s Viral Hooks'}</span>
-                          </button>
-                        )}
+                        ) : item.caption ? (
+                          <p className="text-xs text-[#6b7280] line-clamp-2 font-light">
+                            {item.caption}
+                          </p>
+                        ) : null}
                       </div>
 
                       {/* Action Bar */}
@@ -1118,9 +1054,9 @@ export default function ContentVaultPage() {
                             isPublished
                               ? 'bg-emerald-500/90 text-white'
                               : isScheduled
-                              ? 'bg-amber-500/90 text-white'
+                              ? 'bg-black/85 text-white'
                               : item.status === 'inbox'
-                              ? 'bg-orange-500/90 text-white'
+                              ? 'bg-neutral-800/90 text-neutral-200'
                               : 'bg-black/60 text-neutral-200'
                           )}
                         >
@@ -1143,7 +1079,7 @@ export default function ContentVaultPage() {
                           {item.title}
                         </h3>
                         {item.hook ? (
-                          <p className="text-xs text-amber-900 bg-amber-50/70 p-2 rounded-lg font-medium mt-2 line-clamp-2">
+                          <p className="text-xs text-black bg-neutral-100 border border-black/[0.04] p-2.5 rounded-xl font-medium mt-2 line-clamp-2">
                             "{item.hook}"
                           </p>
                         ) : item.caption ? (
@@ -1156,8 +1092,8 @@ export default function ContentVaultPage() {
                       {/* Schedule / Metadata Details */}
                       <div className="pt-3 border-t border-black/[0.04] flex items-center justify-between text-[11px] text-[#9ca3af] font-light">
                         <div className="flex items-center gap-1.5 font-mono">
-                          <Clock size={12} className={isScheduled ? 'text-amber-500' : ''} />
-                          <span className={isScheduled ? 'text-amber-700 font-medium' : ''}>
+                          <Clock size={12} className={isScheduled ? 'text-black' : ''} />
+                          <span className={isScheduled ? 'text-black font-medium' : ''}>
                             {item.scheduled_at
                               ? `Scheduled: ${new Date(item.scheduled_at).toLocaleDateString([], {
                                   month: 'short',

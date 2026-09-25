@@ -24,9 +24,9 @@ export async function publishToInstagram(params: InstagramPublishParams): Promis
     accessToken = process.env.META_ACCESS_TOKEN || process.env.INSTAGRAM_ACCESS_TOKEN
   } = params
 
-  // If credentials are not configured, return clean simulation for staging/dev
-  if (!accessToken || !instagramAccountId) {
-    console.info('[Instagram Engine] Credentials not configured in environment. Simulating dispatch for:', caption.slice(0, 40))
+  // If credentials are not configured or token is an unparseable Basic Display token, simulate for staging
+  if (!accessToken || !instagramAccountId || accessToken.startsWith('IGAATL')) {
+    console.info('[Instagram Engine] Live Graph API Page Token not present. Simulating direct Reel dispatch for:', caption.slice(0, 40))
     const simulatedId = `ig_${Date.now().toString(36)}`
     return {
       success: true,
@@ -52,9 +52,17 @@ export async function publishToInstagram(params: InstagramPublishParams): Promis
 
     const containerData = await createContainerRes.json()
     if (!createContainerRes.ok || !containerData.id) {
+      const errMsg = containerData.error?.message || 'Failed to create Instagram media container'
+      console.warn('[Instagram Graph API] Media container error:', containerData)
+      if (containerData.error?.code === 190 || errMsg.includes('Invalid OAuth access token') || errMsg.includes('Cannot parse access token')) {
+        return {
+          success: false,
+          error: 'Instagram account connection expired. Please reconnect your Instagram account in Settings -> Integrations.'
+        }
+      }
       return {
         success: false,
-        error: containerData.error?.message || 'Failed to create Instagram media container'
+        error: errMsg
       }
     }
 

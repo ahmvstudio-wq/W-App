@@ -8,6 +8,45 @@ import {
   ArrowRight, X, ChevronDown, Plus, Menu as MenuIcon
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { motion, AnimatePresence } from 'framer-motion'
+
+const ease: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
+const wordAnimation: any = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { ease, duration: 0.8 }
+  }
+};
+
+const AnimatedText = ({ text, className, delay = 0 }: { text: string, className?: string, delay?: number }) => {
+  const words = text.split(" ");
+  return (
+    <motion.div
+      variants={{
+        hidden: { opacity: 0 },
+        visible: {
+          opacity: 1,
+          transition: { staggerChildren: 0.04, delayChildren: delay }
+        }
+      }}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-10%" }}
+      className={className}
+    >
+      {words.map((word, index) => (
+        <span key={index} className="inline-block overflow-hidden mr-[0.25em] pb-1">
+          <motion.span variants={wordAnimation} className="inline-block">
+            {word}
+          </motion.span>
+        </span>
+      ))}
+    </motion.div>
+  );
+};
 
 export default function LandingPage() {
   const [isAuthOpen, setIsAuthOpen] = useState(false)
@@ -177,42 +216,66 @@ export default function LandingPage() {
         </div>
 
         {/* Menu Dropdown */}
+        <AnimatePresence>
         {isMenuOpen && (
-          <div className="absolute top-full left-0 right-0 bg-white border-b border-black/[0.08] shadow-lg animate-fadeIn">
-            <div className="max-w-[1400px] mx-auto px-6 sm:px-10 py-8 grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div>
-                <h4 className="text-xs font-semibold text-black mb-3 tracking-wide uppercase">Product</h4>
-                <div className="space-y-2.5">
-                  <a href="#features" onClick={() => setIsMenuOpen(false)} className="block text-sm text-neutral-500 hover:text-black transition-colors">How it works</a>
-                  <a href="#showcase" onClick={() => setIsMenuOpen(false)} className="block text-sm text-neutral-500 hover:text-black transition-colors">Showcase</a>
-                  <a href="#faq" onClick={() => setIsMenuOpen(false)} className="block text-sm text-neutral-500 hover:text-black transition-colors">FAQ</a>
+          <motion.div 
+            initial={{ opacity: 0, y: -20, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.98 }}
+            transition={{ ease: [0.22, 1, 0.36, 1], duration: 0.4 }}
+            className="absolute top-20 left-4 right-4 sm:left-auto sm:right-10 sm:w-[600px] bg-[#fbfbfd] border border-black/[0.08] shadow-2xl rounded-3xl overflow-hidden z-50"
+          >
+            <div className="p-4 border-b border-black/[0.06] flex justify-center">
+              <button onClick={() => setIsMenuOpen(false)} className="flex items-center gap-2 text-sm text-black hover:text-neutral-500 transition-colors cursor-pointer font-medium">
+                <X size={16} />
+                <span>Close</span>
+              </button>
+            </div>
+            
+            <div className="p-10 grid grid-cols-2 gap-12">
+              <div className="flex flex-col h-full justify-between space-y-12">
+                <div>
+                  <h4 className="text-[11px] font-semibold text-neutral-400 mb-6 tracking-widest uppercase">Product</h4>
+                  <div className="space-y-4">
+                    <a href="#features" onClick={() => setIsMenuOpen(false)} className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors">Home</a>
+                    <a href="#showcase" onClick={() => setIsMenuOpen(false)} className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors">Search</a>
+                    <a href="#pricing" onClick={() => setIsMenuOpen(false)} className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors">Pricing</a>
+                    <a href="#faq" onClick={() => setIsMenuOpen(false)} className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors">FAQ</a>
+                    <a href="#changelog" onClick={() => setIsMenuOpen(false)} className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors">Changelog</a>
+                  </div>
+                </div>
+
+                <div className="pt-8 border-t border-black/[0.06]">
+                  <h4 className="text-[11px] font-semibold text-neutral-400 mb-4 tracking-widest uppercase">Social Media</h4>
+                  <div className="flex flex-wrap gap-5 text-sm font-medium text-black">
+                    <a href="#" className="hover:text-neutral-500 transition-colors">X</a>
+                    <a href="#" className="hover:text-neutral-500 transition-colors">GitHub</a>
+                    <a href="#" className="hover:text-neutral-500 transition-colors">LinkedIn</a>
+                    <a href="#" className="hover:text-neutral-500 transition-colors">Contact</a>
+                  </div>
                 </div>
               </div>
+              
               <div>
-                <h4 className="text-xs font-semibold text-black mb-3 tracking-wide uppercase">Features</h4>
-                <div className="space-y-2.5">
-                  <span className="block text-sm text-neutral-500">AI Connectors</span>
-                  <span className="block text-sm text-neutral-500">Deep Work Sprints</span>
-                  <span className="block text-sm text-neutral-500">Meeting Intelligence</span>
-                </div>
-              </div>
-              <div>
-                <h4 className="text-xs font-semibold text-black mb-3 tracking-wide uppercase">Legal</h4>
-                <div className="space-y-2.5">
-                  <Link href="/privacy" onClick={() => setIsMenuOpen(false)} className="block text-sm text-neutral-500 hover:text-black transition-colors">Privacy Notice</Link>
-                  <Link href="/terms" onClick={() => setIsMenuOpen(false)} className="block text-sm text-neutral-500 hover:text-black transition-colors">Terms of Use</Link>
-                </div>
-              </div>
-              <div>
-                <h4 className="text-xs font-semibold text-black mb-3 tracking-wide uppercase">Account</h4>
-                <div className="space-y-2.5">
-                  <button onClick={() => { setIsMenuOpen(false); setMode('login'); setIsAuthOpen(true) }} className="block text-sm text-neutral-500 hover:text-black transition-colors cursor-pointer">Sign In</button>
-                  <button onClick={() => { setIsMenuOpen(false); setMode('signup'); setIsAuthOpen(true) }} className="block text-sm text-neutral-500 hover:text-black transition-colors cursor-pointer">Create Account</button>
+                <h4 className="text-[11px] font-semibold text-neutral-400 mb-6 tracking-widest uppercase">Solutions</h4>
+                <div className="space-y-6">
+                  <div>
+                    <a href="#" className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors mb-3">Industries</a>
+                    <div className="space-y-2.5 pl-0.5">
+                      <a href="#" className="block text-[15px] font-medium text-neutral-500 hover:text-black transition-colors">Film, video & audio</a>
+                      <a href="#" className="block text-[15px] font-medium text-neutral-500 hover:text-black transition-colors">Knowledge work</a>
+                      <a href="#" className="block text-[15px] font-medium text-neutral-500 hover:text-black transition-colors">AEC</a>
+                      <a href="#" className="block text-[15px] font-medium text-neutral-500 hover:text-black transition-colors">Games & 3D</a>
+                    </div>
+                  </div>
+                  <a href="#" className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors">Developers</a>
+                  <a href="#" className="block text-3xl font-medium text-black hover:text-neutral-500 transition-colors">Enterprise</a>
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
       </nav>
 
 
@@ -228,17 +291,16 @@ export default function LandingPage() {
 
             {/* Giant headline */}
             <h1 className="text-[clamp(36px,6vw,72px)] font-bold tracking-[-0.035em] leading-[1.05] text-black">
-              One workspace{' '}
-              <span className="text-neutral-400 font-light">
-                for everything you ship.
+              <AnimatedText text="One workspace" />
+              <span className="text-neutral-400 font-light block">
+                <AnimatedText text="for everything you ship." delay={0.2} />
               </span>
             </h1>
 
             {/* Subtitle */}
-            <p className="text-base sm:text-lg text-neutral-500 font-normal leading-relaxed max-w-lg">
-              The executive operating system for founders and creators. AI connectors, 
-              deep work sprints, meeting intelligence, and content scheduling — unified.
-            </p>
+            <div className="text-base sm:text-lg text-neutral-500 font-normal leading-relaxed max-w-lg">
+              <AnimatedText text="The executive operating system for founders and creators. AI connectors, deep work sprints, meeting intelligence, and content scheduling — unified." delay={0.4} />
+            </div>
 
             {/* CTA Buttons */}
             <div className="flex items-center gap-4 pt-2">
@@ -347,9 +409,9 @@ export default function LandingPage() {
       <section className="py-20 sm:py-32 px-6 sm:px-10 border-t border-black/[0.06]">
         <div className="max-w-[1400px] mx-auto">
           <h2 className="text-[clamp(28px,5vw,56px)] font-bold tracking-[-0.03em] leading-[1.15] text-black max-w-4xl">
-            Cultlike OS is the operating system for relentless execution.{' '}
-            <span className="text-neutral-400 font-light">
-              Projects, tasks, meetings, content, and AI — on a single surface, using zero friction.
+            <AnimatedText text="Cultlike OS is the operating system for relentless execution." />
+            <span className="text-neutral-400 font-light block mt-2">
+              <AnimatedText text="Projects, tasks, meetings, content, and AI — on a single surface, using zero friction." delay={0.3} />
             </span>
           </h2>
         </div>
@@ -359,27 +421,36 @@ export default function LandingPage() {
       {/* ─── NUMBERED FEATURES SECTION ─── */}
       <section id="features" className="py-0 px-6 sm:px-10 max-w-[1400px] mx-auto">
         {features.map((feature, idx) => (
-          <div 
+          <motion.div 
             key={feature.number}
-            className="py-16 sm:py-20 border-t border-black/[0.08] grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-16 items-start"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-10%" }}
+            transition={{ ease, duration: 0.8, delay: idx * 0.1 }}
+            className="py-16 sm:py-20 border-t border-black/[0.08] grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-16 items-start group"
           >
             {/* Number + Title */}
-            <div className="md:col-span-1">
-              <span className="text-sm font-normal text-neutral-400">{feature.number}</span>
+            <div className="md:col-span-1 overflow-hidden">
+              <motion.span 
+                className="inline-block text-sm font-normal text-neutral-400 group-hover:text-black transition-colors duration-500"
+                whileHover={{ x: 10, transition: { ease, duration: 0.4 } }}
+              >
+                {feature.number}
+              </motion.span>
             </div>
             <div className="md:col-span-5">
-              <h3 className="text-2xl sm:text-3xl font-semibold tracking-[-0.02em] text-black leading-tight">
+              <h3 className="text-2xl sm:text-3xl font-semibold tracking-[-0.02em] text-black leading-tight group-hover:-translate-y-1 transition-transform duration-500 ease-out">
                 {feature.title}
               </h3>
             </div>
 
             {/* Description */}
             <div className="md:col-span-6">
-              <p className="text-base sm:text-lg text-neutral-500 font-normal leading-relaxed">
+              <p className="text-base sm:text-lg text-neutral-500 font-normal leading-relaxed group-hover:text-neutral-800 transition-colors duration-500">
                 {feature.description}
               </p>
             </div>
-          </div>
+          </motion.div>
         ))}
       </section>
 

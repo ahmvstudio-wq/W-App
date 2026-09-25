@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   ExternalLink,
   Film,
-  Sparkles,
   Clock,
   ArrowRight,
   RefreshCw,
@@ -173,7 +172,7 @@ export function DriveImportModal({ isOpen, onClose, onImportSuccess }: DriveImpo
         {/* Header */}
         <div className="flex items-center justify-between border-b border-black/[0.06] pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-neutral-100 border border-black/[0.08] text-black flex items-center justify-center">
               <HardDrive size={20} />
             </div>
             <div>
@@ -199,7 +198,7 @@ export function DriveImportModal({ isOpen, onClose, onImportSuccess }: DriveImpo
         {/* Not connected state */}
         {!connected ? (
           <div className="py-16 text-center space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
+            <div className="w-14 h-14 rounded-2xl bg-neutral-100 border border-black/[0.08] text-black flex items-center justify-center mx-auto">
               <HardDrive size={28} />
             </div>
             <div className="max-w-md mx-auto">
@@ -276,7 +275,7 @@ export function DriveImportModal({ isOpen, onClose, onImportSuccess }: DriveImpo
                       onClick={() => navigateToFolder(folder)}
                       className="p-2.5 bg-white hover:bg-neutral-50 border border-black/[0.06] hover:border-black/[0.15] rounded-xl text-left flex items-center gap-2.5 transition-all group cursor-pointer shadow-xs"
                     >
-                      <Folder size={15} className="text-amber-500 flex-shrink-0 group-hover:scale-105 transition-transform" />
+                      <Folder size={15} className="text-neutral-700 flex-shrink-0 group-hover:scale-105 transition-transform" />
                       <span className="text-xs font-light text-black truncate">{folder.name}</span>
                     </button>
                   ))}
@@ -458,7 +457,7 @@ export function DriveImportModal({ isOpen, onClose, onImportSuccess }: DriveImpo
                   {importing ? (
                     <Loader2 size={13} className="animate-spin text-white" />
                   ) : (
-                    <Sparkles size={13} className="text-amber-400" />
+                    <ArrowRight size={13} className="text-white" />
                   )}
                   <span>
                     Import {selectedIds.size > 0 ? `${selectedIds.size} Video(s)` : ''} to Vault Inbox

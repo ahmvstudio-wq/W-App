@@ -27,7 +27,33 @@ export interface MasterProjectInfo {
   colorTheme?: 'emerald' | 'indigo' | 'purple' | 'blue' | 'amber' | 'rose'
 }
 
-const DEFAULT_MASTER_PROJECTS: MasterProjectInfo[] = []
+export const DEFAULT_MASTER_PROJECTS: MasterProjectInfo[] = [
+  {
+    id: 'mp-content-ahmed',
+    name: 'Content(ahmed )',
+    subtitle: 'Creator Studio & Content Engine',
+    description: 'Media production, video series, and multi-platform content publishing.',
+    colorTheme: 'purple'
+  },
+  {
+    id: 'mp-cultlike-os',
+    name: 'CULTLIKE OS',
+    subtitle: 'Core Platform & Executive Systems',
+    description: 'Executive OS architecture, workflows, integrations, and tools.',
+    colorTheme: 'emerald'
+  },
+  {
+    id: 'mp-ahmv-systems',
+    name: 'AHMV Systems',
+    subtitle: 'Studio Infrastructure & Client Ventures',
+    description: 'Strategic operations, infrastructure, client initiatives, and commercial growth.',
+    colorTheme: 'indigo'
+  }
+]
+
+export function normalizeMasterName(name?: string): string {
+  return (name || '').toLowerCase().replace(/\s+/g, ' ').replace(/\(\s*/g, '(').replace(/\s*\)/g, ')').trim()
+}
 
 export default function ProjectsPage() {
   const router = useRouter()
@@ -36,7 +62,7 @@ export default function ProjectsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isCreateMasterModalOpen, setIsCreateMasterModalOpen] = useState(false)
   const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
-  const [createInitialMasterProject, setCreateInitialMasterProject] = useState<string>('')
+  const [createInitialMasterProject, setCreateInitialMasterProject] = useState<string>(DEFAULT_MASTER_PROJECTS[0].name)
   
   // Data States (Instant 0ms initial paint from SWR cache)
   const [projects, setProjects] = useState<Project[]>(() => {
@@ -45,7 +71,7 @@ export default function ProjectsPage() {
     }
     return []
   })
-  const [masterProjects, setMasterProjects] = useState<MasterProjectInfo[]>([])
+  const [masterProjects, setMasterProjects] = useState<MasterProjectInfo[]>(DEFAULT_MASTER_PROJECTS)
   const [loading, setLoading] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const cached = getCached<Project[]>('projects_list')
@@ -56,7 +82,7 @@ export default function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   
   // Selected Master Project for the Command Hub Banner & Filter
-  const [activeMasterProjectName, setActiveMasterProjectName] = useState<string>('')
+  const [activeMasterProjectName, setActiveMasterProjectName] = useState<string>(DEFAULT_MASTER_PROJECTS[0].name)
   const [selectedMasterFilter, setSelectedMasterFilter] = useState<string>('all')
   const [isCommandHubExpanded, setIsCommandHubExpanded] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -82,12 +108,20 @@ export default function ProjectsPage() {
       if (saved) {
         const parsed = JSON.parse(saved)
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const cleaned = parsed.filter((p: MasterProjectInfo) => p.name !== 'Primary Portfolio')
+          const cleaned = parsed.filter((p: MasterProjectInfo) => 
+            p.name !== 'Primary Portfolio' &&
+            p.name !== 'Tadbeer TT' &&
+            p.name !== 'Internal Core' &&
+            p.name !== 'Community Brand'
+          )
           if (cleaned.length > 0) {
             setMasterProjects(cleaned)
+            return
           }
         }
       }
+      setMasterProjects(DEFAULT_MASTER_PROJECTS)
+      localStorage.setItem('focus_master_projects', JSON.stringify(DEFAULT_MASTER_PROJECTS))
     } catch (e) {
       console.warn('Failed to load master projects from localStorage:', e)
     }
@@ -193,13 +227,22 @@ export default function ProjectsPage() {
 
     const wsSettings = wsRes.data?.settings || {}
     const rawSaved: MasterProjectInfo[] = Array.isArray(wsSettings.master_projects) ? wsSettings.master_projects : []
-    const savedMasterProjects: MasterProjectInfo[] = rawSaved
+    let savedMasterProjects: MasterProjectInfo[] = rawSaved.filter((p: MasterProjectInfo) => 
+      p.name !== 'Primary Portfolio' &&
+      p.name !== 'Tadbeer TT' &&
+      p.name !== 'Internal Core' &&
+      p.name !== 'Community Brand'
+    )
+
+    if (savedMasterProjects.length === 0) {
+      savedMasterProjects = DEFAULT_MASTER_PROJECTS
+    }
 
     const projectMasterMap: Record<string, string> = wsSettings.project_master_map || {}
     const data = projectsRes.data
     
     if (data) {
-      const fallbackMaster = savedMasterProjects[0]?.name || ''
+      const fallbackMaster = savedMasterProjects[0]?.name || DEFAULT_MASTER_PROJECTS[0].name
       const enriched: Project[] = data.map((p: any) => ({
         ...p,
         master_project: projectMasterMap[p.id] || p.master_project || fallbackMaster
@@ -207,30 +250,16 @@ export default function ProjectsPage() {
       setProjects(enriched)
       setCached('projects_list', enriched)
 
-      // Auto-register any new master_project names found
-      const foundNames = Array.from(new Set(enriched.map(p => p.master_project).filter((n): n is string => Boolean(n))))
-      const mergedMasters = [...savedMasterProjects]
-      foundNames.forEach(name => {
-        if (!mergedMasters.some(m => m.name.toLowerCase() === name.toLowerCase())) {
-          mergedMasters.push({
-            id: `mp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-            name,
-            subtitle: 'Master Campaign',
-            description: `Initiatives under ${name}.`,
-            colorTheme: 'purple'
-          })
-        }
-      })
-      setMasterProjects(mergedMasters)
+      setMasterProjects(savedMasterProjects)
 
-      if (mergedMasters.length > 0) {
-        if (!activeMasterProjectName || !mergedMasters.some(m => m.name.toLowerCase() === activeMasterProjectName.toLowerCase())) {
-          setActiveMasterProjectName(mergedMasters[0].name)
+      if (savedMasterProjects.length > 0) {
+        if (!activeMasterProjectName || !savedMasterProjects.some(m => normalizeMasterName(m.name) === normalizeMasterName(activeMasterProjectName))) {
+          setActiveMasterProjectName(savedMasterProjects[0].name)
         }
-        setCreateInitialMasterProject(mergedMasters[0].name)
+        setCreateInitialMasterProject(savedMasterProjects[0].name)
       } else {
-        setActiveMasterProjectName('')
-        setCreateInitialMasterProject('')
+        setActiveMasterProjectName(DEFAULT_MASTER_PROJECTS[0].name)
+        setCreateInitialMasterProject(DEFAULT_MASTER_PROJECTS[0].name)
       }
     }
     setLoading(false)
@@ -269,26 +298,18 @@ export default function ProjectsPage() {
     }
   }, [])
 
-  // All distinct Master Project names
+  // All distinct Master Project names (strictly master projects)
   const allMasterNames = useMemo(() => {
-    const set = new Set<string>()
-    masterProjects.forEach(m => set.add(m.name))
-    projects.forEach(p => { if (p.master_project) set.add(p.master_project) })
-    return Array.from(set)
-  }, [masterProjects, projects])
+    const names = masterProjects.map(m => m.name)
+    return names.length > 0 ? names : DEFAULT_MASTER_PROJECTS.map(m => m.name)
+  }, [masterProjects])
 
   // Active Master Project Object
   const activeMasterObj = useMemo(() => {
     if (!activeMasterProjectName) {
-      return {
-        id: 'none',
-        name: 'Master Campaign',
-        subtitle: 'Start by creating your first campaign',
-        description: 'Organize your missions under one umbrella brand.',
-        colorTheme: 'emerald' as const
-      }
+      return masterProjects[0] || DEFAULT_MASTER_PROJECTS[0]
     }
-    const found = masterProjects.find(m => m.name.toLowerCase() === activeMasterProjectName.toLowerCase())
+    const found = masterProjects.find(m => normalizeMasterName(m.name) === normalizeMasterName(activeMasterProjectName))
     if (found) return found
     return {
       id: 'custom',
@@ -301,7 +322,7 @@ export default function ProjectsPage() {
 
   // Initiatives for Active Master Project
   const activeMasterProjects = useMemo(() => {
-    return projects.filter(p => (p.master_project || 'General').toLowerCase() === activeMasterProjectName.toLowerCase())
+    return projects.filter(p => normalizeMasterName(p.master_project || 'General') === normalizeMasterName(activeMasterProjectName))
   }, [projects, activeMasterProjectName])
 
   const activeMasterTasks = activeMasterProjects.flatMap(p => p.tasks || [])
@@ -314,7 +335,7 @@ export default function ProjectsPage() {
       (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()))
     
     const projectMaster = p.master_project || 'General'
-    const matchesMaster = selectedMasterFilter === 'all' || projectMaster.toLowerCase() === selectedMasterFilter.toLowerCase()
+    const matchesMaster = selectedMasterFilter === 'all' || normalizeMasterName(projectMaster) === normalizeMasterName(selectedMasterFilter)
 
     return matchesSearch && matchesMaster
   })
@@ -323,7 +344,7 @@ export default function ProjectsPage() {
   const isAllFilter = selectedMasterFilter === 'all'
   const scopedProjects = useMemo(() => {
     if (isAllFilter) return projects
-    return projects.filter(p => (p.master_project || 'General').toLowerCase() === selectedMasterFilter.toLowerCase())
+    return projects.filter(p => normalizeMasterName(p.master_project || 'General') === normalizeMasterName(selectedMasterFilter))
   }, [projects, isAllFilter, selectedMasterFilter])
 
   const scopedMasterName = isAllFilter ? 'Portfolio' : selectedMasterFilter
@@ -508,20 +529,15 @@ export default function ProjectsPage() {
                   Quick Initialize Preset:
                 </span>
                 <div className="flex flex-wrap gap-2">
-                  {[
-                    { name: 'Studio & Media', desc: 'Main channel, weekly uploads, and content production.' },
-                    { name: 'Apparel Brand', desc: 'Apparel drops, supply, and e-commerce.' },
-                    { name: 'Advisory Studio', desc: 'Deliverables, consulting, and client sprints.' },
-                    { name: 'Software Product', desc: 'Product development, roadmap, and growth.' },
-                  ].map((preset) => (
+                  {DEFAULT_MASTER_PROJECTS.map((preset) => (
                     <button
-                      key={preset.name}
+                      key={preset.id}
                       type="button"
                       onClick={() => handleCreateNewMasterProject({
                         name: preset.name,
-                        subtitle: 'Master Portfolio',
-                        description: preset.desc,
-                        colorTheme: 'emerald'
+                        subtitle: preset.subtitle || 'Master Portfolio',
+                        description: preset.description || '',
+                        colorTheme: preset.colorTheme || 'emerald'
                       })}
                       className="px-3 py-1.5 rounded-xl bg-neutral-50 hover:bg-black hover:text-white border border-black/[0.06] text-xs font-mono transition-all cursor-pointer"
                     >
@@ -555,12 +571,12 @@ export default function ProjectsPage() {
         {/* Master Project Cards Selector */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {allMasterNames.map((mName) => {
-            const isSelected = activeMasterProjectName.toLowerCase() === mName.toLowerCase()
-            const mProjects = projects.filter(p => (p.master_project || 'General').toLowerCase() === mName.toLowerCase())
+            const isSelected = normalizeMasterName(activeMasterProjectName) === normalizeMasterName(mName)
+            const mProjects = projects.filter(p => normalizeMasterName(p.master_project || 'General') === normalizeMasterName(mName))
             const mTasks = mProjects.flatMap(p => p.tasks || [])
             const mShipped = mTasks.filter((t: any) => t.status === 'shipped').length
             const mProgress = mTasks.length > 0 ? Math.round((mShipped / mTasks.length) * 100) : 0
-            const info = masterProjects.find(m => m.name.toLowerCase() === mName.toLowerCase())
+            const info = masterProjects.find(m => normalizeMasterName(m.name) === normalizeMasterName(mName))
 
             return (
               <button
@@ -903,7 +919,8 @@ export default function ProjectsPage() {
           </button>
 
           {allMasterNames.map((mName) => {
-            const count = projects.filter(p => (p.master_project || 'General').toLowerCase() === mName.toLowerCase()).length
+            const count = projects.filter(p => normalizeMasterName(p.master_project || 'General') === normalizeMasterName(mName)).length
+            const isFilterSelected = normalizeMasterName(selectedMasterFilter) === normalizeMasterName(mName)
             return (
               <button
                 key={mName}
@@ -913,12 +930,12 @@ export default function ProjectsPage() {
                 }}
                 className={cn(
                   'px-3.5 py-1.5 rounded-xl transition-all cursor-pointer font-normal flex items-center gap-1.5 whitespace-nowrap',
-                  selectedMasterFilter.toLowerCase() === mName.toLowerCase()
+                  isFilterSelected
                     ? 'bg-white text-black font-medium shadow-xs'
                     : 'text-[#6b7280] hover:text-black'
                 )}
               >
-                <Building2 size={12} className={selectedMasterFilter.toLowerCase() === mName.toLowerCase() ? 'text-emerald-600' : 'text-[#9ca3af]'} />
+                <Building2 size={12} className={isFilterSelected ? 'text-emerald-600' : 'text-[#9ca3af]'} />
                 <span>{mName}</span>
                 <span className="px-1.5 py-0.2 bg-black/[0.05] rounded-full text-[10px] font-mono">
                   {count}

@@ -6,7 +6,6 @@ import {
   Calendar as CalendarIcon,
   Clock,
   Plus,
-  Sparkles,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -132,7 +131,7 @@ export function ContentCalendarView({
               onClick={onAutoPlanSprint}
               className="px-3.5 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
             >
-              <Sparkles size={12} className="text-amber-400" />
+              <Clock size={12} className="text-white" />
               <span>Auto-Plan Sprint ({inboxItems.length} Inbox)</span>
             </button>
           )}
