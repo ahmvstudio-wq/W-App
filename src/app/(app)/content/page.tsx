@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import type { ContentItem, ContentPlatform, ContentType, ContentStatus } from '@/types'
 import {
   Film,
@@ -13,7 +13,6 @@ import {
   Trash2,
   ExternalLink,
   Send,
-  Upload,
   Eye,
   ThumbsUp,
   Repeat,
@@ -49,21 +48,8 @@ export default function ContentVaultPage() {
 
   // Modals state
   const [isDriveModalOpen, setIsDriveModalOpen] = useState(false)
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [inspectingItem, setInspectingItem] = useState<ContentItem | null>(null)
   const [publishingId, setPublishingId] = useState<string | null>(null)
-
-  // Manual create form state
-  const [title, setTitle] = useState('')
-  const [caption, setCaption] = useState('')
-  const [platform, setPlatform] = useState<ContentPlatform>('instagram')
-  const [contentType, setContentType] = useState<ContentType>('reel')
-  const [scheduledAt, setScheduledAt] = useState('')
-  const [mediaUrls, setMediaUrls] = useState<string[]>([])
-  const [thumbnailUrl, setThumbnailUrl] = useState('')
-  const [uploading, setUploading] = useState(false)
-  const [creating, setCreating] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Connected accounts
   const [ytChannel, setYtChannel] = useState<{
@@ -299,100 +285,6 @@ export default function ContentVaultPage() {
     }
   }
 
-  // Manual Upload
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
-
-    setUploading(true)
-    try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('folder', 'content-vault')
-
-        const res = await fetch('/api/content/upload', {
-          method: 'POST',
-          body: formData,
-        })
-        const data = await res.json()
-
-        if (data.success && data.url) {
-          setMediaUrls((prev) => [...prev, data.url])
-          if (!thumbnailUrl && file.type.startsWith('image/')) {
-            setThumbnailUrl(data.url)
-          }
-          toast.success(`Uploaded ${file.name}`)
-        } else {
-          toast.error(data.error || 'Upload failed')
-        }
-      }
-    } catch (err) {
-      console.error('Upload error:', err)
-      toast.error('Upload encountered an error')
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  // Manual Create
-  const handleCreate = async (submitStatus: ContentStatus = 'inbox') => {
-    if (!title.trim()) {
-      toast.error('Please enter a content title.')
-      return
-    }
-
-    setCreating(true)
-    try {
-      const wsId =
-        typeof window !== 'undefined'
-          ? localStorage.getItem('focus_active_workspace_id')
-          : null
-
-      const res = await fetch('/api/content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          caption,
-          platform,
-          content_type: contentType,
-          status: submitStatus,
-          scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
-          media_urls: mediaUrls,
-          thumbnail_url: thumbnailUrl || mediaUrls[0] || null,
-          workspace_id: wsId,
-        }),
-      })
-
-      const data = await res.json()
-      if (data.success) {
-        toast.success('Content item staged successfully!')
-        setIsCreateModalOpen(false)
-        resetForm()
-        fetchItems(true)
-      } else {
-        toast.error(data.error || 'Failed to save content item.')
-      }
-    } catch (err) {
-      console.error('Create error:', err)
-      toast.error('Failed to create content item.')
-    } finally {
-      setCreating(false)
-    }
-  }
-
-  const resetForm = () => {
-    setTitle('')
-    setCaption('')
-    setPlatform('instagram')
-    setContentType('reel')
-    setScheduledAt('')
-    setMediaUrls([])
-    setThumbnailUrl('')
-  }
-
   // Segment Items
   const inboxItems = items.filter((i) => i.status === 'inbox')
   const scheduledItems = items.filter((i) => i.status === 'scheduled')
@@ -444,17 +336,6 @@ export default function ContentVaultPage() {
           >
             <HardDrive size={15} />
             <span>Import from Google Drive</span>
-          </button>
-
-          <button
-            onClick={() => {
-              resetForm()
-              setIsCreateModalOpen(true)
-            }}
-            className="px-4 py-2.5 bg-white hover:bg-neutral-50 text-black border border-black/[0.1] rounded-xl text-xs font-medium flex items-center gap-2 shadow-xs transition-all cursor-pointer"
-          >
-            <Plus size={14} />
-            <span>Create Content</span>
           </button>
         </div>
       </div>
@@ -1248,181 +1129,7 @@ export default function ContentVaultPage() {
           await fetchItems(true)
         }}
         onPublishNow={handlePublishNow}
-        onDelete={handleDelete}
       />
-
-      {/* MANUAL CREATE CONTENT MODAL */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-black/[0.08] max-h-[90vh] overflow-y-auto space-y-6">
-            <div className="flex items-center justify-between border-b border-black/[0.06] pb-4">
-              <div>
-                <h3 className="text-lg font-light text-black">Stage Content Asset</h3>
-                <p className="text-xs text-[#6b7280] font-light">
-                  Set metadata, media files, and schedule automated dispatch
-                </p>
-              </div>
-              <button
-                onClick={() => setIsCreateModalOpen(false)}
-                className="p-1.5 text-[#9ca3af] hover:text-black rounded-lg cursor-pointer"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {/* Title */}
-              <div>
-                <label className="block text-xs font-medium text-black mb-1.5">Deliverable Title</label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., How to Scale Systems with Cultlike OS [4K Master]"
-                  className="w-full px-3.5 py-2.5 bg-[#fbfbfd] border border-black/[0.08] rounded-xl text-xs text-black outline-none focus:border-black font-light"
-                />
-              </div>
-
-              {/* Platform & Content Type */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-black mb-1.5">Target Platform</label>
-                  <select
-                    value={platform}
-                    onChange={(e) => {
-                      const newPlat = e.target.value as ContentPlatform
-                      setPlatform(newPlat)
-                      if (newPlat === 'youtube' && (contentType === 'reel' || contentType === 'carousel' || contentType === 'post')) {
-                        setContentType('short')
-                      } else if (newPlat === 'instagram' && contentType === 'short') {
-                        setContentType('reel')
-                      }
-                    }}
-                    className="w-full px-3.5 py-2.5 bg-[#fbfbfd] border border-black/[0.08] rounded-xl text-xs text-black outline-none font-light"
-                  >
-                    <option value="instagram">Instagram</option>
-                    <option value="youtube">YouTube</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-black mb-1.5">Format Type</label>
-                  <select
-                    value={contentType}
-                    onChange={(e) => setContentType(e.target.value as ContentType)}
-                    className="w-full px-3.5 py-2.5 bg-[#fbfbfd] border border-black/[0.08] rounded-xl text-xs text-black outline-none font-light"
-                  >
-                    <option value="reel">Instagram Reel</option>
-                    <option value="short">YouTube Short</option>
-                    <option value="video">Long-form Video</option>
-                    <option value="carousel">Carousel (Multi-image)</option>
-                    <option value="post">Single Image Post</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Media File Upload Area */}
-              <div>
-                <label className="block text-xs font-medium text-black mb-1.5">
-                  Media Assets (Video / Images)
-                </label>
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-black/[0.1] hover:border-black/[0.3] rounded-2xl p-6 text-center cursor-pointer transition-colors bg-[#fbfbfd]"
-                >
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                    accept="video/*,image/*"
-                    multiple
-                    className="hidden"
-                  />
-                  {uploading ? (
-                    <div className="flex flex-col items-center gap-2 text-[#9ca3af]">
-                      <Loader2 size={24} className="animate-spin text-black" />
-                      <span className="text-xs font-light">Uploading asset to storage...</span>
-                    </div>
-                  ) : mediaUrls.length > 0 ? (
-                    <div className="flex items-center justify-center gap-2 text-black font-medium text-xs">
-                      <CheckCircle2 size={16} />
-                      <span>{mediaUrls.length} file(s) attached to deliverable</span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-1.5 text-[#6b7280]">
-                      <Upload size={22} className="text-[#9ca3af]" />
-                      <span className="text-xs font-medium text-black">
-                        Click or drag media files here
-                      </span>
-                      <span className="text-[11px] text-[#9ca3af] font-light">
-                        Supports MP4, MOV, WEBM, JPG, PNG (up to 500MB)
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Caption */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-medium text-black">Caption &amp; Description</label>
-                  <span className="text-[10px] text-[#9ca3af] font-mono">
-                    {caption.length} characters
-                  </span>
-                </div>
-                <textarea
-                  rows={4}
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                  placeholder="Craft your description, hook, and hashtags..."
-                  className="w-full px-3.5 py-2.5 bg-[#fbfbfd] border border-black/[0.08] rounded-xl text-xs text-black outline-none focus:border-black font-light resize-none leading-relaxed"
-                />
-              </div>
-
-              {/* Schedule Date & Time */}
-              <div>
-                <label className="block text-xs font-medium text-black mb-1.5">
-                  Schedule Publication Time (Optional)
-                </label>
-                <input
-                  type="datetime-local"
-                  value={scheduledAt}
-                  onChange={(e) => setScheduledAt(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[#fbfbfd] border border-black/[0.08] rounded-xl text-xs text-black outline-none font-light"
-                />
-              </div>
-            </div>
-
-            {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-black/[0.06]">
-              <button
-                type="button"
-                onClick={() => setIsCreateModalOpen(false)}
-                className="px-4 py-2 border border-black/[0.08] rounded-xl text-xs text-[#6b7280] hover:text-black font-light cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => handleCreate('inbox')}
-                disabled={creating}
-                className="px-4 py-2 bg-[#f5f5f7] hover:bg-neutral-200 text-black rounded-xl text-xs font-medium cursor-pointer transition-colors"
-              >
-                Add to Inbox
-              </button>
-              <button
-                type="button"
-                onClick={() => handleCreate(scheduledAt ? 'scheduled' : 'inbox')}
-                disabled={creating}
-                className="px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
-              >
-                {creating && <Loader2 size={12} className="animate-spin text-white" />}
-                <span>{scheduledAt ? 'Schedule Dispatch' : 'Create Deliverable'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
