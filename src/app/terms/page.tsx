@@ -15,7 +15,7 @@ export default function TermsPage() {
         <section style={{ marginBottom: '28px' }}>
           <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#f0ede8', marginBottom: '12px' }}>1. Agreement to Terms</h2>
           <p style={{ color: '#b5b8bd' }}>
-            By accessing or using Cultlike OS ("the Service"), operated by AHMV Systems, you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.
+            By accessing or using Cultlike OS (&ldquo;the Service&rdquo;), operated by AHMV Systems, you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.
           </p>
         </section>
 

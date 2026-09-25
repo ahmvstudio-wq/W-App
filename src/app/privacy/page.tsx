@@ -15,8 +15,8 @@ export default function PrivacyPolicyPage() {
         <section style={{ marginBottom: '28px' }}>
           <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#f0ede8', marginBottom: '12px' }}>1. Overview</h2>
           <p style={{ color: '#b5b8bd' }}>
-            Cultlike OS ("we", "our", or "us"), provided by AHMV Systems, respects your privacy and is committed to protecting your personal data. 
-            This Privacy Policy explains how our application collects, uses, stores, and protects information when you connect external platforms including Meta (Facebook & Instagram), Google (Calendar, Drive, YouTube), and other third-party services.
+            Cultlike OS (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;), provided by AHMV Systems, respects your privacy and is committed to protecting your personal data. 
+            This Privacy Policy explains how our application collects, uses, stores, and protects information when you connect external platforms including Meta (Facebook &amp; Instagram), Google (Calendar, Drive, YouTube), and other third-party services.
           </p>
         </section>
 

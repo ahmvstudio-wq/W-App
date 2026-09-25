@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { 
   ArrowRight, Check, CheckSquare, Video, ExternalLink, 
   ChevronDown, Calendar, RefreshCw, X, Mail, Play, Pause, Camera, 
@@ -33,7 +33,6 @@ export default function LandingPage() {
   const [copiedSpec, setCopiedSpec] = useState(false)
 
   const router = useRouter()
-  const searchParams = useSearchParams()
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -48,17 +47,20 @@ export default function LandingPage() {
       }
     })
 
-    const authErr = searchParams?.get('auth_error')
-    if (authErr) {
-      setError(authErr)
-      setIsAuthOpen(true)
-      setMode('login')
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const authErr = params.get('auth_error')
+      if (authErr) {
+        setError(authErr)
+        setIsAuthOpen(true)
+        setMode('login')
+      }
     }
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [router, searchParams])
+  }, [router])
 
   // Pomodoro countdown timer effect
   useEffect(() => {

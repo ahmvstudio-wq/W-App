@@ -28,7 +28,7 @@ export default function DataDeletionPage() {
 
           <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#f0ede8', marginBottom: '8px' }}>Option 2: Revoke Access via Facebook App Settings</h3>
           <ol style={{ paddingLeft: '20px', color: '#b5b8bd', marginBottom: '16px' }}>
-            <li>Go to your Facebook account's <strong>Settings &amp; Privacy &rarr; Settings</strong>.</li>
+            <li>Go to your Facebook account&apos;s <strong>Settings &amp; Privacy &rarr; Settings</strong>.</li>
             <li>Click on <strong>Apps and Websites</strong> in the left menu.</li>
             <li>Find <strong>Cultlike OS</strong> in the list.</li>
             <li>Click <strong>Remove</strong>. This immediately revokes all permissions granted to our app.</li>
