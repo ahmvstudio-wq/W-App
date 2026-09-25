@@ -22,7 +22,12 @@ export async function POST(req: NextRequest) {
     // Set status to publishing
     await updateContentItem(admin, content_item_id, { status: 'publishing' })
 
-    const mediaUrl = item.media_urls?.[0] || item.thumbnail_url || 'https://placehold.co/1920x1080.mp4'
+    const mediaUrl =
+      item.drive_download_link ||
+      (item.drive_file_id ? `https://drive.google.com/uc?id=${item.drive_file_id}&export=download` : null) ||
+      item.media_urls?.[0] ||
+      item.thumbnail_url ||
+      'https://placehold.co/1920x1080.mp4'
 
     const accessToken = req.cookies.get('youtube_access_token')?.value || req.cookies.get('google_access_token')?.value || process.env.YOUTUBE_ACCESS_TOKEN || process.env.GOOGLE_ACCESS_TOKEN
     const refreshToken = req.cookies.get('youtube_refresh_token')?.value || req.cookies.get('google_refresh_token')?.value || process.env.YOUTUBE_REFRESH_TOKEN || process.env.GOOGLE_REFRESH_TOKEN

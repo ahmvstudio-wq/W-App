@@ -31,6 +31,7 @@ import { getCached, setCached } from '@/lib/cache/swrCache'
 import { CardSkeleton } from '@/components/ui/SkeletonPulse'
 import { cn } from '@/lib/utils'
 import { DriveImportModal } from './DriveImportModal'
+import { CreateContentModal } from './CreateContentModal'
 import { AssetInspectorModal } from './AssetInspectorModal'
 import { ContentCalendarView } from './ContentCalendarView'
 
@@ -48,6 +49,7 @@ export default function ContentVaultPage() {
 
   // Modals state
   const [isDriveModalOpen, setIsDriveModalOpen] = useState(false)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [inspectingItem, setInspectingItem] = useState<ContentItem | null>(null)
   const [publishingId, setPublishingId] = useState<string | null>(null)
 
@@ -332,10 +334,18 @@ export default function ContentVaultPage() {
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => setIsDriveModalOpen(true)}
+            className="px-3.5 py-2.5 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] rounded-xl text-xs font-normal flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+            title="Batch Import Video Files from Google Drive"
+          >
+            <HardDrive size={14} />
+            <span className="hidden sm:inline">Import from Drive</span>
+          </button>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
             className="px-4 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-2 shadow-sm transition-all cursor-pointer"
           >
-            <HardDrive size={15} />
-            <span>Import from Google Drive</span>
+            <Plus size={15} />
+            <span>New Content</span>
           </button>
         </div>
       </div>
@@ -1109,7 +1119,18 @@ export default function ContentVaultPage() {
         </div>
       )}
 
-      {/* GOOGLE DRIVE INGESTION MODAL */}
+      {/* NEW CONTENT CREATION MODAL (100% GOOGLE DRIVE SOURCED) */}
+      <CreateContentModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={() => {
+          fetchItems(true)
+          setActiveTab('inbox')
+        }}
+        isDriveConnected={isDriveConnected}
+      />
+
+      {/* GOOGLE DRIVE BATCH INGESTION MODAL */}
       <DriveImportModal
         isOpen={isDriveModalOpen}
         onClose={() => setIsDriveModalOpen(false)}

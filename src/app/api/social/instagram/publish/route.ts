@@ -21,7 +21,12 @@ export async function POST(req: NextRequest) {
 
     await updateContentItem(admin, content_item_id, { status: 'publishing' })
 
-    const mediaUrl = item.media_urls?.[0] || item.thumbnail_url || 'https://placehold.co/1080x1920.mp4'
+    const mediaUrl =
+      item.drive_download_link ||
+      (item.drive_file_id ? `https://drive.google.com/uc?id=${item.drive_file_id}&export=download` : null) ||
+      item.media_urls?.[0] ||
+      item.thumbnail_url ||
+      'https://placehold.co/1080x1920.mp4'
     const mediaType = item.content_type === 'post' || item.content_type === 'carousel' ? 'IMAGE' : 'REELS'
 
     const metaToken = req.cookies.get('meta_page_token')?.value || req.cookies.get('meta_access_token')?.value
