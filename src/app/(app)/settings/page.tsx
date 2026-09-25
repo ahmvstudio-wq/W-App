@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { 
   User, Settings as SettingsIcon, LogOut, Bell, Calendar, 
-  Video, Copy, Check, ExternalLink, RefreshCw, CheckCircle2, AlertCircle, Bot, Target
+  Video, Copy, Check, ExternalLink, RefreshCw, CheckCircle2, AlertCircle, Bot, Target,
+  Share2, Globe
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -75,10 +76,15 @@ export default function SettingsPage() {
 
   const googleConnected = searchParams.get('google_connected') === 'true'
   const youtubeConnected = searchParams.get('youtube_connected') === 'true'
+  const metaConnected = searchParams.get('meta_connected') === 'true'
   const googleError = searchParams.get('google_error')
+  const metaError = searchParams.get('meta_error')
+  const igUserParam = searchParams.get('ig_user')
   const googleMissingSecret = searchParams.get('google_status') === 'missing_secret'
   const [isGoogleConnected, setIsGoogleConnected] = useState(false)
   const [isYouTubeConnected, setIsYouTubeConnected] = useState(false)
+  const [isMetaConnected, setIsMetaConnected] = useState(false)
+  const [instagramUser, setInstagramUser] = useState<string>('')
   const [checkingGoogle, setCheckingGoogle] = useState(true)
 
   useEffect(() => {
@@ -100,6 +106,10 @@ export default function SettingsPage() {
     if (typeof window !== 'undefined') {
       if (localStorage.getItem('focus_youtube_connected') === 'true') {
         setIsYouTubeConnected(true)
+      }
+      if (localStorage.getItem('cultlike_meta_connected') === 'true') {
+        setIsMetaConnected(true)
+        setInstagramUser(localStorage.getItem('cultlike_ig_user') || '')
       }
     }
   }, [googleConnected])
@@ -123,10 +133,26 @@ export default function SettingsPage() {
       }
       toast.success('YouTube Channel & Analytics connected successfully!')
     }
+    if (metaConnected) {
+      setIsMetaConnected(true)
+      if (igUserParam) {
+        setInstagramUser(igUserParam)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('cultlike_ig_user', igUserParam)
+        }
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('cultlike_meta_connected', 'true')
+      }
+      toast.success(igUserParam ? `Instagram account @${igUserParam} connected successfully!` : 'Meta & Instagram connected successfully!')
+    }
     if (googleError) {
       toast.error(`Google connection: ${googleError}`)
     }
-  }, [googleConnected, youtubeConnected, googleError])
+    if (metaError) {
+      toast.error(`Meta connection: ${metaError}`)
+    }
+  }, [googleConnected, youtubeConnected, metaConnected, googleError, metaError, igUserParam])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -488,6 +514,70 @@ export default function SettingsPage() {
                       </a>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Meta & Instagram Graph API */}
+              <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-black/[0.08] flex items-center justify-center shadow-xs">
+                      <Share2 size={20} className="text-[#E1306C]" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-normal text-black">Meta &amp; Instagram Graph API</h3>
+                      <p className="text-xs text-[#6b7280] font-light">
+                        Connect your Instagram Professional (Creator/Business) account to publish Reels, Carousels, and view analytics directly from the Content Vault.
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className={cn(
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-normal border",
+                    isMetaConnected
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : "bg-neutral-100 text-neutral-600 border-neutral-200"
+                  )}>
+                    {isMetaConnected ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                    <span>{isMetaConnected ? (instagramUser ? `@${instagramUser} Connected` : 'Connected') : 'Not Connected'}</span>
+                  </span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white border border-black/[0.06] space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <a
+                      href="/api/auth/meta?returnTo=/settings"
+                      className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer"
+                    >
+                      <ExternalLink size={12} />
+                      <span>{isMetaConnected ? 'Reconnect Instagram Account' : 'Connect with Facebook & Instagram'}</span>
+                    </a>
+
+                    {isMetaConnected && (
+                      <button
+                        onClick={() => {
+                          if (typeof window !== 'undefined') {
+                            localStorage.removeItem('cultlike_meta_connected')
+                            localStorage.removeItem('cultlike_ig_user')
+                            document.cookie = 'meta_access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+                            document.cookie = 'meta_page_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+                            document.cookie = 'instagram_account_id=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+                            document.cookie = 'instagram_username=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+                          }
+                          setIsMetaConnected(false)
+                          setInstagramUser('')
+                          toast.success('Instagram account disconnected.')
+                        }}
+                        className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-xl text-xs font-normal transition-all shadow-xs cursor-pointer"
+                      >
+                        <span>Disconnect</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <p className="text-[11px] text-[#8a8d95] font-light">
+                    Requirements: Your Instagram account must be a Creator or Business account linked to a Facebook Page you manage.
+                  </p>
                 </div>
               </div>
 

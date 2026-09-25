@@ -24,10 +24,15 @@ export async function POST(req: NextRequest) {
     const mediaUrl = item.media_urls?.[0] || item.thumbnail_url || 'https://placehold.co/1080x1920.mp4'
     const mediaType = item.content_type === 'post' || item.content_type === 'carousel' ? 'IMAGE' : 'REELS'
 
+    const metaToken = req.cookies.get('meta_page_token')?.value || req.cookies.get('meta_access_token')?.value
+    const igAccountId = req.cookies.get('instagram_account_id')?.value
+
     const result = await publishToInstagram({
       caption: item.caption || item.title,
       mediaUrl,
-      mediaType
+      mediaType,
+      ...(metaToken ? { accessToken: metaToken } : {}),
+      ...(igAccountId ? { instagramAccountId: igAccountId } : {}),
     })
 
     if (!result.success) {
