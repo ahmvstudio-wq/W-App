@@ -24,9 +24,9 @@ export async function publishToInstagram(params: InstagramPublishParams): Promis
     accessToken = process.env.META_ACCESS_TOKEN || process.env.INSTAGRAM_ACCESS_TOKEN
   } = params
 
-  // If credentials are not configured or token is an unparseable Basic Display token, simulate for staging
-  if (!accessToken || !instagramAccountId || accessToken.startsWith('IGAATL')) {
-    console.info('[Instagram Engine] Live Graph API Page Token not present. Simulating direct Reel dispatch for:', caption.slice(0, 40))
+  // If credentials are not configured, simulate for staging
+  if (!accessToken || !instagramAccountId) {
+    console.info('[Instagram Engine] Live Instagram Token not present. Simulating direct Reel dispatch for:', caption.slice(0, 40))
     const simulatedId = `ig_${Date.now().toString(36)}`
     return {
       success: true,
@@ -34,6 +34,12 @@ export async function publishToInstagram(params: InstagramPublishParams): Promis
       postUrl: `https://www.instagram.com/p/${simulatedId}/`
     }
   }
+
+  // Tokens starting with IGAAT query graph.instagram.com (Instagram Login).
+  // Tokens starting with EAAB query graph.facebook.com (Facebook Page Login).
+  const isIgLogin = accessToken.startsWith('IGAAT')
+  const apiBase = isIgLogin ? 'https://graph.instagram.com/v19.0' : 'https://graph.facebook.com/v19.0'
+  const targetAccount = isIgLogin ? (instagramAccountId || 'me') : instagramAccountId
 
   try {
     // Step 1: Create Media Container
@@ -46,18 +52,18 @@ export async function publishToInstagram(params: InstagramPublishParams): Promis
     })
 
     const createContainerRes = await fetch(
-      `https://graph.facebook.com/v19.0/${instagramAccountId}/media?${containerParams.toString()}`,
+      `${apiBase}/${targetAccount}/media?${containerParams.toString()}`,
       { method: 'POST' }
     )
 
     const containerData = await createContainerRes.json()
     if (!createContainerRes.ok || !containerData.id) {
       const errMsg = containerData.error?.message || 'Failed to create Instagram media container'
-      console.warn('[Instagram Graph API] Media container error:', containerData)
+      console.warn('[Instagram API] Media container error:', containerData)
       if (containerData.error?.code === 190 || errMsg.includes('Invalid OAuth access token') || errMsg.includes('Cannot parse access token')) {
         return {
           success: false,
-          error: 'Instagram account connection expired. Please reconnect your Instagram account in Settings -> Integrations.'
+          error: 'Instagram access token expired or invalid. Please refresh the token in Settings.'
         }
       }
       return {
@@ -73,18 +79,19 @@ export async function publishToInstagram(params: InstagramPublishParams): Promis
       let isReady = false
       let attempts = 0
 
-      while (!isReady && attempts < 15) {
-        await new Promise(r => setTimeout(r, 2000))
+      while (!isReady && attempts < 25) {
+        await new Promise(r => setTimeout(r, 2500))
         attempts++
 
         const statusRes = await fetch(
-          `https://graph.facebook.com/v19.0/${creationId}?fields=status_code&access_token=${accessToken}`
+          `${apiBase}/${creationId}?fields=status_code,status&access_token=${accessToken}`
         )
         const statusData = await statusRes.json()
+        const statusCode = statusData.status_code || statusData.status
 
-        if (statusData.status_code === 'FINISHED') {
+        if (statusCode === 'FINISHED') {
           isReady = true
-        } else if (statusData.status_code === 'ERROR') {
+        } else if (statusCode === 'ERROR') {
           return { success: false, error: 'Instagram container processing failed on Meta servers.' }
         }
       }
@@ -92,7 +99,7 @@ export async function publishToInstagram(params: InstagramPublishParams): Promis
 
     // Step 3: Publish Media Container
     const publishRes = await fetch(
-      `https://graph.facebook.com/v19.0/${instagramAccountId}/media_publish?creation_id=${creationId}&access_token=${accessToken}`,
+      `${apiBase}/${targetAccount}/media_publish?creation_id=${creationId}&access_token=${accessToken}`,
       { method: 'POST' }
     )
 

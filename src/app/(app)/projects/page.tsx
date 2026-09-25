@@ -27,7 +27,14 @@ export interface MasterProjectInfo {
   colorTheme?: 'emerald' | 'indigo' | 'purple' | 'blue' | 'amber' | 'rose'
 }
 
-export const DEFAULT_MASTER_PROJECTS: MasterProjectInfo[] = [
+const DEFAULT_MASTER_PROJECTS: MasterProjectInfo[] = [
+  {
+    id: 'mp-tadbeer',
+    name: 'Tadbeer TT',
+    subtitle: 'Primary Business Architecture',
+    colorTheme: 'emerald',
+    description: 'Core commercial trading, client CRM, e-commerce products, and operations.'
+  },
   {
     id: 'mp-content-ahmed',
     name: 'Content(ahmed )',
@@ -51,7 +58,7 @@ export const DEFAULT_MASTER_PROJECTS: MasterProjectInfo[] = [
   }
 ]
 
-export function normalizeMasterName(name?: string): string {
+function normalizeMasterName(name?: string): string {
   return (name || '').toLowerCase().replace(/\s+/g, ' ').replace(/\(\s*/g, '(').replace(/\s*\)/g, ')').trim()
 }
 
@@ -110,8 +117,6 @@ export default function ProjectsPage() {
         if (Array.isArray(parsed) && parsed.length > 0) {
           const cleaned = parsed.filter((p: MasterProjectInfo) => 
             p.name !== 'Primary Portfolio' &&
-            p.name !== 'Tadbeer TT' &&
-            p.name !== 'Internal Core' &&
             p.name !== 'Community Brand'
           )
           if (cleaned.length > 0) {
@@ -229,8 +234,6 @@ export default function ProjectsPage() {
     const rawSaved: MasterProjectInfo[] = Array.isArray(wsSettings.master_projects) ? wsSettings.master_projects : []
     let savedMasterProjects: MasterProjectInfo[] = rawSaved.filter((p: MasterProjectInfo) => 
       p.name !== 'Primary Portfolio' &&
-      p.name !== 'Tadbeer TT' &&
-      p.name !== 'Internal Core' &&
       p.name !== 'Community Brand'
     )
 
