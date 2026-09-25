@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 import { getCached, setCached } from '@/lib/cache/swrCache'
 import { cn } from '@/lib/utils'
+import { CreatorAnalyticsView } from './CreatorAnalyticsView'
 
 interface RealStats {
   shippingStreak: number
@@ -47,6 +48,9 @@ export default function CultlikeCreatePage() {
   const [shippedItems, setShippedItems] = useState<ShippedItem[]>([])
   const [ytChannel, setYtChannel] = useState<any>(null)
   const [igAccount, setIgAccount] = useState<any>(null)
+  const [ytVideos, setYtVideos] = useState<any[]>([])
+  const [igReels, setIgReels] = useState<any[]>([])
+  const [vaultItems, setVaultItems] = useState<any[]>([])
   const [heatmapData, setHeatmapData] = useState<number[][]>([])
   const scorecardRef = useRef<HTMLDivElement>(null)
 
@@ -62,17 +66,8 @@ export default function CultlikeCreatePage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'plan' | 'analytics' | 'scorecard'>('overview')
   const [isDriveConnected, setIsDriveConnected] = useState<boolean | null>(null)
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search)
-      if (urlParams.get('google_connected') === 'true') {
-        toast.success('Google Drive connected successfully!')
-        window.history.replaceState({}, '', window.location.pathname)
-      }
-    }
-
-    async function loadRealData() {
-      setLoading(true)
+  async function loadRealData() {
+    setLoading(true)
       try {
         let wsId = typeof window !== 'undefined' ? localStorage.getItem('focus_active_workspace_id') : null
 
@@ -99,21 +94,28 @@ export default function CultlikeCreatePage() {
         const shippedTasks = tasks.filter(t => t.status === 'shipped')
 
         // 2. Process Content Items
-        const vaultItems = contentRes.status === 'fulfilled' && contentRes.value?.items ? contentRes.value.items : []
-        const publishedVault = vaultItems.filter((i: any) => i.status === 'published')
+        const vaultRaw = contentRes.status === 'fulfilled' && contentRes.value?.items ? contentRes.value.items : []
+        const publishedVault = vaultRaw.filter((i: any) => i.status === 'published')
+        setVaultItems(publishedVault)
 
         // 3. Process YouTube Feed
         let ytVideos: any[] = []
         if (ytRes.status === 'fulfilled' && ytRes.value?.success && ytRes.value?.connected) {
           if (ytRes.value.channel) setYtChannel(ytRes.value.channel)
-          if (Array.isArray(ytRes.value.videos)) ytVideos = ytRes.value.videos
+          if (Array.isArray(ytRes.value.videos)) {
+            ytVideos = ytRes.value.videos
+            setYtVideos(ytVideos)
+          }
         }
 
         // 4. Process Instagram Feed
         let igReels: any[] = []
         if (igRes.status === 'fulfilled' && igRes.value?.success && igRes.value?.connected) {
           if (igRes.value.account) setIgAccount(igRes.value.account)
-          if (Array.isArray(igRes.value.reels)) igReels = igRes.value.reels
+          if (Array.isArray(igRes.value.reels)) {
+            igReels = igRes.value.reels
+            setIgReels(igReels)
+          }
         }
 
         // 5. Build Unified Shipped Activity Feed
@@ -258,8 +260,16 @@ export default function CultlikeCreatePage() {
       } finally {
         setLoading(false)
       }
-    }
+  }
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      if (urlParams.get('google_connected') === 'true') {
+        toast.success('Google Drive connected successfully!')
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+    }
     loadRealData()
   }, [])
 
@@ -778,121 +788,16 @@ export default function CultlikeCreatePage() {
         </div>
       )}
 
-      {/* TAB 3: CROSS-PLATFORM ANALYTICS */}
+      {/* TAB 3: ADVANCED CREATOR & CROSS-PLATFORM ANALYTICS */}
       {activeTab === 'analytics' && (
-        <div className="space-y-6 animate-in fade-in-50 duration-200">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Instagram Live Telemetry */}
-            <div className="p-6 bg-gradient-to-br from-pink-500/[0.04] via-white to-transparent border border-pink-500/20 rounded-3xl shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                    IG
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-black">
-                      {igAccount ? `@${igAccount.username}` : 'Instagram Professional'}
-                    </h3>
-                    <p className="text-[11px] text-[#6b7280]">
-                      {igAccount ? igAccount.account_type : 'Connected via Graph API'}
-                    </p>
-                  </div>
-                </div>
-
-                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
-                  <CheckCircle2 size={10} />
-                  Live Connected
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <div className="p-3.5 rounded-xl bg-white border border-black/[0.06]">
-                  <span className="text-[10px] font-mono text-[#8a8d95] uppercase">PUBLISHED REELS</span>
-                  <div className="text-2xl font-light text-black mt-1">
-                    {igAccount?.media_count || 6}
-                  </div>
-                </div>
-                <div className="p-3.5 rounded-xl bg-white border border-black/[0.06]">
-                  <span className="text-[10px] font-mono text-[#8a8d95] uppercase">STATUS</span>
-                  <div className="text-sm font-medium text-emerald-700 mt-2">Active Feed</div>
-                </div>
-              </div>
-
-              {igAccount && (
-                <div className="pt-1">
-                  <a
-                    href={`https://instagram.com/${igAccount.username}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-pink-600 hover:text-pink-700 font-medium"
-                  >
-                    <span>View Profile on Instagram</span>
-                    <ExternalLink size={12} />
-                  </a>
-                </div>
-              )}
-            </div>
-
-            {/* YouTube Live Telemetry */}
-            <div className="p-6 bg-gradient-to-br from-rose-500/[0.04] via-white to-transparent border border-rose-500/20 rounded-3xl shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-sm shadow-xs">
-                    YT
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-black">
-                      {ytChannel ? ytChannel.title : 'YouTube Channel'}
-                    </h3>
-                    <p className="text-[11px] text-[#6b7280]">
-                      {ytChannel?.customUrl || 'Connected via YouTube Data API'}
-                    </p>
-                  </div>
-                </div>
-
-                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
-                  <CheckCircle2 size={10} />
-                  Live Sync
-                </span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2.5 pt-2">
-                <div className="p-3 rounded-xl bg-white border border-black/[0.06]">
-                  <span className="text-[10px] font-mono text-[#8a8d95] uppercase">SUBSCRIBERS</span>
-                  <div className="text-xl font-light text-black mt-1">
-                    {ytChannel ? parseInt(ytChannel.subscriberCount || '0').toLocaleString() : 'Live'}
-                  </div>
-                </div>
-                <div className="p-3 rounded-xl bg-white border border-black/[0.06]">
-                  <span className="text-[10px] font-mono text-[#8a8d95] uppercase">UPLOADS</span>
-                  <div className="text-xl font-light text-black mt-1">
-                    {ytChannel ? parseInt(ytChannel.videoCount || '0').toLocaleString() : 'Live'}
-                  </div>
-                </div>
-                <div className="p-3 rounded-xl bg-white border border-black/[0.06]">
-                  <span className="text-[10px] font-mono text-[#8a8d95] uppercase">VIEWS</span>
-                  <div className="text-xl font-light text-black mt-1">
-                    {ytChannel ? parseInt(ytChannel.viewCount || '0').toLocaleString() : 'Live'}
-                  </div>
-                </div>
-              </div>
-
-              {ytChannel && (
-                <div className="pt-1">
-                  <a
-                    href={ytChannel.customUrl ? `https://youtube.com/${ytChannel.customUrl}` : `https://youtube.com/channel/${ytChannel.id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-rose-600 hover:text-rose-700 font-medium"
-                  >
-                    <span>View Channel on YouTube</span>
-                    <ExternalLink size={12} />
-                  </a>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <CreatorAnalyticsView
+          ytChannel={ytChannel}
+          ytVideos={ytVideos}
+          igAccount={igAccount}
+          igReels={igReels}
+          vaultItems={vaultItems}
+          onRefresh={() => loadRealData()}
+        />
       )}
 
       {/* TAB 4: VERIFIED SCORECARD PREVIEW */}

@@ -24,6 +24,7 @@ import {
   SlidersHorizontal,
   CalendarDays,
   Inbox,
+  BarChart3,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -34,13 +35,14 @@ import { DriveImportModal } from './DriveImportModal'
 import { CreateContentModal } from './CreateContentModal'
 import { AssetInspectorModal } from './AssetInspectorModal'
 import { ContentCalendarView } from './ContentCalendarView'
+import { CreatorAnalyticsView } from '../create/CreatorAnalyticsView'
 
 export default function ContentVaultPage() {
   const [items, setItems] = useState<ContentItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
-  // View Mode: 'inbox' | 'vault' | 'calendar'
-  const [activeTab, setActiveTab] = useState<'inbox' | 'vault' | 'calendar'>('inbox')
+  // View Mode: 'inbox' | 'vault' | 'calendar' | 'analytics'
+  const [activeTab, setActiveTab] = useState<'inbox' | 'vault' | 'calendar' | 'analytics'>('inbox')
 
   // Filters for Vault View
   const [platformFilter, setPlatformFilter] = useState<'all' | ContentPlatform>('all')
@@ -538,6 +540,20 @@ export default function ContentVaultPage() {
             <Layers size={14} />
             <span>Vault All Deliverables</span>
             <span className="text-[10px] font-mono opacity-80">({items.length})</span>
+          </button>
+
+          {/* Creator Analytics Tab */}
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={cn(
+              'px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-2',
+              activeTab === 'analytics'
+                ? 'bg-black text-white shadow-xs'
+                : 'text-[#6b7280] hover:text-black hover:bg-neutral-100'
+            )}
+          >
+            <BarChart3 size={14} className={activeTab === 'analytics' ? 'text-white' : ''} />
+            <span>Creator Analytics</span>
           </button>
         </div>
 
@@ -1117,6 +1133,18 @@ export default function ContentVaultPage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* TAB 4: CREATOR INTELLIGENCE & ADVANCED ANALYTICS */}
+      {activeTab === 'analytics' && (
+        <CreatorAnalyticsView
+          ytChannel={ytChannel}
+          ytVideos={items.filter((i) => i.platform === 'youtube')}
+          igAccount={igAccount}
+          igReels={items.filter((i) => i.platform === 'instagram')}
+          vaultItems={items}
+          onRefresh={() => fetchItems(true)}
+        />
       )}
 
       {/* NEW CONTENT CREATION MODAL (100% GOOGLE DRIVE SOURCED) */}
