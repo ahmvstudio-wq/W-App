@@ -130,7 +130,7 @@ export async function GET(req: NextRequest) {
           operationId: 'createTask',
           summary: 'Create a new task',
           description:
-            'Creates a new task in Focus OS. Can specify project_id, priority (p0-p3), time box, and due date.',
+            'Creates a new task in Cultlike OS. Can specify project_id, priority (p0-p3), time box, and due date.',
           requestBody: {
             required: true,
             content: {
@@ -339,7 +339,7 @@ export async function GET(req: NextRequest) {
         post: {
           operationId: 'createProject',
           summary: 'Create a new project',
-          description: 'Creates a new project in Focus OS.',
+          description: 'Creates a new project in Cultlike OS.',
           requestBody: {
             required: true,
             content: {

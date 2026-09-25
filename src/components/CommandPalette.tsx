@@ -4,15 +4,17 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import { 
-  Search, Plus, Briefcase, FileText, 
-  Users, Clock, Calendar, X, ChevronRight, Sparkles 
+  Search, Plus, FileText, Clock, ChevronRight, 
+  Layers, Activity, BarChart2, FolderOpen, 
+  FolderKanban, CheckSquare, Video, Settings, HelpCircle,
+  LayoutDashboard
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
 interface CommandOption {
   id: string
   label: string
+  description?: string
   icon: React.ReactNode
   action: () => void
   category: string
@@ -21,7 +23,6 @@ interface CommandOption {
 export default function CommandPalette({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const [search, setSearch] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const [workspaceId, setWorkspaceId] = useState<string | null>(null)
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -30,60 +31,120 @@ export default function CommandPalette({ isOpen, onClose }: { isOpen: boolean, o
       setSearch('')
       setSelectedIndex(0)
       setTimeout(() => inputRef.current?.focus(), 10)
-      fetchWorkspace()
     }
   }, [isOpen])
 
-  async function fetchWorkspace() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { data } = await supabase.from('workspaces').select('id').eq('owner_id', user.id).limit(1).single()
-    if (data) setWorkspaceId(data.id)
-  }
-
   const options: CommandOption[] = [
     { 
+      id: 'dashboard', 
+      label: 'Home Dashboard', 
+      description: 'Workspace overview and recent activity',
+      icon: <LayoutDashboard size={16} />, 
+      category: 'Navigation',
+      action: () => { router.push('/dashboard'); onClose(); } 
+    },
+    { 
       id: 'new-task', 
-      label: 'Create New Task', 
+      label: 'Create Task', 
+      description: 'Add a new deliverable or to-do',
       icon: <Plus size={16} />, 
       category: 'Actions',
       action: () => { window.dispatchEvent(new CustomEvent('open-create-task-modal')); onClose(); } 
     },
     { 
-      id: 'new-project', 
-      label: 'Create New Project', 
-      icon: <Briefcase size={16} />, 
-      category: 'Actions',
+      id: 'content-vault', 
+      label: 'Content Vault', 
+      description: 'Social video scheduler and queue',
+      icon: <Layers size={16} />, 
+      category: 'Creator Studio',
+      action: () => { router.push('/content'); onClose(); } 
+    },
+    { 
+      id: 'cultlike-create', 
+      label: 'Cultlike Create', 
+      description: 'Daily scorecard and shipping streaks',
+      icon: <Activity size={16} />, 
+      category: 'Creator Studio',
+      action: () => { router.push('/create'); onClose(); } 
+    },
+    { 
+      id: 'analytics', 
+      label: 'Analytics & Insights', 
+      description: 'Live Instagram and YouTube telemetry',
+      icon: <BarChart2 size={16} />, 
+      category: 'Creator Studio',
+      action: () => { router.push('/create?tab=analytics'); onClose(); } 
+    },
+    { 
+      id: 'drive-storage', 
+      label: 'Google Drive Storage', 
+      description: 'Ingest raw media assets directly from Drive',
+      icon: <FolderOpen size={16} />, 
+      category: 'Creator Studio',
+      action: () => { router.push('/content?tab=drive'); onClose(); } 
+    },
+    { 
+      id: 'projects', 
+      label: 'Projects', 
+      description: 'Manage active deliverables and milestones',
+      icon: <FolderKanban size={16} />, 
+      category: 'Navigation',
       action: () => { router.push('/projects'); onClose(); } 
     },
     { 
-      id: 'new-document', 
-      label: 'New Strategy Document', 
-      icon: <FileText size={16} />, 
-      category: 'Actions',
-      action: async () => {
-        router.push('/documents')
-        onClose()
-      } 
+      id: 'tasks', 
+      label: 'Tasks', 
+      description: 'Task board and deliverable list',
+      icon: <CheckSquare size={16} />, 
+      category: 'Navigation',
+      action: () => { router.push('/tasks'); onClose(); } 
     },
     { 
-      id: 'ai-assistant', 
-      label: 'Consult AI Chief of Staff', 
-      icon: <Sparkles size={16} />, 
-      category: 'AI',
-      action: () => { router.push('/ai'); onClose(); } 
+      id: 'documents', 
+      label: 'Documents', 
+      description: 'Strategy docs and notes',
+      icon: <FileText size={16} />, 
+      category: 'Navigation',
+      action: () => { router.push('/documents'); onClose(); } 
+    },
+    { 
+      id: 'meetings', 
+      label: 'Meetings', 
+      description: 'Fathom call recordings and synced action items',
+      icon: <Video size={16} />, 
+      category: 'Navigation',
+      action: () => { router.push('/meetings'); onClose(); } 
     },
     { 
       id: 'start-focus', 
-      label: 'Toggle Focus Sprint Timer', 
+      label: 'Focus Timer', 
+      description: 'Toggle 25-minute deep work sprint',
       icon: <Clock size={16} />, 
-      category: 'Focus',
+      category: 'Tools',
       action: () => { window.dispatchEvent(new CustomEvent('toggle-focus-timer')); onClose(); } 
+    },
+    { 
+      id: 'settings', 
+      label: 'Settings', 
+      description: 'Workspace and account integrations',
+      icon: <Settings size={16} />, 
+      category: 'System',
+      action: () => { router.push('/settings'); onClose(); } 
+    },
+    { 
+      id: 'guide', 
+      label: 'System Guide', 
+      description: 'Interactive walkthrough tutorial',
+      icon: <HelpCircle size={16} />, 
+      category: 'System',
+      action: () => { window.dispatchEvent(new CustomEvent('open-game-tutorial')); onClose(); } 
     },
   ]
 
   const filteredOptions = options.filter(opt => 
-    opt.label.toLowerCase().includes(search.toLowerCase())
+    opt.label.toLowerCase().includes(search.toLowerCase()) ||
+    (opt.description && opt.description.toLowerCase().includes(search.toLowerCase())) ||
+    opt.category.toLowerCase().includes(search.toLowerCase())
   )
 
   useEffect(() => {
@@ -109,7 +170,7 @@ export default function CommandPalette({ isOpen, onClose }: { isOpen: boolean, o
 
   return (
     <div 
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-start justify-center pt-24 p-4 font-sans animate-fadeIn"
+      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-start justify-center pt-20 p-4 font-sans animate-fadeIn"
       onClick={onClose}
     >
       <div 
@@ -122,15 +183,15 @@ export default function CommandPalette({ isOpen, onClose }: { isOpen: boolean, o
             ref={inputRef}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Type a command or search workspace..."
-            className="flex-1 bg-transparent border-none outline-none text-black text-sm font-light placeholder:text-[#9ca3af]"
+            placeholder="Search workspace or run a command..."
+            className="flex-1 bg-transparent border-none outline-none text-black text-sm font-normal placeholder:text-[#9ca3af]"
           />
           <kbd className="text-[10px] font-mono text-[#9ca3af] bg-black/[0.04] px-2 py-0.5 rounded">ESC</kbd>
         </div>
 
-        <div className="p-2 max-h-72 overflow-y-auto space-y-1">
+        <div className="p-2 max-h-80 overflow-y-auto space-y-1">
           {filteredOptions.length === 0 ? (
-            <div className="py-8 text-center text-xs text-[#9ca3af] font-light">No commands matching &quot;{search}&quot;</div>
+            <div className="py-8 text-center text-xs text-[#9ca3af] font-light">No results found for &quot;{search}&quot;</div>
           ) : (
             filteredOptions.map((opt, i) => (
               <div 
@@ -138,21 +199,36 @@ export default function CommandPalette({ isOpen, onClose }: { isOpen: boolean, o
                 onClick={opt.action}
                 onMouseEnter={() => setSelectedIndex(i)}
                 className={cn(
-                  'px-4 py-3 rounded-2xl cursor-pointer flex items-center gap-3 transition-all text-xs',
-                  selectedIndex === i ? 'bg-black text-white' : 'text-[#4b5563] hover:bg-black/[0.03]'
+                  'px-4 py-2.5 rounded-2xl cursor-pointer flex items-center gap-3.5 transition-all text-xs',
+                  selectedIndex === i ? 'bg-black text-white' : 'text-[#374151] hover:bg-black/[0.03]'
                 )}
               >
-                <div>{opt.icon}</div>
-                <span className="flex-1 font-normal">{opt.label}</span>
-                {selectedIndex === i && <ChevronRight size={13} />}
+                <div className={cn(
+                  'p-1.5 rounded-xl transition-colors',
+                  selectedIndex === i ? 'text-white' : 'text-[#6b7280]'
+                )}>
+                  {opt.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm leading-tight">{opt.label}</div>
+                  {opt.description && (
+                    <div className={cn(
+                      'text-[11px] truncate mt-0.5',
+                      selectedIndex === i ? 'text-neutral-300' : 'text-neutral-400'
+                    )}>
+                      {opt.description}
+                    </div>
+                  )}
+                </div>
+                {selectedIndex === i && <ChevronRight size={14} className="text-neutral-300 shrink-0" />}
               </div>
             ))
           )}
         </div>
 
-        <div className="p-3 px-6 bg-[#fafafa] border-t border-black/[0.04] flex gap-4 text-[10px] font-mono text-[#9ca3af]">
-          <span>↑↓ NAVIGATE</span>
-          <span>ENTER SELECT</span>
+        <div className="p-3 px-6 bg-[#fafafa] border-t border-black/[0.04] flex items-center justify-between text-[11px] font-mono text-[#9ca3af]">
+          <span>↑↓ Navigate</span>
+          <span>Enter Select</span>
         </div>
       </div>
     </div>

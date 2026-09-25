@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { X } from 'lucide-react'
+import { X, ChevronDown } from 'lucide-react'
 
 interface LandingMenuModalProps {
   isOpen: boolean
@@ -15,6 +15,8 @@ export default function LandingMenuModal({
   onClose,
   onOpenAuth,
 }: LandingMenuModalProps) {
+  const [isCreatorOpen, setIsCreatorOpen] = useState(false)
+
   // Handle escape key
   useEffect(() => {
     if (!isOpen) return
@@ -68,7 +70,7 @@ export default function LandingMenuModal({
         className="relative z-10 w-full max-w-2xl sm:max-w-3xl bg-white rounded-3xl border border-neutral-200/90 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.18)] p-6 sm:p-10 max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Top Centered Close Pill Button (exact match to Screenshot 2) */}
+        {/* Top Centered Close Pill Button */}
         <div className="flex justify-center pb-6 sm:pb-8">
           <button
             onClick={onClose}
@@ -125,7 +127,7 @@ export default function LandingMenuModal({
                 onClick={onClose}
                 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 hover:text-neutral-400 transition-colors"
               >
-                Privacy & Legal
+                Privacy & Terms
               </Link>
             </div>
           </div>
@@ -135,88 +137,96 @@ export default function LandingMenuModal({
             <span className="text-[11px] font-semibold text-neutral-400 tracking-[0.14em] uppercase mb-4 sm:mb-5 block">
               Solutions
             </span>
-            <div className="flex flex-col space-y-5">
-              {/* Creator Studio & Sub-items */}
-              <div>
-                <div className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 mb-2">
-                  Creator Studio
-                </div>
-                <div className="flex flex-col space-y-2 pl-0.5 mt-1">
-                  <Link
-                    href="/content"
-                    onClick={onClose}
-                    className="text-sm sm:text-[15px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors flex items-center justify-between"
+            <div className="flex flex-col space-y-4">
+              {/* Creator Studio with Soft Ambient Lighting & Accordion Collapse */}
+              <div className="relative group">
+                <div className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-violet-500/20 via-fuchsia-500/20 to-indigo-500/20 blur-md opacity-70 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
+                <div className="relative z-10 bg-white/95 rounded-2xl p-2.5 -m-2.5 border border-purple-500/20 transition-all">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreatorOpen(prev => !prev)}
+                    className="w-full flex items-center justify-between text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 hover:text-neutral-600 transition-colors text-left cursor-pointer select-none"
                   >
-                    <span>Content Vault</span>
-                    <span className="text-[10px] text-neutral-400 font-mono uppercase">Video Hub</span>
-                  </Link>
-                  <Link
-                    href="/create"
-                    onClick={onClose}
-                    className="text-sm sm:text-[15px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors flex items-center justify-between"
-                  >
-                    <span>Cultlike Create</span>
-                    <span className="text-[10px] text-neutral-400 font-mono uppercase">Scorecard</span>
-                  </Link>
-                  <Link
-                    href="/create?tab=analytics"
-                    onClick={onClose}
-                    className="text-sm sm:text-[15px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors flex items-center justify-between"
-                  >
-                    <span>Cross-Platform Analytics</span>
-                    <span className="text-[10px] text-neutral-400 font-mono uppercase">IG & YT</span>
-                  </Link>
-                  <Link
-                    href="/content?tab=drive"
-                    onClick={onClose}
-                    className="text-sm sm:text-[15px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors flex items-center justify-between"
-                  >
-                    <span>Google Drive Sourcing</span>
-                    <span className="text-[10px] text-neutral-400 font-mono uppercase">Assets</span>
-                  </Link>
+                    <span>Creator Studio</span>
+                    <ChevronDown
+                      size={20}
+                      className={`text-neutral-400 transition-transform duration-200 ${
+                        isCreatorOpen ? 'rotate-180 text-black' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {/* Expandable Sub-items on click - clean, simple, zero tags */}
+                  {isCreatorOpen && (
+                    <div className="flex flex-col space-y-2.5 pt-3 pl-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <Link
+                        href="/content"
+                        onClick={onClose}
+                        className="text-base font-medium text-neutral-600 hover:text-black transition-colors"
+                      >
+                        Content Vault
+                      </Link>
+                      <Link
+                        href="/create"
+                        onClick={onClose}
+                        className="text-base font-medium text-neutral-600 hover:text-black transition-colors"
+                      >
+                        Daily Create
+                      </Link>
+                      <Link
+                        href="/create?tab=analytics"
+                        onClick={onClose}
+                        className="text-base font-medium text-neutral-600 hover:text-black transition-colors"
+                      >
+                        Analytics
+                      </Link>
+                      <Link
+                        href="/content?tab=drive"
+                        onClick={onClose}
+                        className="text-base font-medium text-neutral-600 hover:text-black transition-colors"
+                      >
+                        Drive Storage
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Deep Work Execution */}
+              {/* Deep Work */}
               <a
                 href="#features"
                 onClick={(e) => handleAnchorClick(e, '#features')}
-                className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 hover:text-neutral-400 transition-colors text-left flex items-center justify-between group cursor-pointer"
+                className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 hover:text-neutral-400 transition-colors text-left pt-1"
               >
-                <span>Deep Work Sprints</span>
-                <span className="text-[10px] font-mono font-normal uppercase text-neutral-400 border border-neutral-200 px-2 py-0.5 rounded-md group-hover:border-neutral-400 transition-colors">
-                  Streaks
-                </span>
+                Deep Work
               </a>
 
-              {/* Fathom Call Sync */}
+              {/* Meetings */}
               <a
                 href="#showcase"
                 onClick={(e) => handleAnchorClick(e, '#showcase')}
-                className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 hover:text-neutral-400 transition-colors text-left flex items-center justify-between group cursor-pointer"
+                className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 hover:text-neutral-400 transition-colors text-left"
               >
-                <span>Meeting Intelligence</span>
-                <span className="text-[10px] font-mono font-normal uppercase text-neutral-400 border border-neutral-200 px-2 py-0.5 rounded-md group-hover:border-neutral-400 transition-colors">
-                  Fathom
-                </span>
+                Meetings
               </a>
 
-              {/* Enterprise Directives */}
+              {/* Enterprise */}
               <button
                 type="button"
                 onClick={() => {
                   onClose()
                   onOpenAuth('signup')
                 }}
-                className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 hover:text-neutral-400 transition-colors text-left"
+                className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 hover:text-neutral-400 transition-colors text-left cursor-pointer"
               >
-                Enterprise Workspace
+                Enterprise
               </button>
             </div>
           </div>
         </div>
 
-        {/* Crisp Divider Line (matching Screenshot 2 bottom rule) */}
+        {/* Crisp Divider Line */}
         <div className="pt-6 border-t border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <img 
@@ -226,7 +236,7 @@ export default function LandingMenuModal({
             />
             <div>
               <div className="text-xs font-semibold text-neutral-900">Cultlike OS</div>
-              <div className="text-[11px] text-neutral-400 font-mono">The Executive Operating System</div>
+              <div className="text-[11px] text-neutral-400 font-mono">Executive Operating System</div>
             </div>
           </div>
 
