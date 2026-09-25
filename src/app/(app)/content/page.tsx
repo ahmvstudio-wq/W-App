@@ -47,6 +47,12 @@ export default function ContentVaultPage() {
     videoCount: string
     viewCount: string
   } | null>(null)
+  const [igAccount, setIgAccount] = useState<{
+    id: string
+    username: string
+    account_type: string
+    media_count?: number
+  } | null>(null)
   const [syncingYt, setSyncingYt] = useState(false)
 
   // Fetch Items
@@ -60,10 +66,11 @@ export default function ContentVaultPage() {
       if (platformFilter !== 'all') queryParams.set('platform', platformFilter)
       if (statusFilter !== 'all') queryParams.set('status', statusFilter)
 
-      // Fetch staged database items and live YouTube channel uploads in parallel
-      const [dbRes, ytRes] = await Promise.allSettled([
+      // Fetch staged database items, live YouTube uploads, and live Instagram feed in parallel
+      const [dbRes, ytRes, igRes] = await Promise.allSettled([
         fetch(`/api/content?${queryParams.toString()}`).then(r => r.json()),
-        fetch('/api/social/youtube/feed').then(r => r.json())
+        fetch('/api/social/youtube/feed').then(r => r.json()),
+        fetch('/api/social/instagram/feed').then(r => r.json())
       ])
 
       let dbItems: ContentItem[] = []
@@ -81,14 +88,24 @@ export default function ContentVaultPage() {
         }
       }
 
-      // Merge: real YouTube videos + staged drafts (avoiding duplicate IDs)
+      let liveInstagram: ContentItem[] = []
+      if (igRes.status === 'fulfilled' && igRes.value?.success && igRes.value?.connected) {
+        if (igRes.value.account) {
+          setIgAccount(igRes.value.account)
+        }
+        if (Array.isArray(igRes.value.reels)) {
+          liveInstagram = igRes.value.reels
+        }
+      }
+
+      // Merge: real YouTube videos + real Instagram Reels + staged drafts (avoiding duplicate IDs)
       let combined = [...dbItems]
-      for (const lv of liveVideos) {
-        if (!combined.some(i => i.external_post_id === lv.external_post_id || i.id === lv.id)) {
+      for (const item of [...liveVideos, ...liveInstagram]) {
+        if (!combined.some(i => i.external_post_id === item.external_post_id || i.id === item.id)) {
           // Respect platform and status filters
-          if (platformFilter !== 'all' && lv.platform !== platformFilter) continue
-          if (statusFilter !== 'all' && lv.status !== statusFilter) continue
-          combined.push(lv)
+          if (platformFilter !== 'all' && item.platform !== platformFilter) continue
+          if (statusFilter !== 'all' && item.status !== statusFilter) continue
+          combined.push(item)
         }
       }
 
@@ -378,6 +395,44 @@ export default function ContentVaultPage() {
           >
             Connect Channel
           </Link>
+        </div>
+      )}
+
+      {/* Live Instagram Account Integration Banner */}
+      {igAccount && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-pink-500/[0.05] via-purple-500/[0.03] to-transparent border border-pink-500/20 backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center font-bold text-base shadow-xs">
+              IG
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-medium text-black">@{igAccount.username}</h3>
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
+                  <CheckCircle2 size={10} />
+                  Live Sync Active
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[10px] font-medium border border-purple-200">
+                  {igAccount.account_type}
+                </span>
+              </div>
+              <p className="text-xs text-[#6b7280] font-light">
+                Connected via Instagram Graph API • {igAccount.media_count || 'Live'} Reels &amp; Posts in Vault
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <a
+              href={`https://instagram.com/${igAccount.username}`}
+              target="_blank"
+              rel="noreferrer"
+              className="px-3.5 py-1.5 bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white rounded-xl text-xs font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            >
+              <ExternalLink size={12} />
+              <span>Open Instagram</span>
+            </a>
+          </div>
         </div>
       )}
 
