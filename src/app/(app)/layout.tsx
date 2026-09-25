@@ -161,7 +161,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <FocusTimer />
 
         {/* Minimalist Clean Header */}
-        <header className="sticky top-0 z-40 h-16 bg-white/85 backdrop-blur-xl border-b border-black/[0.06] px-4 sm:px-10 flex items-center justify-between">
+        <header className="sticky top-0 z-40 h-16 bg-white/85 backdrop-blur-xl border-b border-black/[0.06] px-4 sm:px-10 flex items-center justify-between relative">
           {/* Left: Brand Identity */}
           <div className="flex items-center gap-3">
             <Link href="/dashboard" className="flex items-center group">
@@ -169,8 +169,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
 
-          {/* Center: Iconic Pill Menu Button (Exact match to Screenshot 1) */}
-          <div className="flex items-center justify-center">
+          {/* Center: Iconic Pill Menu Button (Dead center via absolute positioning) */}
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-auto">
             <button
               onClick={() => setIsMenuModalOpen(true)}
               type="button"
@@ -187,29 +187,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Right Actions & User Profile */}
-          <div className="flex items-center gap-2 sm:gap-3 font-body">
-            {/* Quick Search */}
+          <div className="flex items-center gap-2 sm:gap-2.5 font-body">
+            {/* Quick Search - Minimal Icon Button */}
             <button
               onClick={() => setIsCommandPaletteOpen(true)}
               type="button"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-[#f5f5f7] hover:bg-[#ebebee] border border-black/[0.04] rounded-full text-xs text-[#6b7280] hover:text-black transition-all cursor-pointer font-light"
+              className="w-9 h-9 rounded-full bg-[#f5f5f7] hover:bg-[#ebebee] border border-black/[0.04] flex items-center justify-center text-[#6b7280] hover:text-black transition-all cursor-pointer"
               title="Search workspace (⌘K)"
+              aria-label="Search"
             >
-              <Search size={13} className="text-[#9ca3af]" />
-              <span className="hidden md:inline">Search...</span>
-              <kbd className="px-1.5 py-0.2 bg-white border border-black/[0.06] rounded text-[9px] font-mono text-[#6b7280]">
-                ⌘K
-              </kbd>
+              <Search size={15} />
             </button>
 
-            {/* New Task Trigger */}
+            {/* New Task Trigger - Minimal Icon Button */}
             <button
               onClick={() => setIsCreateTaskOpen(true)}
               type="button"
-              className="flex items-center gap-1 px-3 sm:px-3.5 py-1.5 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-full shadow-sm transition-all cursor-pointer"
+              className="w-9 h-9 rounded-full bg-black hover:bg-neutral-800 text-white flex items-center justify-center shadow-xs transition-all cursor-pointer"
+              title="Create Task"
+              aria-label="Create Task"
             >
-              <Plus size={14} />
-              <span className="hidden sm:inline">New Task</span>
+              <Plus size={16} />
             </button>
 
             {/* User Profile Avatar with Dropdown */}
@@ -217,7 +215,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 type="button"
-                className="w-8 h-8 rounded-full bg-black text-white font-medium text-xs flex items-center justify-center shadow-sm cursor-pointer hover:ring-2 hover:ring-black/10 transition-all"
+                className="w-9 h-9 rounded-full bg-black text-white font-medium text-xs flex items-center justify-center shadow-sm cursor-pointer hover:ring-2 hover:ring-black/10 transition-all"
                 title={user?.name || 'Account'}
               >
                 {getInitials(user?.name)}

@@ -187,7 +187,7 @@ export default function LandingPage() {
 
       {/* ─── STICKY NAV ─── */}
       <nav className="fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-b border-black/[0.06]">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-10 h-16 flex items-center justify-between">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-10 h-16 flex items-center justify-between relative">
           {/* Logo */}
           <div className="flex items-center gap-2.5">
             <img 
@@ -198,8 +198,8 @@ export default function LandingPage() {
             <span className="text-sm font-semibold tracking-tight text-black hidden sm:inline">Cultlike OS</span>
           </div>
 
-          {/* Center: Iconic Pill Menu Button (Screenshot 1 Exact Match) */}
-          <div className="flex items-center justify-center">
+          {/* Center: Iconic Pill Menu Button (Dead center via absolute positioning) */}
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-auto">
             <button 
               onClick={() => setIsMenuOpen(true)}
               type="button"
