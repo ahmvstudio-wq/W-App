@@ -65,11 +65,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(`${appBaseUrl}/settings?google_error=${encodeURIComponent(lastError)}`)
     }
 
-    // Set cookies and redirect back to settings
-    const state = searchParams.get('state')
-    const isYouTube = state === 'youtube'
+    // Parse service and return_to from state (format: service or service::returnTo)
+    const rawState = searchParams.get('state') || ''
+    const [service, returnTo] = rawState.includes('::') ? rawState.split('::') : [rawState, '']
+    const isYouTube = service === 'youtube'
     const redirectParam = isYouTube ? 'youtube_connected=true' : 'google_connected=true'
-    const response = NextResponse.redirect(`${appBaseUrl}/settings?${redirectParam}`)
+    const targetPath = returnTo || '/settings'
+    const separator = targetPath.includes('?') ? '&' : '?'
+    const response = NextResponse.redirect(`${appBaseUrl}${targetPath}${separator}${redirectParam}`)
     
     // Cookie options
     const cookieOpts = {

@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         connected: false,
         message: 'Google account is not connected. Connect your Google Workspace or Drive account in Settings.',
-        authUrl: '/api/auth/google?service=workspace',
+        authUrl: '/api/auth/google?service=workspace&return_to=/content',
         videos: [],
         folders: [],
       })
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
         connected: !isScopeError,
         error: driveErr?.message || 'Failed to list Google Drive video assets',
         requiresReauth: isScopeError,
-        authUrl: '/api/auth/google?service=workspace',
+        authUrl: '/api/auth/google?service=workspace&return_to=/content',
         videos: [],
         folders: [],
       })

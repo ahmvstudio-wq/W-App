@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
 
   // Extract requested service target (workspace | calendar | youtube)
   const service = req.nextUrl.searchParams.get('service') || 'workspace'
+  const returnTo = req.nextUrl.searchParams.get('return_to') || ''
 
   let scopesList: string[] = []
 
@@ -57,7 +58,9 @@ export async function GET(req: NextRequest) {
   googleAuthUrl.searchParams.set('scope', scopes)
   googleAuthUrl.searchParams.set('access_type', 'offline')
   googleAuthUrl.searchParams.set('prompt', 'consent')
-  googleAuthUrl.searchParams.set('state', service)
+  
+  const stateVal = returnTo ? `${service}::${returnTo}` : service
+  googleAuthUrl.searchParams.set('state', stateVal)
 
   return NextResponse.redirect(googleAuthUrl.toString())
 }

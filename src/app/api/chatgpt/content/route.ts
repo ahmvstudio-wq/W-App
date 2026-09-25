@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
         angle: item.angle,
         cta: item.cta,
         tags: item.tags,
+        transcript: item.transcript,
         scheduled_at: item.scheduled_at,
         published_at: item.published_at,
         drive_file_id: item.drive_file_id,
