@@ -15,22 +15,35 @@ export async function GET(req: NextRequest) {
   const protocol = host.includes('localhost') ? 'http' : 'https'
   const redirectUri = `${protocol}://${host}/api/auth/google/callback`
 
-  const scopes = [
-    // Identity
-    'openid',
-    'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/userinfo.profile',
-    // Google Calendar API
-    'https://www.googleapis.com/auth/calendar.events',
-    'https://www.googleapis.com/auth/calendar.readonly',
-    // Google Docs & Drive API
-    'https://www.googleapis.com/auth/documents',
-    'https://www.googleapis.com/auth/drive.file',
-    // YouTube Data API v3 & Analytics API
-    'https://www.googleapis.com/auth/youtube.upload',
-    'https://www.googleapis.com/auth/youtube.readonly',
-    'https://www.googleapis.com/auth/yt-analytics.readonly',
-  ].join(' ')
+  // Extract requested service target (workspace | calendar | youtube)
+  const service = req.nextUrl.searchParams.get('service') || 'workspace'
+
+  let scopesList: string[] = []
+
+  if (service === 'youtube') {
+    // YouTube Data API v3 & YouTube Analytics
+    scopesList = [
+      'openid',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/youtube.upload',
+      'https://www.googleapis.com/auth/youtube.readonly',
+      'https://www.googleapis.com/auth/yt-analytics.readonly',
+    ]
+  } else {
+    // Google Calendar & Workspace (Docs & Drive file access)
+    scopesList = [
+      'openid',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/calendar.events',
+      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/documents',
+      'https://www.googleapis.com/auth/drive.file',
+    ]
+  }
+
+  const scopes = scopesList.join(' ')
 
   const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
   googleAuthUrl.searchParams.set('client_id', clientId)
@@ -39,7 +52,7 @@ export async function GET(req: NextRequest) {
   googleAuthUrl.searchParams.set('scope', scopes)
   googleAuthUrl.searchParams.set('access_type', 'offline')
   googleAuthUrl.searchParams.set('prompt', 'consent')
-  googleAuthUrl.searchParams.set('include_granted_scopes', 'true')
+  googleAuthUrl.searchParams.set('state', service)
 
   return NextResponse.redirect(googleAuthUrl.toString())
 }

@@ -74,9 +74,11 @@ export default function SettingsPage() {
   }, [currentWorkspace?.settings?.fathom_api_key])
 
   const googleConnected = searchParams.get('google_connected') === 'true'
+  const youtubeConnected = searchParams.get('youtube_connected') === 'true'
   const googleError = searchParams.get('google_error')
   const googleMissingSecret = searchParams.get('google_status') === 'missing_secret'
   const [isGoogleConnected, setIsGoogleConnected] = useState(false)
+  const [isYouTubeConnected, setIsYouTubeConnected] = useState(false)
   const [checkingGoogle, setCheckingGoogle] = useState(true)
 
   useEffect(() => {
@@ -94,6 +96,12 @@ export default function SettingsPage() {
       }
     }
     checkGoogleStatus()
+
+    if (typeof window !== 'undefined') {
+      if (localStorage.getItem('focus_youtube_connected') === 'true') {
+        setIsYouTubeConnected(true)
+      }
+    }
   }, [googleConnected])
 
   useEffect(() => {
@@ -106,12 +114,19 @@ export default function SettingsPage() {
   useEffect(() => {
     if (googleConnected) {
       setIsGoogleConnected(true)
-      toast.success('Google Cloud services connected! (Calendar, Docs, Drive, YouTube)')
+      toast.success('Google Calendar & Workspace connected successfully! (Calendar, Docs, Drive)')
+    }
+    if (youtubeConnected) {
+      setIsYouTubeConnected(true)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('focus_youtube_connected', 'true')
+      }
+      toast.success('YouTube Channel & Analytics connected successfully!')
     }
     if (googleError) {
       toast.error(`Google connection: ${googleError}`)
     }
-  }, [googleConnected, googleError])
+  }, [googleConnected, youtubeConnected, googleError])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -384,69 +399,94 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Direct Google Cloud Services & Account Sync */}
-                <div className="p-4 rounded-xl border border-black/[0.08] bg-[#fafafa] space-y-3">
+                <div className="p-4 rounded-xl border border-black/[0.08] bg-[#fafafa] space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-black">Google Cloud Integration</span>
-                      {isGoogleConnected ? (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
-                          <CheckCircle2 size={10} />
-                          Connected
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[10px] font-medium border border-neutral-200">
-                          Not Connected
-                        </span>
-                      )}
+                    <div>
+                      <h4 className="text-xs font-medium text-black">Google Cloud Integrations</h4>
+                      <p className="text-[11px] text-[#6b7280] font-light mt-0.5">
+                        Google prohibits bundling Drive and YouTube in the same authorization prompt. Connect each service individually below.
+                      </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowAdvancedOAuth(!showAdvancedOAuth)}
-                      className="text-xs text-[#6b7280] hover:text-black flex items-center gap-1 cursor-pointer font-light"
-                    >
-                      <span>{showAdvancedOAuth ? '▾ Less details' : '▸ View permissions'}</span>
-                    </button>
                   </div>
 
-                  <p className="text-xs text-[#6b7280] font-light leading-relaxed">
-                    Direct integration for Calendar event sync, Docs drafting, Drive file export, and YouTube publishing &amp; analytics.
-                  </p>
-
-                  {showAdvancedOAuth && (
-                    <div className="pt-2 pb-1 border-t border-black/[0.05] animate-in fade-in duration-150">
-                      <div className="text-[11px] text-[#6b7280] font-light space-y-1 mb-3">
-                        <div className="font-medium text-black">Active Google APIs enabled:</div>
-                        <ul className="list-disc list-inside space-y-0.5 text-[#4a4d52]">
-                          <li>Google Calendar API (2-way task scheduling &amp; sync)</li>
-                          <li>Google Docs API (Document creation &amp; synthesis exports)</li>
-                          <li>Google Drive API (Deliverable storage &amp; file attachments)</li>
-                          <li>YouTube Data API v3 (Direct video &amp; short uploads)</li>
-                          <li>YouTube Analytics API (Realtime viewer engagement &amp; reach)</li>
-                        </ul>
+                  {/* 1. Google Calendar, Docs & Drive */}
+                  <div className="p-3.5 rounded-xl bg-white border border-black/[0.06] space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-black">Google Calendar &amp; Workspace</span>
+                        {isGoogleConnected ? (
+                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
+                            <CheckCircle2 size={10} />
+                            Connected
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[10px] font-medium border border-neutral-200">
+                            Not Connected
+                          </span>
+                        )}
                       </div>
+                      <span className="text-[10px] text-[#8a8d95] font-light">Calendar, Docs &amp; Drive</span>
                     </div>
-                  )}
 
-                  <div className="flex flex-wrap items-center gap-2.5 pt-1">
-                    <a
-                      href="/api/auth/google"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#f5f5f7] border border-black/[0.1] rounded-xl text-xs font-normal text-black transition-all shadow-xs cursor-pointer"
-                    >
-                      <ExternalLink size={13} />
-                      <span>{isGoogleConnected ? 'Reconnect Google Account' : 'Connect Google Account'}</span>
-                    </a>
+                    <p className="text-[11px] text-[#6b7280] font-light leading-relaxed">
+                      Two-way calendar task scheduling, meeting agenda docs drafting, and deliverable file exports.
+                    </p>
 
-                    {isGoogleConnected && (
-                      <button
-                        type="button"
-                        onClick={handleSyncToGoogle}
-                        disabled={syncingGoogle}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <a
+                        href="/api/auth/google?service=workspace"
+                        className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white hover:bg-[#f5f5f7] border border-black/[0.1] rounded-xl text-xs font-normal text-black transition-all shadow-xs cursor-pointer"
                       >
-                        <RefreshCw size={13} className={cn(syncingGoogle && 'animate-spin')} />
-                        <span>{syncingGoogle ? 'Syncing...' : 'Sync Tasks to Google Calendar'}</span>
-                      </button>
-                    )}
+                        <ExternalLink size={12} />
+                        <span>{isGoogleConnected ? 'Reconnect Workspace' : 'Connect Calendar & Workspace'}</span>
+                      </a>
+
+                      {isGoogleConnected && (
+                        <button
+                          type="button"
+                          onClick={handleSyncToGoogle}
+                          disabled={syncingGoogle}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                        >
+                          <RefreshCw size={12} className={cn(syncingGoogle && 'animate-spin')} />
+                          <span>{syncingGoogle ? 'Syncing...' : 'Sync Tasks Now'}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 2. YouTube Channel & Analytics */}
+                  <div className="p-3.5 rounded-xl bg-white border border-black/[0.06] space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-black">YouTube Channel &amp; Analytics</span>
+                        {isYouTubeConnected ? (
+                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
+                            <CheckCircle2 size={10} />
+                            Connected
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[10px] font-medium border border-neutral-200">
+                            Not Connected
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-[#8a8d95] font-light">Data API v3 &amp; Analytics</span>
+                    </div>
+
+                    <p className="text-[11px] text-[#6b7280] font-light leading-relaxed">
+                      Publish video deliverables and YouTube Shorts directly from the Content Studio, plus view viewer reach.
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <a
+                        href="/api/auth/google?service=youtube"
+                        className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white hover:bg-[#f5f5f7] border border-black/[0.1] rounded-xl text-xs font-normal text-black transition-all shadow-xs cursor-pointer"
+                      >
+                        <ExternalLink size={12} />
+                        <span>{isYouTubeConnected ? 'Reconnect YouTube' : 'Connect YouTube Channel'}</span>
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>

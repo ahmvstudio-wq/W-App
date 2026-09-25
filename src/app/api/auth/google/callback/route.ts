@@ -62,7 +62,10 @@ export async function GET(req: NextRequest) {
     }
 
     // Set cookies and redirect back to settings
-    const response = NextResponse.redirect(`${appBaseUrl}/settings?google_connected=true`)
+    const state = searchParams.get('state')
+    const isYouTube = state === 'youtube'
+    const redirectParam = isYouTube ? 'youtube_connected=true' : 'google_connected=true'
+    const response = NextResponse.redirect(`${appBaseUrl}/settings?${redirectParam}`)
     
     // Cookie options
     const cookieOpts = {
@@ -72,22 +75,38 @@ export async function GET(req: NextRequest) {
       path: '/',
     }
 
-    // Set Google Calendar tokens
-    response.cookies.set('gcal_access_token', tokenData.access_token, {
-      ...cookieOpts,
-      maxAge: tokenData.expires_in || 3600,
-    })
-    // Set General Google Workspace & YouTube tokens
+    if (isYouTube) {
+      // Set YouTube specific tokens
+      response.cookies.set('youtube_access_token', tokenData.access_token, {
+        ...cookieOpts,
+        maxAge: tokenData.expires_in || 3600,
+      })
+      if (tokenData.refresh_token) {
+        response.cookies.set('youtube_refresh_token', tokenData.refresh_token, {
+          ...cookieOpts,
+          maxAge: 60 * 60 * 24 * 30, // 30 days
+        })
+      }
+    } else {
+      // Set Google Calendar & Workspace tokens
+      response.cookies.set('gcal_access_token', tokenData.access_token, {
+        ...cookieOpts,
+        maxAge: tokenData.expires_in || 3600,
+      })
+      if (tokenData.refresh_token) {
+        response.cookies.set('gcal_refresh_token', tokenData.refresh_token, {
+          ...cookieOpts,
+          maxAge: 60 * 60 * 24 * 30, // 30 days
+        })
+      }
+    }
+
+    // Set unified google access token
     response.cookies.set('google_access_token', tokenData.access_token, {
       ...cookieOpts,
       maxAge: tokenData.expires_in || 3600,
     })
-
     if (tokenData.refresh_token) {
-      response.cookies.set('gcal_refresh_token', tokenData.refresh_token, {
-        ...cookieOpts,
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-      })
       response.cookies.set('google_refresh_token', tokenData.refresh_token, {
         ...cookieOpts,
         maxAge: 60 * 60 * 24 * 30, // 30 days
