@@ -65,6 +65,21 @@ export default function SettingsPage() {
     return "Studio Workspace"
   })()
 
+  const [copiedClaudeMcp, setCopiedClaudeMcp] = useState(false)
+
+  const getClaudeMcpUrl = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cultlike.ahmvsystems.com'
+    const key = currentWorkspace?.id || currentUser?.id || 'focus_sk_live_9a7d3f82e1c4b6e5'
+    return `${origin}/api/mcp?key=${key}`
+  }
+
+  const copyClaudeMcpUrl = () => {
+    navigator.clipboard.writeText(getClaudeMcpUrl())
+    setCopiedClaudeMcp(true)
+    toast.success('Personal Claude Connector URL copied!')
+    setTimeout(() => setCopiedClaudeMcp(false), 2500)
+  }
+
   const getOpenApiUrl = () => {
     if (typeof window === 'undefined') return '/api/chatgpt/openapi.json'
     return `${window.location.origin}/api/chatgpt/openapi.json`
@@ -878,9 +893,72 @@ export default function SettingsPage() {
                       <span>GPT Actions &rarr; Import from URL</span>
                     </div>
                     <div className="p-2 rounded-lg bg-neutral-50 border border-black/[0.04]">
-                      <strong className="text-black block mb-0.5">Claude:</strong>
-                      <span>Claude Projects &rarr; Query Endpoint</span>
+                      <strong className="text-black block mb-0.5">Claude Projects:</strong>
+                      <span>Add to Project &rarr; Custom Endpoint</span>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 7: Claude Custom Connector (Remote MCP) */}
+              <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.06] flex flex-col justify-between space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="relative group shrink-0">
+                        <div className="absolute -inset-1.5 rounded-2xl bg-[#d97757]/[0.12] blur-md group-hover:blur-lg transition-all duration-300 pointer-events-none" />
+                        <div className="relative w-12 h-12 rounded-2xl bg-white border border-black/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-center text-[#d97757] transition-all duration-200 group-hover:border-black/[0.16] group-hover:scale-[1.02]">
+                          {/* Anthropic Claude Icon */}
+                          <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14.5h-2v-2h2v2zm0-4h-2V7h2v5.5z"/>
+                          </svg>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-medium text-black">Claude Custom Connector</h3>
+                          <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono border bg-neutral-100 text-neutral-900 border-black/[0.08]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#d97757] shrink-0" /> Remote MCP
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#6b7280] font-light mt-1">
+                          Connect Claude Web and Claude Desktop to orchestrate tasks, roadmap, and content deliverables.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-[#6b7280] font-light">
+                    Your unique personal connector link with isolated workspace access. No client IDs or secrets needed.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-white border border-black/[0.06] space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-black">Personal Connector URL</span>
+                    <span className="text-[11px] text-[#8a8d95]">Streamable HTTP</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={getClaudeMcpUrl()}
+                      className="flex-1 px-3 py-1.5 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-[11px] font-mono text-black outline-none select-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={copyClaudeMcpUrl}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                    >
+                      {copiedClaudeMcp ? <Check size={12} /> : <Copy size={12} />}
+                      <span>{copiedClaudeMcp ? 'Copied' : 'Copy Link'}</span>
+                    </button>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-neutral-50 border border-black/[0.04] text-[11px] text-[#6b7280] space-y-1">
+                    <p className="font-medium text-black">How to connect in Claude:</p>
+                    <p>1. Open Claude &rarr; <strong>Settings &rarr; Connectors &rarr; Add custom connector</strong></p>
+                    <p>2. Paste your Personal Connector URL</p>
+                    <p>3. Select <strong>No sign-in (Detected)</strong> &rarr; Click <strong>Add connector</strong>. Done!</p>
                   </div>
                 </div>
               </div>

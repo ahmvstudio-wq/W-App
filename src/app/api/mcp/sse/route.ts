@@ -242,7 +242,20 @@ async function resolveUserWorkspace(authHeader?: string | null, keyParam?: strin
     }
   }
 
-  // 2. If API Key from URL query param (?key=...) or Header
+  // 2. If token is a workspace ID or user ID (UUID)
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)
+  if (token && isUuid) {
+    const { data: ws } = await supabase.from('workspaces').select('id, owner_id').eq('id', token).single()
+    if (ws) {
+      return { userId: ws.owner_id, workspaceId: ws.id }
+    }
+    const { data: userWs } = await supabase.from('workspaces').select('id, owner_id').eq('owner_id', token).limit(1).single()
+    if (userWs) {
+      return { userId: userWs.owner_id, workspaceId: userWs.id }
+    }
+  }
+
+  // 3. If Master API Key
   const masterKey = process.env.CULTLIKE_API_KEY || process.env.CHATGPT_API_KEY || 'focus_sk_live_9a7d3f82e1c4b6e5'
   if (token && token === masterKey) {
     const userId = await getDefaultUserId(supabase)
@@ -250,7 +263,7 @@ async function resolveUserWorkspace(authHeader?: string | null, keyParam?: strin
     return { userId, workspaceId }
   }
 
-  // 3. Fallback for default owner
+  // 4. Fallback for default owner
   const userId = await getDefaultUserId(supabase)
   const workspaceId = await getDefaultWorkspaceId(supabase, userId)
   return { userId, workspaceId }
