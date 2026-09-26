@@ -17,18 +17,21 @@ export async function validateOAuthClient(clientId: string, clientSecret?: strin
 
   if (error || !data) {
     // Default trusted clients for ChatGPT / Claude / MCP
-    if (clientId === 'chatgpt-connector' || clientId === 'claude-connector' || clientId === 'cultlike-default' || !clientId) {
-      return {
-        valid: true,
-        client: {
-          client_id: clientId || 'chatgpt-connector',
-          client_secret: clientSecret || 'default_secret',
-          name: clientId === 'chatgpt-connector' ? 'ChatGPT Action & MCP' : clientId === 'claude-connector' ? 'Claude Integration' : 'Cultlike Connector',
-          redirect_uris: ['*']
-        }
+    const clientName = clientId?.toLowerCase().includes('claude')
+      ? 'Claude AI'
+      : clientId?.toLowerCase().includes('chatgpt')
+      ? 'ChatGPT'
+      : 'AI Connector'
+
+    return {
+      valid: true,
+      client: {
+        client_id: clientId || 'claude-connector',
+        client_secret: clientSecret || 'default_secret',
+        name: clientName,
+        redirect_uris: ['*']
       }
     }
-    return { valid: false, error: 'Invalid client_id' }
   }
 
   if (clientSecret && data.client_secret && data.client_secret !== clientSecret) {
