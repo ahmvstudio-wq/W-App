@@ -154,10 +154,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <WorkspaceProvider>
       <NavigationProgressBar />
       <div className="min-h-screen bg-[#fbfbfd] text-[#111827] font-sans selection:bg-black/10 flex flex-col relative overflow-x-hidden">
-        {/* Subtle Ambient Studio Lighting */}
-        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[450px] bg-[radial-gradient(ellipse_70%_50%_at_50%_-10%,rgba(0,0,0,0.025),rgba(255,255,255,0))] pointer-events-none z-0" />
-        <div className="fixed -bottom-20 right-10 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(0,0,0,0.015),rgba(255,255,255,0))] pointer-events-none z-0" />
-        <div className="fixed top-1/2 -left-20 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(0,0,0,0.015),rgba(255,255,255,0))] pointer-events-none z-0" />
+        {/* Vibrant Ambient Studio Lighting */}
+        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[450px] bg-[radial-gradient(ellipse_70%_50%_at_50%_-10%,rgba(99,102,241,0.14),rgba(255,255,255,0))] pointer-events-none z-0" />
+        <div className="fixed -bottom-20 right-10 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(245,158,11,0.08),rgba(255,255,255,0))] pointer-events-none z-0" />
+        <div className="fixed top-1/2 -left-20 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(168,85,247,0.08),rgba(255,255,255,0))] pointer-events-none z-0" />
 
         <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
         {isCreateTaskOpen && (
