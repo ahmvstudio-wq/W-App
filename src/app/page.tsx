@@ -190,11 +190,11 @@ export default function LandingPage() {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-10 h-16 flex items-center justify-between relative">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center">
+            <Link href="/" className="flex items-center group">
               <img 
-                src="/logo.png" 
+                src="/logo-cultlike.png" 
                 alt="Logo" 
-                className="h-10 sm:h-12 w-auto object-contain hover:opacity-85 transition-opacity" 
+                className="h-9 w-9 object-contain rounded-full hover:scale-105 transition-transform" 
               />
             </Link>
           </div>
@@ -246,18 +246,24 @@ export default function LandingPage() {
       />
 
 
+      {/* ─── AMBIENT STUDIO LIGHTING BACKDROPS ─── */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[500px] bg-[radial-gradient(ellipse_70%_60%_at_50%_-10%,rgba(99,102,241,0.08),rgba(255,255,255,0))] pointer-events-none z-0" />
+      <div className="fixed top-1/3 -right-32 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(245,158,11,0.04),rgba(255,255,255,0))] pointer-events-none z-0" />
+      <div className="fixed bottom-1/4 -left-32 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(99,102,241,0.04),rgba(255,255,255,0))] pointer-events-none z-0" />
+
       {/* ─── HERO SECTION ─── */}
-      <section className="pt-28 sm:pt-36 pb-16 sm:pb-24 px-6 sm:px-10 max-w-[1400px] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
+      <section className="pt-28 sm:pt-36 pb-16 sm:pb-24 px-6 sm:px-10 max-w-[1400px] mx-auto relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           {/* Left: Text */}
-          <div className="space-y-8 pt-4 lg:pt-12">
+          <div className="lg:col-span-6 space-y-8 pt-4">
             {/* Social proof badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-black/[0.1] text-xs text-neutral-600 font-normal">
-              Free for solo builders & creators
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-black/[0.1] bg-white/60 backdrop-blur-md text-xs text-neutral-700 font-normal shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              <span>Free for solo builders &amp; creators</span>
             </div>
 
             {/* Giant headline */}
-            <h1 className="text-[clamp(36px,6vw,72px)] font-bold tracking-[-0.035em] leading-[1.05] text-black">
+            <h1 className="text-[clamp(36px,5.5vw,72px)] font-light tracking-[-0.035em] leading-[1.05] text-black">
               <AnimatedText text="One workspace" />
               <span className="text-neutral-400 font-light block">
                 <AnimatedText text="for everything you ship." delay={0.2} />
@@ -265,107 +271,190 @@ export default function LandingPage() {
             </h1>
 
             {/* Subtitle */}
-            <div className="text-base sm:text-lg text-neutral-500 font-normal leading-relaxed max-w-lg">
-              <AnimatedText text="The executive operating system for founders and creators. AI connectors, deep work sprints, meeting intelligence, and content scheduling — unified." delay={0.4} />
+            <div className="text-base sm:text-lg text-neutral-500 font-light leading-relaxed max-w-lg">
+              <AnimatedText text="The studio operating system for founders and creators. AI connectors, deep work sprints, meeting intelligence, and content scheduling — unified." delay={0.4} />
             </div>
 
             {/* CTA Buttons */}
             <div className="flex items-center gap-4 pt-2">
               <button
                 onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
-                className="px-7 py-3.5 rounded-full bg-black hover:bg-neutral-800 text-white text-sm font-medium transition-all cursor-pointer shadow-sm"
+                className="px-7 py-3.5 rounded-full bg-black hover:bg-neutral-800 text-white text-sm font-medium transition-all cursor-pointer shadow-sm active:scale-[0.98]"
               >
                 Launch Free Workspace
               </button>
               <button
                 onClick={() => { setMode('login'); setConfirmationSent(false); setIsAuthOpen(true) }}
-                className="px-6 py-3.5 rounded-full border border-black/[0.12] hover:border-black/[0.3] text-sm font-normal text-black transition-all cursor-pointer"
+                className="px-6 py-3.5 rounded-full border border-black/[0.12] hover:border-black/[0.3] bg-white/50 backdrop-blur-xs text-sm font-normal text-black transition-all cursor-pointer"
               >
                 Sign In
               </button>
             </div>
           </div>
 
-          {/* Right: Product Preview Cards (Fanned like reference) */}
-          <div className="relative h-[400px] sm:h-[480px] lg:h-[520px]">
-            {/* Card 1 - Dashboard Preview */}
-            <div 
-              className="absolute top-6 right-0 w-[75%] sm:w-[320px] rounded-2xl bg-[#fafafa] border border-black/[0.08] shadow-xl overflow-hidden"
-              style={{ transform: 'rotate(3deg)' }}
-            >
-              <div className="px-4 py-3 bg-white border-b border-black/[0.05] flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#ff5f57]" />
-                <span className="w-2 h-2 rounded-full bg-[#febc2e]" />
-                <span className="w-2 h-2 rounded-full bg-[#28c840]" />
-                <span className="text-[10px] text-neutral-400 ml-2 font-mono">Dashboard</span>
+          {/* Right: High-End Interactive Telemetry & Graphs Cockpit */}
+          <div className="lg:col-span-6 relative">
+            <div className="relative rounded-3xl bg-white/90 backdrop-blur-xl border border-black/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.06)] p-6 space-y-6 overflow-hidden">
+              
+              {/* Top Bar: System Status & Live Velocity */}
+              <div className="flex items-center justify-between pb-4 border-b border-black/[0.06]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse" />
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-neutral-500 font-medium">CULTLIKE TELEMETRY</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.06] text-[10px] font-mono">
+                    99.8% On-Time
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200/60 text-[10px] font-mono font-medium">
+                    +34% WoW Velocity
+                  </span>
+                </div>
               </div>
-              <div className="p-4 space-y-3">
+
+              {/* Main Graph 1: 7-Day Velocity Spline Curve */}
+              <div className="p-4 rounded-2xl bg-[#fafafa] border border-black/[0.05] space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">Sprint Health</span>
-                  <span className="text-[10px] font-mono text-emerald-600">84%</span>
-                </div>
-                <div className="w-full h-1.5 bg-black/[0.06] rounded-full overflow-hidden">
-                  <div className="h-full bg-black rounded-full" style={{ width: '84%' }} />
-                </div>
-                <div className="space-y-2 pt-2">
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                    <span className="text-neutral-700">Finalize sponsor deliverable</span>
-                    <span className="ml-auto text-[10px] font-mono text-neutral-400">P0</span>
+                  <div>
+                    <div className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">Shipping Velocity (7-Day Trend)</div>
+                    <div className="text-xl font-light text-black tracking-tight mt-0.5">
+                      42.5 <span className="text-xs text-neutral-400 font-normal">hours focused</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                    <span className="text-neutral-700">Record episode intro</span>
-                    <span className="ml-auto text-[10px] font-mono text-neutral-400">P1</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-neutral-500 line-through">Publish weekly newsletter</span>
-                    <span className="ml-auto text-[10px] font-mono text-emerald-600">Shipped</span>
+                  <div className="text-right">
+                    <span className="text-xs font-mono font-medium text-black">18 Deliverables</span>
+                    <div className="text-[10px] text-neutral-400 font-mono">Peak: 6.8h / day</div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Card 2 - Focus Timer */}
-            <div 
-              className="absolute top-32 sm:top-28 right-16 sm:right-40 w-[65%] sm:w-[280px] rounded-2xl bg-white border border-black/[0.08] shadow-xl overflow-hidden z-10"
-              style={{ transform: 'rotate(-2deg)' }}
-            >
-              <div className="px-4 py-3 bg-white border-b border-black/[0.05] flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#ff5f57]" />
-                <span className="w-2 h-2 rounded-full bg-[#febc2e]" />
-                <span className="w-2 h-2 rounded-full bg-[#28c840]" />
-                <span className="text-[10px] text-neutral-400 ml-2 font-mono">Focus Timer</span>
-              </div>
-              <div className="p-5 text-center space-y-3">
-                <div className="text-[10px] font-mono text-emerald-600 uppercase tracking-wider">Deep Work</div>
-                <div className="text-4xl font-mono font-light text-black tracking-tighter">24:18</div>
-                <div className="text-xs text-neutral-400">Sprint on: Sony color grade</div>
-                <div className="flex items-center justify-center gap-1 text-xs font-mono text-orange-600">
-                  <span>🔥</span>
-                  <span>14 Day Streak</span>
-                </div>
-              </div>
-            </div>
+                {/* SVG Spline Graph */}
+                <div className="relative h-28 w-full pt-2">
+                  <svg className="w-full h-full overflow-visible" viewBox="0 0 400 100" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="heroGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#6366f1" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
+                      </linearGradient>
+                      <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#6366f1" />
+                        <stop offset="50%" stopColor="#8b5cf6" />
+                        <stop offset="100%" stopColor="#f59e0b" />
+                      </linearGradient>
+                    </defs>
 
-            {/* Card 3 - AI Sync */}
-            <div 
-              className="absolute bottom-8 sm:bottom-12 right-4 sm:right-8 w-[70%] sm:w-[300px] rounded-2xl bg-[#0c0d0f] border border-neutral-800 shadow-xl overflow-hidden z-20"
-              style={{ transform: 'rotate(1.5deg)' }}
-            >
-              <div className="px-4 py-3 border-b border-neutral-800 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#ff5f57]" />
-                <span className="w-2 h-2 rounded-full bg-[#febc2e]" />
-                <span className="w-2 h-2 rounded-full bg-[#28c840]" />
-                <span className="text-[10px] text-neutral-500 ml-2 font-mono">AI Context Engine</span>
-              </div>
-              <div className="p-4 space-y-2">
-                <div className="text-[10px] font-mono text-emerald-400">✓ Claude connected via OpenAPI</div>
-                <div className="text-xs text-neutral-400 leading-relaxed">
-                  "Sprint health at 84%. 1 P0 blocker isolated. 2 low-priority items auto-rescheduled to tomorrow."
+                    {/* Grid lines */}
+                    <line x1="0" y1="25" x2="400" y2="25" stroke="rgba(0,0,0,0.04)" strokeDasharray="3 3" />
+                    <line x1="0" y1="65" x2="400" y2="65" stroke="rgba(0,0,0,0.04)" strokeDasharray="3 3" />
+
+                    {/* Area under curve */}
+                    <path
+                      d="M 0,80 Q 40,65 80,75 T 160,40 T 240,55 T 320,20 T 400,15 L 400,100 L 0,100 Z"
+                      fill="url(#heroGradient)"
+                    />
+
+                    {/* Glowing Stroke line */}
+                    <path
+                      d="M 0,80 Q 40,65 80,75 T 160,40 T 240,55 T 320,20 T 400,15"
+                      fill="none"
+                      stroke="url(#lineGrad)"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    />
+
+                    {/* Interactive Data Nodes */}
+                    <circle cx="80" cy="75" r="3.5" fill="#ffffff" stroke="#6366f1" strokeWidth="2" />
+                    <circle cx="160" cy="40" r="3.5" fill="#ffffff" stroke="#6366f1" strokeWidth="2" />
+                    <circle cx="240" cy="55" r="3.5" fill="#ffffff" stroke="#8b5cf6" strokeWidth="2" />
+                    <circle cx="320" cy="20" r="4.5" fill="#ffffff" stroke="#f59e0b" strokeWidth="2.5" className="animate-pulse" />
+                    <circle cx="400" cy="15" r="4.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.5" />
+                  </svg>
+                </div>
+
+                {/* Day labels */}
+                <div className="flex justify-between text-[10px] font-mono text-neutral-400 pt-1 border-t border-black/[0.04]">
+                  <span>Mon</span>
+                  <span>Tue</span>
+                  <span>Wed</span>
+                  <span>Thu</span>
+                  <span>Fri</span>
+                  <span>Sat</span>
+                  <span className="font-semibold text-black">Sun (Today)</span>
                 </div>
               </div>
+
+              {/* Bottom Split: Radial Focus Dial + Annual Execution Matrix */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                
+                {/* Left Mini: Radial Chronograph */}
+                <div className="sm:col-span-5 p-4 rounded-2xl bg-[#fafafa] border border-black/[0.05] flex items-center gap-3.5">
+                  <div className="relative w-16 h-16 flex-shrink-0 flex items-center justify-center">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                      <path
+                        className="text-neutral-200"
+                        stroke="currentColor"
+                        strokeWidth="3.2"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                      <path
+                        className="text-black"
+                        strokeDasharray="84, 100"
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        strokeWidth="3.2"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-xs font-mono font-medium text-black">24:18</span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono uppercase text-neutral-400 block font-medium">DEEP WORK</span>
+                    <span className="text-xs font-normal text-black block leading-tight">Sprint: Product Reel</span>
+                    <span className="text-[10px] font-mono text-amber-700 font-medium mt-0.5 block">14-Day Streak 🔥</span>
+                  </div>
+                </div>
+
+                {/* Right Mini: 12-Week Annual Execution Matrix Heatmap */}
+                <div className="sm:col-span-7 p-4 rounded-2xl bg-[#fafafa] border border-black/[0.05] flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-mono uppercase text-neutral-400 font-medium">ANNUAL CADENCE</span>
+                    <span className="text-[10px] font-mono text-neutral-700 font-medium">142 Shipped</span>
+                  </div>
+                  {/* Heatmap Grid */}
+                  <div className="grid grid-cols-12 gap-1">
+                    {[
+                      [1,2,3,2,1,0,3], [2,3,4,3,2,1,2], [3,4,4,4,3,2,3], [1,2,3,1,0,1,2],
+                      [2,3,4,4,3,2,4], [3,4,4,4,4,3,3], [0,1,2,3,2,1,2], [2,3,3,4,3,2,3],
+                      [3,4,4,4,3,2,4], [4,4,4,4,4,3,4], [3,4,4,4,4,4,3], [4,4,4,4,4,4,4]
+                    ].map((col, cIdx) => (
+                      <div key={cIdx} className="flex flex-col gap-1">
+                        {col.map((lvl, rIdx) => {
+                          const bg = lvl === 4 ? 'bg-neutral-900' :
+                                     lvl === 3 ? 'bg-indigo-600' :
+                                     lvl === 2 ? 'bg-indigo-300' :
+                                     lvl === 1 ? 'bg-neutral-200' : 'bg-neutral-100';
+                          return (
+                            <div 
+                              key={rIdx} 
+                              className={cn("w-full h-1.5 rounded-2xs transition-all", bg)} 
+                              title={`Week ${cIdx + 1}, Day ${rIdx + 1}: ${lvl} commits`}
+                            />
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between text-[9px] font-mono text-neutral-400 pt-1.5">
+                    <span>12 Weeks Ago</span>
+                    <span className="font-semibold text-black">Active Sprint</span>
+                  </div>
+                </div>
+
+              </div>
+
             </div>
           </div>
         </div>
@@ -445,7 +534,7 @@ export default function LandingPage() {
               </div>
               <span className="text-xs font-mono text-neutral-500">Cultlike OS — Dashboard</span>
               <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
                 <span className="text-[10px] font-mono text-neutral-500">Live</span>
               </div>
             </div>
@@ -462,7 +551,7 @@ export default function LandingPage() {
                 </div>
                 <div className="p-3 rounded-xl bg-neutral-800/80 border border-neutral-700/50">
                   <div className="text-[10px] font-mono text-neutral-500 uppercase">Focus Hours</div>
-                  <div className="text-xl font-semibold text-emerald-400 mt-1">38.5h</div>
+                  <div className="text-xl font-semibold text-indigo-400 mt-1">38.5h</div>
                 </div>
               </div>
 
@@ -483,10 +572,10 @@ export default function LandingPage() {
                 </div>
                 <div className="p-3 rounded-xl bg-neutral-800/50 border border-neutral-700/40 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="w-2 h-2 rounded-full bg-indigo-500" />
                     <span className="text-xs text-neutral-500 line-through">Update client proposal</span>
                   </div>
-                  <span className="text-[10px] font-mono text-emerald-400">Shipped</span>
+                  <span className="text-[10px] font-mono text-indigo-400">Shipped</span>
                 </div>
               </div>
             </div>
@@ -519,7 +608,7 @@ export default function LandingPage() {
                 </div>
                 <div className="p-3 rounded-xl bg-neutral-800/60 border border-neutral-700/40 flex items-center justify-between">
                   <span className="text-xs text-neutral-300">Product launch teaser reel</span>
-                  <span className="text-[10px] font-mono text-emerald-400">Published</span>
+                  <span className="text-[10px] font-mono text-indigo-400">Published</span>
                 </div>
                 <div className="p-3 rounded-xl bg-neutral-800/60 border border-neutral-700/40 flex items-center justify-between">
                   <span className="text-xs text-neutral-300">Weekly vlog — episode 47</span>
@@ -632,9 +721,9 @@ export default function LandingPage() {
             <div className="col-span-2 md:col-span-4 space-y-4">
               <div className="flex items-center">
                 <img 
-                  src="/logo.png" 
+                  src="/logo-cultlike.png" 
                   alt="Logo" 
-                  className="h-12 sm:h-14 w-auto object-contain" 
+                  className="h-10 w-10 object-contain rounded-full" 
                 />
               </div>
               <p className="text-sm text-neutral-500 font-normal">
@@ -720,12 +809,12 @@ export default function LandingPage() {
             <div className="p-8 sm:p-10">
               {/* Logo */}
               <div className="flex items-center mb-8">
-                <img src="/logo.png" alt="Logo" className="h-11 w-auto object-contain" />
+                <img src="/logo-cultlike.png" alt="Logo" className="h-10 w-10 object-contain rounded-full" />
               </div>
 
               {confirmationSent ? (
                 <div className="space-y-4 text-center py-4">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                  <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mx-auto">
                     ✓
                   </div>
                   <h3 className="text-lg font-semibold text-black">Check your email</h3>
