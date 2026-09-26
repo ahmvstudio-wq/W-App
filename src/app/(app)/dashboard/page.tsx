@@ -6,7 +6,7 @@ import { callGroq, buildWorkspaceContext } from '@/lib/groq/client'
 import { cn, formatDateTime, getInitials, PRIORITY_CONFIG, TASK_STATUS_CONFIG, getProjectHealth } from '@/lib/utils'
 import { 
   CheckCircle2, AlertTriangle, AlertOctagon, TrendingUp, TrendingDown,
-  Play, Check, X, RefreshCw, MessageSquare, ChevronRight, Zap,
+  Play, Check, X, RefreshCw, MessageSquare, ChevronRight, ChevronDown, ChevronUp, Zap,
   Flame, Clock, Target, Calendar as CalendarIcon, ArrowUpRight,
   ShieldCheck, Activity, Award, Sparkles, FolderKanban, BarChart3,
   Layers, CheckSquare, Plus, ListTodo, Sun, CircleDot
@@ -49,6 +49,23 @@ export default function DashboardPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [agendaDate, setAgendaDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'))
   const [showShippedToday, setShowShippedToday] = useState(false)
+  const [isBriefExpanded, setIsBriefExpanded] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('cultlike_brief_expanded')
+      return saved !== null ? saved === 'true' : true
+    }
+    return true
+  })
+
+  const toggleBriefExpanded = () => {
+    setIsBriefExpanded(prev => {
+      const next = !prev
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('cultlike_brief_expanded', String(next))
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     const cachedTasks = getCached<Task[]>('dashboard_tasks')
@@ -313,13 +330,36 @@ export default function DashboardPage() {
             </div>
 
             {/* Executive Intelligence Brief */}
-            <div className="p-4 rounded-2xl bg-[#fafafa] border border-black/[0.06]">
-              <div className="text-[10px] font-mono text-neutral-500 font-medium mb-1 uppercase tracking-wide">
-                <span>DAILY SUMMARY &amp; NEXT STEPS</span>
+            <div className="p-4 rounded-2xl bg-[#fafafa] border border-black/[0.06] transition-all">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono text-neutral-500 font-medium uppercase tracking-wide">
+                    DAILY SUMMARY &amp; NEXT STEPS
+                  </span>
+                </div>
+                <button
+                  onClick={toggleBriefExpanded}
+                  className="flex items-center gap-1.5 text-[11px] text-neutral-500 hover:text-black font-medium transition-colors px-2 py-0.5 rounded-lg hover:bg-black/[0.04] cursor-pointer"
+                  title={isBriefExpanded ? "Minimize summary" : "Expand summary"}
+                >
+                  <span className="font-mono text-[10px] uppercase tracking-wider">{isBriefExpanded ? 'Minimize' : 'Expand'}</span>
+                  {isBriefExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                </button>
               </div>
-              <div className="text-xs text-neutral-700 whitespace-pre-line leading-relaxed font-light">
-                {brief || 'Analyzing current priorities and next steps...'}
-              </div>
+
+              {isBriefExpanded ? (
+                <div className="text-xs text-neutral-700 whitespace-pre-line leading-relaxed font-light mt-2 animate-fadeIn">
+                  {brief || 'Analyzing current priorities and next steps...'}
+                </div>
+              ) : (
+                <div 
+                  onClick={toggleBriefExpanded} 
+                  className="text-xs text-neutral-500 truncate font-light mt-1.5 cursor-pointer hover:text-neutral-700 select-none"
+                  title="Click to expand"
+                >
+                  {brief ? brief.replace(/\n+/g, ' ') : 'Analyzing current priorities and next steps...'}
+                </div>
+              )}
             </div>
           </div>
 
