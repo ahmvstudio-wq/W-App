@@ -279,13 +279,10 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4 pb-10 animate-fadeIn font-sans">
-      {/* Top Header Section (Bold & Stylish Monochrome) */}
+      {/* Top Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
         <div>
-          <div className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest font-semibold mb-1">
-            DASHBOARD
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-[-0.035em] text-black flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-black flex items-center gap-3">
             <span>Your Daily Dashboard</span>
           </h1>
         </div>
