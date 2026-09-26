@@ -88,9 +88,7 @@ export default function LandingPage() {
       const params = new URLSearchParams(window.location.search)
       const authErr = params.get('auth_error')
       if (authErr) {
-        setError(authErr)
-        setIsAuthOpen(true)
-        setMode('login')
+        router.push(`/login?error=${encodeURIComponent(authErr)}`)
       }
     }
 
@@ -225,18 +223,8 @@ export default function LandingPage() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2 sm:gap-3 font-sans">
-            <button
-              onClick={() => { setMode('login'); setConfirmationSent(false); setIsAuthOpen(true) }}
-              className="hidden sm:inline-block text-xs font-medium text-neutral-600 hover:text-black px-3.5 py-1.5 transition-colors cursor-pointer"
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
-              className="px-5 py-2 sm:py-2.5 rounded-full bg-black hover:bg-neutral-800 text-white text-xs sm:text-sm font-medium shadow-xs hover:shadow-md active:scale-[0.98] transition-all cursor-pointer"
-            >
-              Get Started
-            </button>
+            <Link href="/login" className="hidden sm:inline-block text-xs font-medium text-neutral-600 hover:text-black px-3.5 py-1.5 transition-colors cursor-pointer">Sign In</Link>
+            <Link href="/signup" className="px-5 py-2 sm:py-2.5 rounded-full bg-black hover:bg-neutral-800 text-white text-xs sm:text-sm font-medium shadow-xs hover:shadow-md active:scale-[0.98] transition-all cursor-pointer">Get Started</Link>
           </div>
         </div>
       </nav>
@@ -245,11 +233,7 @@ export default function LandingPage() {
       <LandingMenuModal
         isOpen={isMenuOpen}
         onClose={() => setIsMenuOpen(false)}
-        onOpenAuth={(authMode) => {
-          setMode(authMode)
-          setConfirmationSent(false)
-          setIsAuthOpen(true)
-        }}
+        onOpenAuth={(authMode) => { router.push(`/${authMode}`); setIsMenuOpen(false); }}
       />
 
       {/* ─── TARGETED SKY-BLUE AMBIENT LIGHTING (NO PINK / NO MULTICOLOR) ─── */}
@@ -305,14 +289,14 @@ export default function LandingPage() {
           {/* Direct CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2 w-full sm:w-auto">
             <button
-              onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
+              onClick={() => router.push('/signup')}
               className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-black hover:bg-neutral-800 text-white text-sm font-medium transition-all cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.2)] active:scale-[0.98] flex items-center justify-center gap-2 group"
             >
               <span>Get Started</span>
               <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
             </button>
             <button
-              onClick={() => { setMode('login'); setConfirmationSent(false); setIsAuthOpen(true) }}
+              onClick={() => router.push('/login')}
               className="w-full sm:w-auto px-7 py-3.5 rounded-full border border-black/[0.1] hover:border-black/[0.25] bg-white/80 backdrop-blur-md text-sm font-normal text-black transition-all cursor-pointer shadow-xs hover:bg-white flex items-center justify-center"
             >
               <span>Sign In</span>
@@ -623,7 +607,7 @@ export default function LandingPage() {
           <h3 className="text-4xl sm:text-5xl font-bold uppercase mb-8">BUILD WITHOUT LOSING THE THREAD.</h3>
           
           <button
-            onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
+            onClick={() => router.push('/signup')}
             className="px-10 py-4 rounded-full bg-white hover:bg-neutral-200 text-black text-sm font-bold transition-all shadow-xl active:scale-[0.98] inline-flex items-center gap-2 cursor-pointer"
           >
             Enter Cultlike <ArrowRight size={16} />
