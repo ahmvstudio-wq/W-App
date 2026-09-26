@@ -313,17 +313,17 @@ export default function DashboardPage() {
       <div className="relative overflow-hidden rounded-3xl bg-white/95 backdrop-blur-xl border border-black/[0.08] p-6 sm:p-7 shadow-[0_12px_36px_rgba(0,0,0,0.03)]">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           {/* Left Column: Greeting & Big Punchy Metric */}
-          <div className="lg:col-span-7 space-y-4">
+          <div className="lg:col-span-7 space-y-4 font-sans">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-light text-black tracking-tight leading-snug">
-              <span className="font-extrabold text-black tracking-[-0.04em]">{totalHours} focused hours</span> logged <br className="hidden sm:block" />
-              <span className="text-neutral-500 font-light">
-                across {projects.length} active projects.
+              <span className="font-medium text-black tracking-tight">{totalHours} focused hours</span>{" "}
+              <span className="font-light text-neutral-500">
+                logged across {projects.length} active projects.
               </span>
             </h2>
 
             <div className="flex flex-wrap items-center gap-3 text-xs">
               <span className="px-3 py-1 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] font-mono text-[11px] font-medium flex items-center gap-1.5 shadow-2xs">
-                <span className="w-1.5 h-1.5 rounded-full bg-black" />
+                <span className="w-1.5 h-1.5 rounded-full bg-neutral-800" />
                 <span>{completionRate}% completed</span>
               </span>
               <span className="px-3 py-1 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] font-mono text-[11px] font-medium flex items-center gap-1.5 shadow-2xs">
@@ -366,20 +366,20 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Right Column: Radial Arc Donut Gauge with Ambient Lighting */}
-          <div className="lg:col-span-5 relative overflow-hidden flex flex-col items-center justify-center p-6 bg-gradient-to-b from-white via-[#fafafa] to-indigo-50/20 border border-black/[0.06] rounded-3xl shadow-2xs">
-            {/* Ambient Lighting Atmosphere */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.09),transparent_70%)] pointer-events-none" />
+          {/* Right Column: Radial Arc Donut Gauge with Light Subtle Monochromatic Styling */}
+          <div className="lg:col-span-5 relative overflow-hidden flex flex-col items-center justify-center p-6 bg-gradient-to-b from-white via-[#fafafa] to-neutral-50/80 border border-black/[0.06] rounded-3xl shadow-2xs">
+            {/* Subtle Ambient Halo */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.03),transparent_70%)] pointer-events-none" />
 
             <div className="relative w-44 h-44 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90 overflow-visible" viewBox="0 0 100 100">
                 <defs>
                   <linearGradient id="dashboardGaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#4f46e5" />
-                    <stop offset="100%" stopColor="#6366f1" />
+                    <stop offset="0%" stopColor="#334155" />
+                    <stop offset="100%" stopColor="#64748b" />
                   </linearGradient>
                   <filter id="gaugeAmbientGlow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#6366f1" floodOpacity="0.25" />
+                    <feDropShadow dx="0" dy="1.5" stdDeviation="2.5" floodColor="#334155" floodOpacity="0.18" />
                   </filter>
                 </defs>
                 <circle
@@ -387,7 +387,7 @@ export default function DashboardPage() {
                   cy="50"
                   r="40"
                   fill="transparent"
-                  stroke="rgba(99, 102, 241, 0.08)"
+                  stroke="rgba(0, 0, 0, 0.05)"
                   strokeWidth="8"
                 />
                 <circle
@@ -413,7 +413,7 @@ export default function DashboardPage() {
 
             <div className="flex items-center gap-6 mt-4 text-xs font-mono relative z-10">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-neutral-800 shadow-2xs"></span>
                 <span className="text-black font-semibold">Completed: {completionRate}%</span>
               </div>
               <div className="flex items-center gap-2">

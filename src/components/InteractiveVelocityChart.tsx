@@ -92,7 +92,7 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
   return (
     <div className="relative overflow-hidden bg-white border border-black/[0.08] rounded-3xl p-6 shadow-sm space-y-4 font-body">
       {/* Subtle Ambient Lighting Aura */}
-      <div className="absolute inset-x-8 top-12 bottom-12 bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,rgba(99,102,241,0.08),transparent)] pointer-events-none" />
+      <div className="absolute inset-x-8 top-12 bottom-12 bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,rgba(0,0,0,0.02),transparent)] pointer-events-none" />
 
       <div className="flex items-center justify-between relative z-10">
         <div>
@@ -101,8 +101,8 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
           </span>
           <h3 className="text-base font-normal text-black">Tasks Completed Over the Last 7 Days</h3>
         </div>
-        <div className="flex items-center gap-1.5 text-xs font-mono text-indigo-900 font-medium bg-indigo-50/80 border border-indigo-100/80 px-2.5 py-1 rounded-lg">
-          <TrendingUp size={13} className="text-indigo-600" />
+        <div className="flex items-center gap-1.5 text-xs font-mono text-neutral-900 font-medium bg-neutral-100 border border-black/[0.06] px-2.5 py-1 rounded-lg">
+          <TrendingUp size={13} className="text-neutral-700" />
           <span>{totalLast7Days} {totalLast7Days === 1 ? 'task' : 'tasks'} this week</span>
         </div>
       </div>
@@ -112,17 +112,17 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
         <svg className="w-full h-full overflow-visible" viewBox={`0 0 ${svgWidth} ${svgHeight}`} preserveAspectRatio="none">
           <defs>
             <linearGradient id="velocityGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#6366f1" stopOpacity="0.18" />
-              <stop offset="60%" stopColor="#818cf8" stopOpacity="0.05" />
-              <stop offset="100%" stopColor="#c7d2fe" stopOpacity="0.0" />
+              <stop offset="0%" stopColor="#64748b" stopOpacity="0.12" />
+              <stop offset="60%" stopColor="#94a3b8" stopOpacity="0.04" />
+              <stop offset="100%" stopColor="#e2e8f0" stopOpacity="0.0" />
             </linearGradient>
             <linearGradient id="velocityStroke" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#4f46e5" />
-              <stop offset="50%" stopColor="#6366f1" />
-              <stop offset="100%" stopColor="#818cf8" />
+              <stop offset="0%" stopColor="#334155" />
+              <stop offset="50%" stopColor="#475569" />
+              <stop offset="100%" stopColor="#64748b" />
             </linearGradient>
             <filter id="velocityGlowFilter" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#6366f1" floodOpacity="0.3" />
+              <feDropShadow dx="0" dy="1.5" stdDeviation="2.5" floodColor="#334155" floodOpacity="0.18" />
             </filter>
           </defs>
 
@@ -141,7 +141,7 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
                 r={hoveredIdx === idx ? 6 : 4}
                 className={cn(
                   'transition-all duration-150',
-                  hoveredIdx === idx ? 'fill-indigo-600 stroke-white stroke-2 shadow-[0_0_8px_rgba(99,102,241,0.6)]' : 'fill-indigo-500'
+                  hoveredIdx === idx ? 'fill-neutral-900 stroke-white stroke-2 shadow-[0_0_8px_rgba(0,0,0,0.25)]' : 'fill-neutral-700'
                 )}
               />
               {hoveredIdx === idx && (
@@ -150,7 +150,7 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
                   y1={0}
                   x2={p.x}
                   y2={svgHeight}
-                  stroke="rgba(99,102,241,0.35)"
+                  stroke="rgba(0,0,0,0.15)"
                   strokeDasharray="3 3"
                 />
               )}
@@ -167,7 +167,7 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
             onMouseEnter={() => setHoveredIdx(idx)}
             className={cn(
               'cursor-pointer transition-colors',
-              hoveredIdx === idx ? 'text-indigo-600 font-semibold' : 'hover:text-black'
+              hoveredIdx === idx ? 'text-black font-semibold' : 'hover:text-black'
             )}
           >
             {d.dayName}
