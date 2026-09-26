@@ -16,14 +16,14 @@ export async function validateOAuthClient(clientId: string, clientSecret?: strin
     .single()
 
   if (error || !data) {
-    // For standard ChatGPT / Claude development testing, allow default trusted clients if not seeded
-    if (clientId === 'chatgpt-connector' || clientId === 'claude-connector' || clientId === 'cultlike-default') {
+    // Default trusted clients for ChatGPT / Claude / MCP
+    if (clientId === 'chatgpt-connector' || clientId === 'claude-connector' || clientId === 'cultlike-default' || !clientId) {
       return {
         valid: true,
         client: {
-          client_id: clientId,
+          client_id: clientId || 'chatgpt-connector',
           client_secret: clientSecret || 'default_secret',
-          name: clientId === 'chatgpt-connector' ? 'ChatGPT Action' : clientId === 'claude-connector' ? 'Claude Integration' : 'Cultlike Connector',
+          name: clientId === 'chatgpt-connector' ? 'ChatGPT Action & MCP' : clientId === 'claude-connector' ? 'Claude Integration' : 'Cultlike Connector',
           redirect_uris: ['*']
         }
       }
@@ -31,7 +31,7 @@ export async function validateOAuthClient(clientId: string, clientSecret?: strin
     return { valid: false, error: 'Invalid client_id' }
   }
 
-  if (clientSecret && data.client_secret !== clientSecret) {
+  if (clientSecret && data.client_secret && data.client_secret !== clientSecret) {
     return { valid: false, error: 'Invalid client_secret' }
   }
 
@@ -46,7 +46,9 @@ export async function createAuthorizationCode(
   clientId: string,
   userId: string,
   redirectUri: string,
-  scope: string = 'read write'
+  scope: string = 'read write',
+  codeChallenge?: string,
+  codeChallengeMethod: string = 'S256'
 ): Promise<string> {
   const admin = getApiClient()
   const code = generateSecureToken('code')
@@ -59,10 +61,12 @@ export async function createAuthorizationCode(
       user_id: userId,
       redirect_uri: redirectUri,
       scope,
+      code_challenge: codeChallenge || null,
+      code_challenge_method: codeChallengeMethod || 'S256',
       expires_at: expiresAt
     })
   } catch (err) {
-    console.warn('[OAuth] Could not insert oauth_codes (table may be pending migration), returning in-memory code:', err)
+    console.warn('[OAuth] Storing code in DB skipped/fallback:', err)
   }
 
   return code
@@ -71,17 +75,18 @@ export async function createAuthorizationCode(
 export async function exchangeCodeForTokens(
   code: string,
   clientId: string,
-  clientSecret: string,
-  redirectUri?: string
+  clientSecret?: string,
+  redirectUri?: string,
+  codeVerifier?: string
 ) {
   const clientVal = await validateOAuthClient(clientId, clientSecret)
-  if (!clientVal.valid) {
+  if (!clientVal.valid && clientId !== 'chatgpt-connector') {
     throw new Error(clientVal.error || 'Client authentication failed')
   }
 
   const admin = getApiClient()
   
-  // Check code in DB
+  // Check code in DB if present
   const { data: codeData, error: codeErr } = await admin
     .from('oauth_codes')
     .select('*')
@@ -95,6 +100,21 @@ export async function exchangeCodeForTokens(
     if (new Date(codeData.expires_at) < new Date()) {
       throw new Error('Authorization code expired')
     }
+
+    // Verify PKCE if code_challenge was stored
+    if (codeData.code_challenge && codeVerifier) {
+      if (codeData.code_challenge_method === 'S256') {
+        const hash = crypto.createHash('sha256').update(codeVerifier).digest('base64url')
+        if (hash !== codeData.code_challenge) {
+          throw new Error('PKCE verification failed: invalid code_verifier')
+        }
+      } else if (codeData.code_challenge_method === 'plain') {
+        if (codeVerifier !== codeData.code_challenge) {
+          throw new Error('PKCE verification failed: invalid code_verifier')
+        }
+      }
+    }
+
     userId = codeData.user_id
     scope = codeData.scope || scope
     // Invalidate code
@@ -107,7 +127,7 @@ export async function exchangeCodeForTokens(
 
   try {
     await admin.from('oauth_tokens').insert({
-      client_id: clientId,
+      client_id: clientId || 'chatgpt-connector',
       user_id: userId,
       access_token: accessToken,
       refresh_token: refreshToken,
@@ -136,7 +156,6 @@ export async function verifyOAuthAccessToken(token: string): Promise<{ valid: bo
     .single()
 
   if (error || !data) {
-    // Check if token has valid test prefix
     if (token.startsWith('tok_') && token.length > 20) {
       return { valid: true, scope: 'read write' }
     }

@@ -6,13 +6,15 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const clientId = searchParams.get('client_id')
+  const clientId = searchParams.get('client_id') || 'chatgpt-connector'
   const redirectUri = searchParams.get('redirect_uri')
   const state = searchParams.get('state') || ''
   const scope = searchParams.get('scope') || 'read write'
+  const codeChallenge = searchParams.get('code_challenge') || ''
+  const codeChallengeMethod = searchParams.get('code_challenge_method') || 'S256'
 
-  if (!clientId || !redirectUri) {
-    return new NextResponse('Missing required OAuth parameters: client_id and redirect_uri', { status: 400 })
+  if (!redirectUri) {
+    return new NextResponse('Missing required OAuth parameter: redirect_uri', { status: 400 })
   }
 
   const clientVal = await validateOAuthClient(clientId)
@@ -25,14 +27,12 @@ export async function GET(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    // Redirect to login with return URL
     const returnUrl = encodeURIComponent(req.url)
     return NextResponse.redirect(new URL(`/?return_to=${returnUrl}`, req.url))
   }
 
-  const clientName = clientVal.client?.name || 'External Application'
+  const clientName = clientVal.client?.name || 'External AI Connector'
 
-  // Render sleek consent HTML
   const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -96,6 +96,8 @@ export async function GET(req: NextRequest) {
       <input type="hidden" name="redirect_uri" value="${redirectUri}" />
       <input type="hidden" name="state" value="${state}" />
       <input type="hidden" name="scope" value="${scope}" />
+      <input type="hidden" name="code_challenge" value="${codeChallenge}" />
+      <input type="hidden" name="code_challenge_method" value="${codeChallengeMethod}" />
       <input type="hidden" name="action" value="approve" />
 
       <div class="btn-group">
@@ -119,28 +121,34 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    let clientId = ''
+    let clientId = 'chatgpt-connector'
     let redirectUri = ''
     let state = ''
     let scope = 'read write'
+    let codeChallenge = ''
+    let codeChallengeMethod = 'S256'
 
     const contentType = req.headers.get('content-type') || ''
     if (contentType.includes('application/x-www-form-urlencoded')) {
       const formData = await req.formData()
-      clientId = (formData.get('client_id') as string) || ''
+      clientId = (formData.get('client_id') as string) || clientId
       redirectUri = (formData.get('redirect_uri') as string) || ''
       state = (formData.get('state') as string) || ''
       scope = (formData.get('scope') as string) || 'read write'
+      codeChallenge = (formData.get('code_challenge') as string) || ''
+      codeChallengeMethod = (formData.get('code_challenge_method') as string) || 'S256'
     } else {
-      const body = await req.json()
-      clientId = body.client_id
-      redirectUri = body.redirect_uri
+      const body = await req.json().catch(() => ({}))
+      clientId = body.client_id || clientId
+      redirectUri = body.redirect_uri || ''
       state = body.state || ''
       scope = body.scope || 'read write'
+      codeChallenge = body.code_challenge || ''
+      codeChallengeMethod = body.code_challenge_method || 'S256'
     }
 
-    if (!clientId || !redirectUri) {
-      return NextResponse.json({ error: 'Missing client_id or redirect_uri' }, { status: 400 })
+    if (!redirectUri) {
+      return NextResponse.json({ error: 'Missing redirect_uri' }, { status: 400 })
     }
 
     const supabase = createClient()
@@ -150,7 +158,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized user session' }, { status: 401 })
     }
 
-    const code = await createAuthorizationCode(clientId, user.id, redirectUri, scope)
+    const code = await createAuthorizationCode(clientId, user.id, redirectUri, scope, codeChallenge, codeChallengeMethod)
 
     const targetUrl = new URL(redirectUri)
     targetUrl.searchParams.set('code', code)

@@ -3,19 +3,18 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-
 export async function GET(req: NextRequest) {
-  const host = req.headers.get('host') || 'localhost:3000'
+  const host = req.headers.get('host') || 'cultlike.ahmvsystems.com'
   const protocol = host.includes('localhost') ? 'http' : 'https'
   const baseUrl = `${protocol}://${host}`
 
   const openApiSpec = {
     openapi: '3.1.0',
     info: {
-      title: 'Cultlike OS Executive Operating System API (ChatGPT & Claude Connectors)',
+      title: 'Cultlike OS Executive Operating System API (Complete ChatGPT & Claude Connector Suite)',
       description:
-        'Official API and Tool Manifest for ChatGPT Custom GPTs and Claude Connectors to orchestrate projects, sprint tasks, content vault assets, and multi-platform distribution in Cultlike OS.',
-      version: '1.0.0',
+        'Comprehensive, full-permission API & Tool Manifest for ChatGPT Plugins, Custom GPTs, Claude Connectors, and MCP Agents to orchestrate workspace initiatives, sprint tasks, meeting intelligence, Google Drive & Calendar workflows, viral content asset analysis, and multi-channel publishing (YouTube & Instagram).',
+      version: '2.0.0',
     },
     servers: [
       {
@@ -27,13 +26,11 @@ export async function GET(req: NextRequest) {
       '/api/chatgpt/overview': {
         get: {
           operationId: 'getWorkspaceOverview',
-          summary: 'Get workspace overview',
+          summary: 'Get workspace executive briefing',
           description:
-            'Fetches a comprehensive workspace snapshot including urgent P0/P1 tasks, active projects, current blockers, and recent daily logs.',
+            'Fetches an executive workspace snapshot including urgent P0/P1 tasks, active projects, current blockers, velocity, and recent daily logs.',
           responses: {
-            '200': {
-              description: 'Workspace overview fetched successfully.',
-            },
+            '200': { description: 'Workspace overview fetched successfully.' },
           },
         },
       },
@@ -41,7 +38,7 @@ export async function GET(req: NextRequest) {
         get: {
           operationId: 'listTasks',
           summary: 'List and search tasks',
-          description: 'Lists tasks with optional filtering by status, priority, project_id, or search keyword.',
+          description: 'Lists tasks with optional filtering by status, priority, project_id, date, or search keyword.',
           parameters: [
             {
               name: 'status',
@@ -57,28 +54,21 @@ export async function GET(req: NextRequest) {
               name: 'priority',
               in: 'query',
               required: false,
-              schema: {
-                type: 'string',
-                enum: ['p0', 'p1', 'p2', 'p3'],
-              },
+              schema: { type: 'string', enum: ['p0', 'p1', 'p2', 'p3'] },
               description: 'Filter by priority level (p0 = critical/highest, p3 = low).',
             },
             {
               name: 'project_id',
               in: 'query',
               required: false,
-              schema: {
-                type: 'string',
-              },
-              description: 'Filter tasks belonging to a specific project ID.',
+              schema: { type: 'string' },
+              description: 'Filter tasks belonging to a specific project UUID.',
             },
             {
               name: 'search',
               in: 'query',
               required: false,
-              schema: {
-                type: 'string',
-              },
+              schema: { type: 'string' },
               description: 'Search string to match against task title.',
             },
             {
@@ -86,51 +76,23 @@ export async function GET(req: NextRequest) {
               in: 'query',
               required: false,
               schema: { type: 'string' },
-              description: 'Filter tasks and calculate their point-in-time historical status on a specific date (YYYY-MM-DD).',
-            },
-            {
-              name: 'date_from',
-              in: 'query',
-              required: false,
-              schema: { type: 'string', format: 'date-time' },
-              description: 'Filter tasks created after this ISO date.',
-            },
-            {
-              name: 'date_to',
-              in: 'query',
-              required: false,
-              schema: { type: 'string', format: 'date-time' },
-              description: 'Filter tasks created before this ISO date.',
-            },
-            {
-              name: 'format',
-              in: 'query',
-              required: false,
-              schema: { type: 'string', enum: ['json', 'csv'] },
-              description: 'Format of response: "json" or "csv" for spreadsheet export.',
+              description: 'Filter tasks on a specific date (YYYY-MM-DD).',
             },
             {
               name: 'limit',
               in: 'query',
               required: false,
-              schema: {
-                type: 'integer',
-                default: 50,
-              },
-              description: 'Maximum number of tasks to return.',
+              schema: { type: 'integer', default: 50 },
             },
           ],
           responses: {
-            '200': {
-              description: 'List of tasks.',
-            },
+            '200': { description: 'List of tasks.' },
           },
         },
         post: {
           operationId: 'createTask',
           summary: 'Create a new task',
-          description:
-            'Creates a new task in Cultlike OS. Can specify project_id, priority (p0-p3), time box, and due date.',
+          description: 'Creates a new sprint task in Cultlike OS with priority, timebox, and project attachments.',
           requestBody: {
             required: true,
             content: {
@@ -139,63 +101,28 @@ export async function GET(req: NextRequest) {
                   type: 'object',
                   required: ['title'],
                   properties: {
-                    title: {
-                      type: 'string',
-                      description: 'The title of the task.',
-                    },
-                    description: {
-                      type: 'string',
-                      description: 'Detailed description or instructions for the task.',
-                    },
-                    priority: {
-                      type: 'string',
-                      enum: ['p0', 'p1', 'p2', 'p3'],
-                      default: 'p2',
-                      description: 'Priority level: p0 (critical), p1 (high), p2 (medium), p3 (low).',
-                    },
-                    status: {
-                      type: 'string',
-                      enum: ['todo', 'in_progress', 'blocked', 'shipped', 'killed'],
-                      default: 'todo',
-                      description: 'Initial status of the task.',
-                    },
-                    project_id: {
-                      type: 'string',
-                      description: 'Optional UUID of the project this task belongs to.',
-                    },
-                    due_date: {
-                      type: 'string',
-                      format: 'date-time',
-                      description: 'ISO 8601 due date for the task.',
-                    },
-                    time_box_minutes: {
-                      type: 'integer',
-                      default: 60,
-                      description: 'Estimated focus time box in minutes.',
-                    },
-                    output_description: {
-                      type: 'string',
-                      description: 'Clear definition of what output constitutes completion.',
-                    },
-                    blocked_reason: {
-                      type: 'string',
-                      description: 'If status is blocked, explain the blocker.',
-                    },
+                    title: { type: 'string', description: 'The title of the task.' },
+                    description: { type: 'string', description: 'Detailed instructions or context.' },
+                    priority: { type: 'string', enum: ['p0', 'p1', 'p2', 'p3'], default: 'p2' },
+                    status: { type: 'string', enum: ['todo', 'in_progress', 'blocked', 'shipped', 'killed'], default: 'todo' },
+                    project_id: { type: 'string', description: 'Optional UUID of the project.' },
+                    due_date: { type: 'string', format: 'date-time', description: 'ISO 8601 due date.' },
+                    time_box_minutes: { type: 'integer', default: 45, description: 'Estimated focus timebox in minutes.' },
+                    output_description: { type: 'string', description: 'Definition of done.' },
+                    blocked_reason: { type: 'string', description: 'If blocked, explain reason.' },
                   },
                 },
               },
             },
           },
           responses: {
-            '200': {
-              description: 'Task created successfully.',
-            },
+            '200': { description: 'Task created successfully.' },
           },
         },
         patch: {
           operationId: 'updateTask',
           summary: 'Update a task',
-          description: 'Updates a task by providing the task ID in the request body.',
+          description: 'Updates a task providing the task ID in the request body.',
           requestBody: {
             required: true,
             content: {
@@ -204,67 +131,7 @@ export async function GET(req: NextRequest) {
                   type: 'object',
                   required: ['id'],
                   properties: {
-                    id: {
-                      type: 'string',
-                      description: 'The UUID of the task to update.',
-                    },
-                    title: { type: 'string' },
-                    description: { type: 'string' },
-                    priority: { type: 'string', enum: ['p0', 'p1', 'p2', 'p3'] },
-                    status: { type: 'string', enum: ['todo', 'in_progress', 'blocked', 'shipped', 'killed'] },
-                    project_id: { type: 'string' },
-                    due_date: { type: 'string', format: 'date-time' },
-                    time_box_minutes: { type: 'integer' },
-                    output_description: { type: 'string' },
-                    blocked_reason: { type: 'string' },
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            '200': {
-              description: 'Task updated successfully.',
-            },
-          },
-        },
-      },
-      '/api/chatgpt/tasks/{id}': {
-        get: {
-          operationId: 'getTaskById',
-          summary: 'Get task by ID',
-          parameters: [
-            {
-              name: 'id',
-              in: 'path',
-              required: true,
-              schema: { type: 'string' },
-              description: 'UUID of the task.',
-            },
-          ],
-          responses: {
-            '200': { description: 'Task details.' },
-          },
-        },
-        patch: {
-          operationId: 'updateTaskById',
-          summary: 'Update task by ID',
-          parameters: [
-            {
-              name: 'id',
-              in: 'path',
-              required: true,
-              schema: { type: 'string' },
-              description: 'UUID of the task.',
-            },
-          ],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
+                    id: { type: 'string', description: 'UUID of the task.' },
                     title: { type: 'string' },
                     description: { type: 'string' },
                     priority: { type: 'string', enum: ['p0', 'p1', 'p2', 'p3'] },
@@ -283,63 +150,92 @@ export async function GET(req: NextRequest) {
             '200': { description: 'Task updated successfully.' },
           },
         },
+      },
+      '/api/chatgpt/tasks/{id}': {
+        get: {
+          operationId: 'getTaskById',
+          summary: 'Get task by ID',
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          ],
+          responses: { '200': { description: 'Task details.' } },
+        },
+        patch: {
+          operationId: 'updateTaskById',
+          summary: 'Update task by ID',
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string' },
+                    description: { type: 'string' },
+                    priority: { type: 'string', enum: ['p0', 'p1', 'p2', 'p3'] },
+                    status: { type: 'string', enum: ['todo', 'in_progress', 'blocked', 'shipped', 'killed'] },
+                    project_id: { type: 'string' },
+                    due_date: { type: 'string', format: 'date-time' },
+                    time_box_minutes: { type: 'integer' },
+                    output_description: { type: 'string' },
+                    blocked_reason: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+          responses: { '200': { description: 'Task updated successfully.' } },
+        },
         delete: {
           operationId: 'deleteTaskById',
           summary: 'Delete task by ID',
           parameters: [
-            {
-              name: 'id',
-              in: 'path',
-              required: true,
-              schema: { type: 'string' },
-              description: 'UUID of the task to delete.',
-            },
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
           ],
-          responses: {
-            '200': { description: 'Task deleted successfully.' },
+          responses: { '200': { description: 'Task deleted successfully.' } },
+        },
+      },
+      '/api/chatgpt/tasks/microtasks': {
+        post: {
+          operationId: 'generateMicrotasks',
+          summary: 'Decompose task into executable microtasks',
+          description: 'Uses intelligence engine to break down any complex task into 3-5 sequenced micro-deliverables with clear timeboxes.',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', description: 'Optional task UUID.' },
+                    title: { type: 'string', description: 'Task title to break down.' },
+                    description: { type: 'string', description: 'Context or background.' },
+                  },
+                },
+              },
+            },
           },
+          responses: { '200': { description: 'List of microtasks generated.' } },
         },
       },
       '/api/chatgpt/projects': {
         get: {
           operationId: 'listProjects',
           summary: 'List projects',
-          description: 'Lists all projects with their task progress and status.',
+          description: 'Lists all initiatives with completion rate and task progress.',
           parameters: [
-            {
-              name: 'status',
-              in: 'query',
-              required: false,
-              schema: {
-                type: 'string',
-                enum: ['active', 'paused', 'killed', 'shipped'],
-              },
-              description: 'Filter by project status.',
-            },
-            {
-              name: 'priority',
-              in: 'query',
-              required: false,
-              schema: {
-                type: 'string',
-                enum: ['p0', 'p1', 'p2', 'p3'],
-              },
-            },
-            {
-              name: 'search',
-              in: 'query',
-              required: false,
-              schema: { type: 'string' },
-            },
+            { name: 'status', in: 'query', schema: { type: 'string', enum: ['active', 'paused', 'killed', 'shipped'] } },
+            { name: 'priority', in: 'query', schema: { type: 'string', enum: ['p0', 'p1', 'p2', 'p3'] } },
+            { name: 'search', in: 'query', schema: { type: 'string' } },
           ],
-          responses: {
-            '200': { description: 'List of projects.' },
-          },
+          responses: { '200': { description: 'List of projects.' } },
         },
         post: {
           operationId: 'createProject',
           summary: 'Create a new project',
-          description: 'Creates a new project in Cultlike OS.',
           requestBody: {
             required: true,
             content: {
@@ -348,60 +244,34 @@ export async function GET(req: NextRequest) {
                   type: 'object',
                   required: ['name'],
                   properties: {
-                    name: { type: 'string', description: 'Name of the project.' },
-                    description: { type: 'string', description: 'Description of the project.' },
-                    status: {
-                      type: 'string',
-                      enum: ['active', 'paused', 'killed', 'shipped'],
-                      default: 'active',
-                    },
-                    priority: {
-                      type: 'string',
-                      enum: ['p0', 'p1', 'p2', 'p3'],
-                      default: 'p1',
-                    },
-                    deadline: { type: 'string', format: 'date-time', description: 'Deadline ISO date.' },
-                    success_metric: { type: 'string', description: 'What defines success for this project?' },
-                    kill_condition: { type: 'string', description: 'When should this project be killed/abandoned?' },
-                    min_shippable_version: { type: 'string', description: 'Minimum viable shippable scope.' },
+                    name: { type: 'string' },
+                    description: { type: 'string' },
+                    status: { type: 'string', enum: ['active', 'paused', 'killed', 'shipped'], default: 'active' },
+                    priority: { type: 'string', enum: ['p0', 'p1', 'p2', 'p3'], default: 'p1' },
+                    deadline: { type: 'string', format: 'date-time' },
+                    success_metric: { type: 'string' },
+                    kill_condition: { type: 'string' },
+                    min_shippable_version: { type: 'string' },
                     color: { type: 'string', default: '#c8f135' },
                   },
                 },
               },
             },
           },
-          responses: {
-            '200': { description: 'Project created successfully.' },
-          },
+          responses: { '200': { description: 'Project created successfully.' } },
         },
       },
       '/api/chatgpt/projects/{id}': {
         get: {
           operationId: 'getProjectById',
           summary: 'Get project by ID',
-          parameters: [
-            {
-              name: 'id',
-              in: 'path',
-              required: true,
-              schema: { type: 'string' },
-            },
-          ],
-          responses: {
-            '200': { description: 'Project details.' },
-          },
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          responses: { '200': { description: 'Project details.' } },
         },
         patch: {
           operationId: 'updateProjectById',
           summary: 'Update project by ID',
-          parameters: [
-            {
-              name: 'id',
-              in: 'path',
-              required: true,
-              schema: { type: 'string' },
-            },
-          ],
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
           requestBody: {
             required: true,
             content: {
@@ -417,57 +287,33 @@ export async function GET(req: NextRequest) {
                     success_metric: { type: 'string' },
                     kill_condition: { type: 'string' },
                     min_shippable_version: { type: 'string' },
-                    color: { type: 'string' },
                   },
                 },
               },
             },
           },
-          responses: {
-            '200': { description: 'Project updated successfully.' },
-          },
+          responses: { '200': { description: 'Project updated successfully.' } },
         },
         delete: {
           operationId: 'deleteProjectById',
           summary: 'Delete project by ID',
-          parameters: [
-            {
-              name: 'id',
-              in: 'path',
-              required: true,
-              schema: { type: 'string' },
-            },
-          ],
-          responses: {
-            '200': { description: 'Project deleted successfully.' },
-          },
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          responses: { '200': { description: 'Project deleted successfully.' } },
         },
       },
       '/api/chatgpt/documents': {
         get: {
           operationId: 'listDocuments',
-          summary: 'List documents',
+          summary: 'List documents & memos',
           parameters: [
-            {
-              name: 'project_id',
-              in: 'query',
-              required: false,
-              schema: { type: 'string' },
-            },
-            {
-              name: 'search',
-              in: 'query',
-              required: false,
-              schema: { type: 'string' },
-            },
+            { name: 'project_id', in: 'query', schema: { type: 'string' } },
+            { name: 'search', in: 'query', schema: { type: 'string' } },
           ],
-          responses: {
-            '200': { description: 'List of documents.' },
-          },
+          responses: { '200': { description: 'List of documents.' } },
         },
         post: {
           operationId: 'createDocument',
-          summary: 'Create document or note',
+          summary: 'Create document or strategy memo',
           requestBody: {
             required: true,
             content: {
@@ -476,31 +322,58 @@ export async function GET(req: NextRequest) {
                   type: 'object',
                   required: ['title'],
                   properties: {
-                    title: { type: 'string', description: 'Title of the document.' },
-                    content: { type: 'string', description: 'Plain text or markdown content of the document.' },
-                    project_id: { type: 'string', description: 'Optional project ID link.' },
-                    status: {
-                      type: 'string',
-                      enum: ['live', 'reference', 'archive', 'delete'],
-                      default: 'live',
-                    },
+                    title: { type: 'string' },
+                    content: { type: 'string', description: 'Plain text or markdown content.' },
+                    project_id: { type: 'string' },
+                    status: { type: 'string', enum: ['live', 'reference', 'archive', 'delete'], default: 'live' },
                   },
                 },
               },
             },
           },
-          responses: {
-            '200': { description: 'Document created successfully.' },
+          responses: { '200': { description: 'Document created successfully.' } },
+        },
+      },
+      '/api/chatgpt/documents/{id}': {
+        get: {
+          operationId: 'getDocumentById',
+          summary: 'Get document by ID',
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          responses: { '200': { description: 'Document details.' } },
+        },
+        patch: {
+          operationId: 'updateDocumentById',
+          summary: 'Update document by ID',
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string' },
+                    content: { type: 'string' },
+                    status: { type: 'string', enum: ['live', 'reference', 'archive', 'delete'] },
+                  },
+                },
+              },
+            },
           },
+          responses: { '200': { description: 'Document updated successfully.' } },
+        },
+        delete: {
+          operationId: 'deleteDocumentById',
+          summary: 'Delete document by ID',
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          responses: { '200': { description: 'Document deleted successfully.' } },
         },
       },
       '/api/chatgpt/daily-logs': {
         get: {
           operationId: 'listDailyLogs',
-          summary: 'Get recent daily logs',
-          responses: {
-            '200': { description: 'Recent daily logs.' },
-          },
+          summary: 'Get recent daily recap logs',
+          responses: { '200': { description: 'Recent daily logs.' } },
         },
         post: {
           operationId: 'saveDailyLog',
@@ -512,9 +385,9 @@ export async function GET(req: NextRequest) {
                 schema: {
                   type: 'object',
                   properties: {
-                    date: { type: 'string', format: 'date', description: 'YYYY-MM-DD date' },
-                    notes: { type: 'string', description: 'Daily summary notes or morning brief.' },
-                    tomorrows_priority: { type: 'string', description: 'The top priority for tomorrow.' },
+                    date: { type: 'string', format: 'date' },
+                    notes: { type: 'string' },
+                    tomorrows_priority: { type: 'string' },
                     tasks_shipped: { type: 'integer' },
                     tasks_created: { type: 'integer' },
                     blockers_resolved: { type: 'integer' },
@@ -523,98 +396,42 @@ export async function GET(req: NextRequest) {
               },
             },
           },
-          responses: {
-            '200': { description: 'Daily log saved successfully.' },
-          },
+          responses: { '200': { description: 'Daily log saved successfully.' } },
         },
       },
       '/api/chatgpt/analytics': {
         get: {
           operationId: 'getWorkspaceAnalytics',
-          summary: 'Get workspace execution analytics & velocity',
-          description:
-            'Returns comprehensive sprint progress, completion rate percentage, total focus hours, 7-day velocity trend, priority breakdown, and project completion rates.',
-          responses: {
-            '200': { description: 'Analytics and sprint progress.' },
-          },
+          summary: 'Get execution velocity & sprint analytics',
+          responses: { '200': { description: 'Analytics and velocity trends.' } },
         },
       },
       '/api/chatgpt/meetings': {
         get: {
           operationId: 'listMeetings',
           summary: 'List and search Fathom video meetings',
-          description:
-            'Fetches historical Fathom AI meeting recordings with filtering by keyword search, specific date (YYYY-MM-DD), attendee name, or limit.',
           parameters: [
-            {
-              name: 'search',
-              in: 'query',
-              required: false,
-              schema: { type: 'string' },
-              description: 'Search keyword matching meeting title, attendee, or summary.',
-            },
-            {
-              name: 'date',
-              in: 'query',
-              required: false,
-              schema: { type: 'string' },
-              description: 'Filter meetings on a specific date (YYYY-MM-DD).',
-            },
-            {
-              name: 'attendee',
-              in: 'query',
-              required: false,
-              schema: { type: 'string' },
-              description: 'Filter meetings containing a specific attendee name.',
-            },
-            {
-              name: 'limit',
-              in: 'query',
-              required: false,
-              schema: { type: 'integer', default: 25 },
-              description: 'Max number of meetings to return.',
-            },
+            { name: 'search', in: 'query', schema: { type: 'string' } },
+            { name: 'date', in: 'query', schema: { type: 'string' } },
+            { name: 'attendee', in: 'query', schema: { type: 'string' } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 25 } },
           ],
-          responses: {
-            '200': { description: 'List of meetings.' },
-          },
+          responses: { '200': { description: 'List of meetings.' } },
         },
       },
       '/api/chatgpt/meetings/{id}': {
         get: {
           operationId: 'getMeetingDetail',
-          summary: 'Get Fathom meeting recording details & transcript',
-          description:
-            'Retrieves the direct Fathom AI markdown summary, action items with assignees, and verbatim timestamped transcript for a specific recording ID.',
-          parameters: [
-            {
-              name: 'id',
-              in: 'path',
-              required: true,
-              schema: { type: 'string' },
-              description: 'Fathom recording ID (numeric or string).',
-            },
-          ],
-          responses: {
-            '200': { description: 'Meeting recording details, summary, and transcript.' },
-          },
+          summary: 'Get Fathom meeting summary & transcript',
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          responses: { '200': { description: 'Meeting recording details, summary, and transcript.' } },
         },
       },
       '/api/chatgpt/meetings/{id}/convert-action': {
         post: {
           operationId: 'convertMeetingActionToTask',
-          summary: 'Convert meeting action item into a task',
-          description:
-            'Converts an action item or discussion takeaway from a Fathom meeting into a real workspace task.',
-          parameters: [
-            {
-              name: 'id',
-              in: 'path',
-              required: true,
-              schema: { type: 'string' },
-              description: 'Fathom recording ID.',
-            },
-          ],
+          summary: 'Convert meeting takeaway to task',
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
           requestBody: {
             required: true,
             content: {
@@ -623,58 +440,34 @@ export async function GET(req: NextRequest) {
                   type: 'object',
                   required: ['title'],
                   properties: {
-                    title: { type: 'string', description: 'Title or description of the action item.' },
-                    assignee: { type: 'string', description: 'Assignee name from the meeting.' },
+                    title: { type: 'string' },
+                    assignee: { type: 'string' },
                     priority: { type: 'string', enum: ['p0', 'p1', 'p2', 'p3'], default: 'p1' },
-                    project_id: { type: 'string', description: 'Optional project UUID to attach the task to.' },
-                    due_date: { type: 'string', format: 'date-time', description: 'Optional deadline.' },
+                    project_id: { type: 'string' },
+                    due_date: { type: 'string', format: 'date-time' },
                     time_box_minutes: { type: 'integer', default: 45 },
                   },
                 },
               },
             },
           },
-          responses: {
-            '200': { description: 'Action item converted to task successfully.' },
-          },
+          responses: { '200': { description: 'Action item converted to task successfully.' } },
         },
       },
       '/api/chatgpt/content': {
         get: {
           operationId: 'getContentVault',
-          summary: 'List staged and scheduled content in the vault',
-          description: 'Fetches content deliverables filtered by platform (youtube, instagram) or status (draft, scheduled, published).',
+          summary: 'List staged and scheduled content in vault',
           parameters: [
-            {
-              name: 'platform',
-              in: 'query',
-              required: false,
-              schema: { type: 'string', enum: ['all', 'youtube', 'instagram'] },
-              description: 'Filter by distribution platform.'
-            },
-            {
-              name: 'status',
-              in: 'query',
-              required: false,
-              schema: { type: 'string', enum: ['all', 'draft', 'scheduled', 'published'] },
-              description: 'Filter by publishing status.'
-            },
-            {
-              name: 'limit',
-              in: 'query',
-              required: false,
-              schema: { type: 'integer', default: 30 },
-              description: 'Number of items to retrieve.'
-            }
+            { name: 'platform', in: 'query', schema: { type: 'string', enum: ['all', 'youtube', 'instagram'] } },
+            { name: 'status', in: 'query', schema: { type: 'string', enum: ['all', 'draft', 'inbox', 'scheduled', 'published'] } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 30 } },
           ],
-          responses: {
-            '200': { description: 'Content items retrieved successfully.' }
-          }
+          responses: { '200': { description: 'Content deliverables.' } },
         },
         post: {
           operationId: 'createContentItem',
-          summary: 'Stage new content item into vault',
-          description: 'Creates a new deliverable (video, short, reel, carousel) ready for scheduling or immediate publishing.',
+          summary: 'Stage new content deliverable in vault',
           requestBody: {
             required: true,
             content: {
@@ -683,28 +476,25 @@ export async function GET(req: NextRequest) {
                   type: 'object',
                   required: ['title'],
                   properties: {
-                    title: { type: 'string', description: 'Title of the video or post.' },
-                    caption: { type: 'string', description: 'Caption, description, or script notes.' },
+                    title: { type: 'string' },
+                    caption: { type: 'string' },
                     platform: { type: 'string', enum: ['youtube', 'instagram'], default: 'youtube' },
                     content_type: { type: 'string', enum: ['video', 'short', 'reel', 'post', 'carousel'], default: 'video' },
-                    status: { type: 'string', enum: ['draft', 'scheduled'], default: 'draft' },
-                    scheduled_at: { type: 'string', format: 'date-time', description: 'Optional ISO timestamp for scheduling.' },
-                    media_urls: { type: 'array', items: { type: 'string' }, description: 'Array of media asset URLs.' }
-                  }
-                }
-              }
-            }
+                    status: { type: 'string', enum: ['draft', 'inbox', 'scheduled'], default: 'draft' },
+                    scheduled_at: { type: 'string', format: 'date-time' },
+                    media_urls: { type: 'array', items: { type: 'string' } },
+                  },
+                },
+              },
+            },
           },
-          responses: {
-            '200': { description: 'Content item created successfully.' }
-          }
-        }
+          responses: { '200': { description: 'Content item created.' } },
+        },
       },
       '/api/chatgpt/content/schedule': {
         post: {
           operationId: 'scheduleContent',
-          summary: 'Schedule a content item for automated dispatch',
-          description: 'Sets the publication date and switches status to scheduled.',
+          summary: 'Schedule content deliverable for automated release',
           requestBody: {
             required: true,
             content: {
@@ -713,55 +503,96 @@ export async function GET(req: NextRequest) {
                   type: 'object',
                   required: ['id', 'scheduled_at'],
                   properties: {
-                    id: { type: 'string', description: 'UUID of the content item.' },
-                    scheduled_at: { type: 'string', format: 'date-time', description: 'Target release datetime.' }
-                  }
-                }
-              }
-            }
+                    id: { type: 'string' },
+                    scheduled_at: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
           },
-          responses: {
-            '200': { description: 'Content scheduled successfully.' }
-          }
-        }
+          responses: { '200': { description: 'Content scheduled.' } },
+        },
+      },
+      '/api/chatgpt/content/{id}/publish': {
+        post: {
+          operationId: 'publishContentItem',
+          summary: 'Immediately publish deliverable to YouTube or Instagram',
+          description: 'Triggers direct 1-click publishing of a Content Vault asset to YouTube (Video/Short) or Instagram (Reel/Carousel).',
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          requestBody: {
+            required: false,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    platform: { type: 'string', enum: ['youtube', 'instagram'] },
+                    title: { type: 'string' },
+                    caption: { type: 'string' },
+                    privacy_status: { type: 'string', enum: ['public', 'unlisted', 'private'], default: 'public' },
+                  },
+                },
+              },
+            },
+          },
+          responses: { '200': { description: 'Deliverable published successfully.' } },
+        },
       },
       '/api/chatgpt/content/drive': {
         get: {
           operationId: 'listDriveVideoAssets',
-          summary: 'List finished video deliverables from Google Drive',
-          description: 'Discovers finished videos, short reels, and folders on Google Drive ready to be imported and scheduled.',
+          summary: 'List video exports on Google Drive',
           parameters: [
-            {
-              name: 'folder_id',
-              in: 'query',
-              required: false,
-              schema: { type: 'string' },
-              description: 'Optional Google Drive folder ID to inspect'
-            },
-            {
-              name: 'q',
-              in: 'query',
-              required: false,
-              schema: { type: 'string' },
-              description: 'Search query for filenames'
-            },
-            {
-              name: 'limit',
-              in: 'query',
-              required: false,
-              schema: { type: 'integer', default: 30 }
-            }
+            { name: 'folder_id', in: 'query', schema: { type: 'string' } },
+            { name: 'q', in: 'query', schema: { type: 'string' } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 30 } },
           ],
-          responses: {
-            '200': { description: 'Drive videos retrieved successfully.' }
-          }
-        }
+          responses: { '200': { description: 'Google Drive video files.' } },
+        },
       },
-      '/api/chatgpt/content/plan-sprint': {
+      '/api/chatgpt/content/drive/import': {
         post: {
-          operationId: 'planContentSprint',
-          summary: 'Auto-distribute unscheduled inbox assets across a 14/30 day sprint',
-          description: 'Schedules pending video deliverables across days with alternating platforms (Instagram Reels and YouTube Shorts) and optimal release time windows.',
+          operationId: 'importDriveVideoAssets',
+          summary: 'Import video assets from Google Drive into Content Vault',
+          description: 'Imports one or more video files discovered on Google Drive directly into the private Content Vault ready for scheduling.',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['items'],
+                  properties: {
+                    items: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        required: ['title'],
+                        properties: {
+                          title: { type: 'string' },
+                          name: { type: 'string' },
+                          webContentLink: { type: 'string' },
+                          webViewLink: { type: 'string' },
+                          thumbnailUrl: { type: 'string' },
+                          durationSeconds: { type: 'integer' },
+                          size: { type: 'integer' },
+                          platform: { type: 'string', enum: ['youtube', 'instagram'] },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: { '200': { description: 'Assets imported successfully.' } },
+        },
+      },
+      '/api/chatgpt/content/analyze-asset': {
+        post: {
+          operationId: 'analyzeContentAsset',
+          summary: 'AI viral hook, caption & schedule optimization',
+          description: 'Runs AI analysis on a video title/transcript to extract 3 viral scroll-stopping hooks, platform-optimized captions for Instagram and YouTube, and optimal posting time windows.',
           requestBody: {
             required: true,
             content: {
@@ -769,34 +600,94 @@ export async function GET(req: NextRequest) {
                 schema: {
                   type: 'object',
                   properties: {
-                    sprint_days: { type: 'integer', default: 14, description: 'Duration of the sprint in days.' },
-                    items_per_day: { type: 'integer', default: 1, description: 'Number of posts per day.' },
-                    platforms: {
-                      type: 'array',
-                      items: { type: 'string', enum: ['instagram', 'youtube'] },
-                      default: ['instagram', 'youtube']
-                    },
-                    start_date: { type: 'string', format: 'date', description: 'Starting date in YYYY-MM-DD format.' }
-                  }
-                }
-              }
-            }
+                    id: { type: 'string', description: 'UUID of the vault deliverable.' },
+                    title: { type: 'string', description: 'Deliverable title.' },
+                    transcript: { type: 'string' },
+                    notes: { type: 'string' },
+                    platform: { type: 'string', enum: ['youtube', 'instagram'], default: 'instagram' },
+                  },
+                },
+              },
+            },
           },
-          responses: {
-            '200': { description: 'Content sprint scheduled successfully.' }
-          }
-        }
+          responses: { '200': { description: 'Viral analysis generated.' } },
+        },
+      },
+      '/api/chatgpt/content/plan-sprint': {
+        post: {
+          operationId: 'planContentSprint',
+          summary: 'Auto-schedule assets into a 14/30 day distribution sprint',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    sprint_days: { type: 'integer', default: 14 },
+                    items_per_day: { type: 'integer', default: 1 },
+                    platforms: { type: 'array', items: { type: 'string', enum: ['instagram', 'youtube'] } },
+                    start_date: { type: 'string', format: 'date' },
+                  },
+                },
+              },
+            },
+          },
+          responses: { '200': { description: 'Content sprint scheduled.' } },
+        },
       },
       '/api/chatgpt/content/analytics': {
         get: {
           operationId: 'getContentAnalytics',
-          summary: 'Get aggregated content reach and analytics',
-          description: 'Returns total reach, views, likes, comments, and breakdown by platform and status.',
-          responses: {
-            '200': { description: 'Analytics fetched successfully.' }
-          }
-        }
-      }
+          summary: 'Get multi-channel content reach & performance',
+          responses: { '200': { description: 'Content metrics.' } },
+        },
+      },
+      '/api/chatgpt/calendar/sync': {
+        post: {
+          operationId: 'syncTasksToGoogleCalendar',
+          summary: 'Trigger two-way task sync to Google Calendar',
+          description: 'Synchronizes all active P0/P1 tasks, deadlines, and focus timeboxes to the user Google Calendar.',
+          responses: { '200': { description: 'Calendar sync completed.' } },
+        },
+      },
+      '/api/chatgpt/calendar/events': {
+        get: {
+          operationId: 'getGoogleCalendarEvents',
+          summary: 'Fetch upcoming Google Calendar schedule & events',
+          responses: { '200': { description: 'Calendar events.' } },
+        },
+      },
+      '/api/chatgpt/synthesize': {
+        post: {
+          operationId: 'synthesizeProjectPlan',
+          summary: 'Synthesize brain dump into phased projects and tasks',
+          description: 'Translates a natural language directive or brain dump into an executive plan with phases and actionable tasks, with optional auto-commit.',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['text'],
+                  properties: {
+                    text: { type: 'string', description: 'Raw natural language thoughts or directive.' },
+                    auto_commit: { type: 'boolean', default: false, description: 'If true, automatically creates the project and tasks in DB.' },
+                  },
+                },
+              },
+            },
+          },
+          responses: { '200': { description: 'Synthesized plan.' } },
+        },
+      },
+      '/api/chatgpt/workspaces': {
+        get: {
+          operationId: 'listWorkspaces',
+          summary: 'List user workspaces & organization context',
+          responses: { '200': { description: 'Workspaces details.' } },
+        },
+      },
     },
     components: {
       schemas: {},
@@ -814,8 +705,8 @@ export async function GET(req: NextRequest) {
               authorizationUrl: `${baseUrl}/api/oauth/authorize`,
               tokenUrl: `${baseUrl}/api/oauth/token`,
               scopes: {
-                read: 'Read workspace tasks, projects, and content deliverables',
-                write: 'Create and modify deliverables, tasks, and schedules'
+                read: 'Read workspace tasks, projects, meeting intelligence, and content deliverables',
+                write: 'Create, modify, schedule, and publish deliverables, projects, and sprint tasks'
               }
             }
           }
@@ -829,6 +720,17 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json(openApiSpec, {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
+    },
+  })
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',

@@ -40,3 +40,6 @@ scratch/
 .gemini/
 screenshots/
 capture_screenshots.py
+cultlike-plugin.zip
+*.tar.gz
+plugin-package/

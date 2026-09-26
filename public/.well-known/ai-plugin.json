@@ -1,0 +1,25 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Cultlike OS",
+  "name_for_model": "cultlike_os",
+  "description_for_human": "Executive Operating System to orchestrate sprint tasks, projects, meeting takeaways, and multi-channel content publishing.",
+  "description_for_model": "Plugin for orchestrating Cultlike OS workspaces. Use this plugin to query sprint analytics, list and manage P0/P1 tasks, create projects, inspect Fathom meeting summaries and action items, and stage/schedule video deliverables in the Content Vault for YouTube and Instagram.",
+  "auth": {
+    "type": "oauth",
+    "client_url": "https://cultlike.ahmvsystems.com/api/oauth/authorize",
+    "scope": "read write",
+    "authorization_url": "https://cultlike.ahmvsystems.com/api/oauth/token",
+    "authorization_content_type": "application/json",
+    "verification_tokens": {
+      "openai": "cultlike_openai_verification_token"
+    }
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://cultlike.ahmvsystems.com/api/chatgpt/openapi.json",
+    "is_user_authenticated": false
+  },
+  "logo_url": "https://cultlike.ahmvsystems.com/logo.png",
+  "contact_email": "w.taufiqq@gmail.com",
+  "legal_info_url": "https://cultlike.ahmvsystems.com/terms"
+}

@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
     let clientId = ''
     let clientSecret = ''
     let redirectUri = ''
+    let codeVerifier = ''
 
     // Parse Authorization header for HTTP Basic Auth if present
     const authHeader = req.headers.get('authorization')
@@ -27,13 +28,15 @@ export async function POST(req: NextRequest) {
       clientId = clientId || (formData.get('client_id') as string) || ''
       clientSecret = clientSecret || (formData.get('client_secret') as string) || ''
       redirectUri = (formData.get('redirect_uri') as string) || ''
+      codeVerifier = (formData.get('code_verifier') as string) || ''
     } else {
-      const body = await req.json()
+      const body = await req.json().catch(() => ({}))
       grantType = body.grant_type || ''
       code = body.code || ''
       clientId = clientId || body.client_id || ''
       clientSecret = clientSecret || body.client_secret || ''
       redirectUri = body.redirect_uri || ''
+      codeVerifier = body.code_verifier || ''
     }
 
     if (grantType !== 'authorization_code' && grantType !== 'refresh_token') {
@@ -50,12 +53,15 @@ export async function POST(req: NextRequest) {
       }, { status: 400 })
     }
 
-    const tokenResponse = await exchangeCodeForTokens(code, clientId, clientSecret, redirectUri)
+    const tokenResponse = await exchangeCodeForTokens(code, clientId, clientSecret, redirectUri, codeVerifier)
 
     return NextResponse.json(tokenResponse, {
       headers: {
         'Cache-Control': 'no-store',
-        'Pragma': 'no-cache'
+        'Pragma': 'no-cache',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       }
     })
   } catch (error: any) {
@@ -65,4 +71,15 @@ export async function POST(req: NextRequest) {
       error_description: error.message || 'Token exchange failed.'
     }, { status: 400 })
   }
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    }
+  })
 }

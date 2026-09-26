@@ -1,329 +1,108 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Cultlike OS Executive Operating System API (ChatGPT & Claude Connectors)",
-    "description": "Official API for ChatGPT Custom GPT Actions & Claude Connectors to orchestrate projects, sprint tasks, content vault deliverables, Fathom meetings, and execution analytics in Cultlike OS.",
+    "title": "Cultlike OS Executive Operating System API (Complete ChatGPT & Claude Connector Suite)",
+    "description": "Comprehensive, full-permission API & Tool Manifest for ChatGPT Plugins, Custom GPTs, Claude Connectors, and MCP Agents to orchestrate workspace initiatives, sprint tasks, meeting intelligence, Google Drive & Calendar workflows, viral content asset analysis, and multi-channel publishing (YouTube & Instagram).",
     "version": "2.0.0"
   },
   "servers": [
     {
-      "url": "https://callmy-mgmt.vercel.app",
-      "description": "Cultlike OS Server"
+      "url": "https://cultlike.ahmvsystems.com",
+      "description": "Cultlike OS Production Server"
     }
   ],
   "paths": {
     "/api/chatgpt/overview": {
       "get": {
         "operationId": "getWorkspaceOverview",
-        "summary": "Get workspace overview & sprint health",
-        "description": "Fetches a comprehensive workspace snapshot including urgent P0/P1 tasks, active projects, current blockers, recent daily logs, Fathom meetings summary, and sprint completion percentage.",
+        "summary": "Get workspace executive briefing",
+        "description": "Fetches an executive workspace snapshot including urgent P0/P1 tasks, active projects, current blockers, velocity, and recent daily logs.",
         "responses": {
-          "200": {
-            "description": "Workspace overview fetched successfully."
-          }
-        }
-      }
-    },
-    "/api/chatgpt/analytics": {
-      "get": {
-        "operationId": "getWorkspaceAnalytics",
-        "summary": "Get workspace execution analytics & velocity",
-        "description": "Returns comprehensive sprint progress, completion rate percentage, total focus hours, 7-day velocity trend, priority breakdown, and project completion rates.",
-        "responses": {
-          "200": {
-            "description": "Analytics and sprint progress."
-          }
+          "200": { "description": "Workspace overview fetched successfully." }
         }
       }
     },
     "/api/chatgpt/tasks": {
       "get": {
         "operationId": "listTasks",
-        "summary": "List and search tasks with point-in-time date filtering",
-        "description": "Lists tasks with optional filtering by status, priority, project_id, search keyword, or specific date (YYYY-MM-DD) for historical status.",
+        "summary": "List and search tasks",
         "parameters": [
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "todo",
-                "in_progress",
-                "blocked",
-                "shipped",
-                "killed",
-                "active"
-              ]
-            },
-            "description": "Filter by task status."
-          },
-          {
-            "name": "priority",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "p0",
-                "p1",
-                "p2",
-                "p3"
-              ]
-            },
-            "description": "Filter by priority level."
-          },
-          {
-            "name": "project_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter tasks belonging to project UUID."
-          },
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Search keyword matching title."
-          },
-          {
-            "name": "date",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Point-in-time historical date (YYYY-MM-DD)."
-          },
-          {
-            "name": "date_from",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter tasks created after this ISO date."
-          },
-          {
-            "name": "date_to",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter tasks created before this ISO date."
-          },
-          {
-            "name": "format",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "json",
-                "csv"
-              ]
-            },
-            "description": "Format of output: json or csv."
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 50
-            },
-            "description": "Max items."
-          }
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["todo", "in_progress", "blocked", "shipped", "killed", "active"] } },
+          { "name": "priority", "in": "query", "schema": { "type": "string", "enum": ["p0", "p1", "p2", "p3"] } },
+          { "name": "project_id", "in": "query", "schema": { "type": "string" } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "date", "in": "query", "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50 } }
         ],
-        "responses": {
-          "200": {
-            "description": "List of tasks."
-          }
-        }
+        "responses": { "200": { "description": "List of tasks." } }
       },
       "post": {
         "operationId": "createTask",
         "summary": "Create a new task",
-        "description": "Creates a new task in CallMy Mgmt.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "title"
-                ],
+                "required": ["title"],
                 "properties": {
-                  "title": {
-                    "type": "string",
-                    "description": "Task title."
-                  },
-                  "description": {
-                    "type": "string",
-                    "description": "Task description."
-                  },
-                  "priority": {
-                    "type": "string",
-                    "enum": [
-                      "p0",
-                      "p1",
-                      "p2",
-                      "p3"
-                    ],
-                    "default": "p2"
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "todo",
-                      "in_progress",
-                      "blocked",
-                      "shipped",
-                      "killed"
-                    ],
-                    "default": "todo"
-                  },
-                  "project_id": {
-                    "type": "string"
-                  },
-                  "due_date": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "time_box_minutes": {
-                    "type": "integer",
-                    "default": 60
-                  },
-                  "output_description": {
-                    "type": "string"
-                  },
-                  "blocked_reason": {
-                    "type": "string"
-                  }
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "priority": { "type": "string", "enum": ["p0", "p1", "p2", "p3"], "default": "p2" },
+                  "status": { "type": "string", "enum": ["todo", "in_progress", "blocked", "shipped", "killed"], "default": "todo" },
+                  "project_id": { "type": "string" },
+                  "due_date": { "type": "string", "format": "date-time" },
+                  "time_box_minutes": { "type": "integer", "default": 45 },
+                  "output_description": { "type": "string" },
+                  "blocked_reason": { "type": "string" }
                 }
               }
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "Task created successfully."
-          }
-        }
+        "responses": { "200": { "description": "Task created successfully." } }
       },
       "patch": {
         "operationId": "updateTask",
         "summary": "Update a task",
-        "description": "Updates a task by task ID in the request body.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "id"
-                ],
+                "required": ["id"],
                 "properties": {
-                  "id": {
-                    "type": "string",
-                    "description": "Task UUID."
-                  },
-                  "title": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "priority": {
-                    "type": "string",
-                    "enum": [
-                      "p0",
-                      "p1",
-                      "p2",
-                      "p3"
-                    ]
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "todo",
-                      "in_progress",
-                      "blocked",
-                      "shipped",
-                      "killed"
-                    ]
-                  },
-                  "project_id": {
-                    "type": "string"
-                  },
-                  "due_date": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "time_box_minutes": {
-                    "type": "integer"
-                  },
-                  "output_description": {
-                    "type": "string"
-                  },
-                  "blocked_reason": {
-                    "type": "string"
-                  }
+                  "id": { "type": "string" },
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "priority": { "type": "string", "enum": ["p0", "p1", "p2", "p3"] },
+                  "status": { "type": "string", "enum": ["todo", "in_progress", "blocked", "shipped", "killed"] },
+                  "project_id": { "type": "string" },
+                  "due_date": { "type": "string", "format": "date-time" },
+                  "time_box_minutes": { "type": "integer" },
+                  "output_description": { "type": "string" },
+                  "blocked_reason": { "type": "string" }
                 }
               }
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "Task updated successfully."
-          }
-        }
+        "responses": { "200": { "description": "Task updated successfully." } }
       }
     },
     "/api/chatgpt/tasks/{id}": {
       "get": {
         "operationId": "getTaskById",
         "summary": "Get task by ID",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Task details."
-          }
-        }
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Task details." } }
       },
       "patch": {
         "operationId": "updateTaskById",
         "summary": "Update task by ID",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
         "requestBody": {
           "required": true,
           "content": {
@@ -331,428 +110,104 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "title": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "priority": {
-                    "type": "string",
-                    "enum": [
-                      "p0",
-                      "p1",
-                      "p2",
-                      "p3"
-                    ]
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "todo",
-                      "in_progress",
-                      "blocked",
-                      "shipped",
-                      "killed"
-                    ]
-                  },
-                  "project_id": {
-                    "type": "string"
-                  },
-                  "due_date": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "time_box_minutes": {
-                    "type": "integer"
-                  }
+                  "title": { "type": "string" },
+                  "description": { "type": "string" },
+                  "priority": { "type": "string", "enum": ["p0", "p1", "p2", "p3"] },
+                  "status": { "type": "string", "enum": ["todo", "in_progress", "blocked", "shipped", "killed"] },
+                  "project_id": { "type": "string" },
+                  "due_date": { "type": "string", "format": "date-time" },
+                  "time_box_minutes": { "type": "integer" }
                 }
               }
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "Task updated."
-          }
-        }
+        "responses": { "200": { "description": "Task updated successfully." } }
       },
       "delete": {
         "operationId": "deleteTaskById",
         "summary": "Delete task by ID",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Task deleted successfully." } }
+      }
+    },
+    "/api/chatgpt/tasks/microtasks": {
+      "post": {
+        "operationId": "generateMicrotasks",
+        "summary": "Decompose task into executable microtasks",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "title": { "type": "string" },
+                  "description": { "type": "string" }
+                }
+              }
             }
           }
-        ],
-        "responses": {
-          "200": {
-            "description": "Task deleted."
-          }
-        }
+        },
+        "responses": { "200": { "description": "List of microtasks." } }
       }
     },
     "/api/chatgpt/projects": {
       "get": {
         "operationId": "listProjects",
         "summary": "List projects",
-        "parameters": [
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "active",
-                "paused",
-                "killed",
-                "shipped"
-              ]
-            }
-          },
-          {
-            "name": "priority",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "p0",
-                "p1",
-                "p2",
-                "p3"
-              ]
-            }
-          },
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of projects."
-          }
-        }
+        "responses": { "200": { "description": "List of projects." } }
       },
       "post": {
         "operationId": "createProject",
-        "summary": "Create project",
+        "summary": "Create a new project",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "name"
-                ],
+                "required": ["name"],
                 "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "active",
-                      "paused",
-                      "killed",
-                      "shipped"
-                    ],
-                    "default": "active"
-                  },
-                  "priority": {
-                    "type": "string",
-                    "enum": [
-                      "p0",
-                      "p1",
-                      "p2",
-                      "p3"
-                    ],
-                    "default": "p1"
-                  },
-                  "deadline": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "success_metric": {
-                    "type": "string"
-                  },
-                  "min_shippable_version": {
-                    "type": "string"
-                  }
+                  "name": { "type": "string" },
+                  "description": { "type": "string" },
+                  "status": { "type": "string", "enum": ["active", "paused", "killed", "shipped"], "default": "active" },
+                  "priority": { "type": "string", "enum": ["p0", "p1", "p2", "p3"], "default": "p1" },
+                  "deadline": { "type": "string", "format": "date-time" }
                 }
               }
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "Project created."
-          }
-        }
+        "responses": { "200": { "description": "Project created successfully." } }
       }
     },
     "/api/chatgpt/projects/{id}": {
       "get": {
         "operationId": "getProjectById",
         "summary": "Get project by ID",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Project details."
-          }
-        }
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Project details." } }
       },
       "patch": {
         "operationId": "updateProjectById",
         "summary": "Update project by ID",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "active",
-                      "paused",
-                      "killed",
-                      "shipped"
-                    ]
-                  },
-                  "priority": {
-                    "type": "string",
-                    "enum": [
-                      "p0",
-                      "p1",
-                      "p2",
-                      "p3"
-                    ]
-                  },
-                  "deadline": {
-                    "type": "string",
-                    "format": "date-time"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Project updated."
-          }
-        }
-      }
-    },
-    "/api/chatgpt/meetings": {
-      "get": {
-        "operationId": "listMeetings",
-        "summary": "List and search Fathom video meetings",
-        "description": "Fetches historical Fathom AI meeting recordings with filtering by keyword search, specific date (YYYY-MM-DD), attendee name, or limit.",
-        "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Search keyword matching title, attendee, or summary."
-          },
-          {
-            "name": "date",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter meetings on a specific date (YYYY-MM-DD)."
-          },
-          {
-            "name": "attendee",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter meetings containing a specific attendee name."
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "default": 25
-            },
-            "description": "Max meetings to return."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of meetings."
-          }
-        }
-      }
-    },
-    "/api/chatgpt/meetings/{id}": {
-      "get": {
-        "operationId": "getMeetingDetail",
-        "summary": "Get Fathom meeting recording details & transcript",
-        "description": "Retrieves direct Fathom AI markdown summary, action items with assignees, and verbatim timestamped transcript for a recording ID.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Fathom recording ID."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Meeting recording details, summary, and transcript."
-          }
-        }
-      }
-    },
-    "/api/chatgpt/meetings/{id}/convert-action": {
-      "post": {
-        "operationId": "convertMeetingActionToTask",
-        "summary": "Convert meeting action item into a task",
-        "description": "Converts an action item or takeaway from a Fathom meeting into a real workspace task in CallMy Mgmt.",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Fathom recording ID."
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "title"
-                ],
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "description": "Action item title."
-                  },
-                  "assignee": {
-                    "type": "string"
-                  },
-                  "priority": {
-                    "type": "string",
-                    "enum": [
-                      "p0",
-                      "p1",
-                      "p2",
-                      "p3"
-                    ],
-                    "default": "p1"
-                  },
-                  "project_id": {
-                    "type": "string"
-                  },
-                  "due_date": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "time_box_minutes": {
-                    "type": "integer",
-                    "default": 45
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Action item converted to task."
-          }
-        }
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Project updated successfully." } }
+      },
+      "delete": {
+        "operationId": "deleteProjectById",
+        "summary": "Delete project by ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Project deleted successfully." } }
       }
     },
     "/api/chatgpt/documents": {
       "get": {
         "operationId": "listDocuments",
         "summary": "List documents",
-        "parameters": [
-          {
-            "name": "project_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of documents."
-          }
-        }
+        "responses": { "200": { "description": "List of documents." } }
       },
       "post": {
         "operationId": "createDocument",
@@ -763,110 +218,169 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "title"
-                ],
+                "required": ["title"],
                 "properties": {
-                  "title": {
-                    "type": "string"
-                  },
-                  "content": {
-                    "type": "string"
-                  },
-                  "project_id": {
-                    "type": "string"
-                  }
+                  "title": { "type": "string" },
+                  "content": { "type": "string" },
+                  "project_id": { "type": "string" }
                 }
               }
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "Document created."
-          }
-        }
+        "responses": { "200": { "description": "Document created." } }
+      }
+    },
+    "/api/chatgpt/documents/{id}": {
+      "get": {
+        "operationId": "getDocumentById",
+        "summary": "Get document by ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Document details." } }
+      },
+      "patch": {
+        "operationId": "updateDocumentById",
+        "summary": "Update document by ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Document updated." } }
+      },
+      "delete": {
+        "operationId": "deleteDocumentById",
+        "summary": "Delete document by ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Document deleted." } }
       }
     },
     "/api/chatgpt/daily-logs": {
       "get": {
         "operationId": "listDailyLogs",
-        "summary": "Get recent daily logs",
-        "responses": {
-          "200": {
-            "description": "Recent daily logs."
-          }
-        }
+        "summary": "Get daily logs",
+        "responses": { "200": { "description": "Daily logs." } }
       },
       "post": {
         "operationId": "saveDailyLog",
         "summary": "Save daily log",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "date": {
-                    "type": "string",
-                    "format": "date"
-                  },
-                  "notes": {
-                    "type": "string"
-                  },
-                  "tomorrows_priority": {
-                    "type": "string"
-                  },
-                  "tasks_shipped": {
-                    "type": "integer"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Daily log saved."
-          }
-        }
+        "responses": { "200": { "description": "Daily log saved." } }
+      }
+    },
+    "/api/chatgpt/analytics": {
+      "get": {
+        "operationId": "getWorkspaceAnalytics",
+        "summary": "Get velocity and sprint analytics",
+        "responses": { "200": { "description": "Analytics." } }
+      }
+    },
+    "/api/chatgpt/meetings": {
+      "get": {
+        "operationId": "listMeetings",
+        "summary": "List meetings",
+        "responses": { "200": { "description": "List of meetings." } }
+      }
+    },
+    "/api/chatgpt/meetings/{id}": {
+      "get": {
+        "operationId": "getMeetingDetail",
+        "summary": "Get meeting details and transcript",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Meeting details." } }
+      }
+    },
+    "/api/chatgpt/meetings/{id}/convert-action": {
+      "post": {
+        "operationId": "convertMeetingActionToTask",
+        "summary": "Convert meeting action item to task",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Action item converted." } }
+      }
+    },
+    "/api/chatgpt/content": {
+      "get": {
+        "operationId": "getContentVault",
+        "summary": "List deliverables in content vault",
+        "responses": { "200": { "description": "Content deliverables." } }
+      },
+      "post": {
+        "operationId": "createContentItem",
+        "summary": "Create content deliverable",
+        "responses": { "200": { "description": "Content item created." } }
+      }
+    },
+    "/api/chatgpt/content/schedule": {
+      "post": {
+        "operationId": "scheduleContent",
+        "summary": "Schedule content deliverable",
+        "responses": { "200": { "description": "Content scheduled." } }
+      }
+    },
+    "/api/chatgpt/content/{id}/publish": {
+      "post": {
+        "operationId": "publishContentItem",
+        "summary": "Immediately publish deliverable to YouTube or Instagram",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Deliverable published." } }
+      }
+    },
+    "/api/chatgpt/content/drive": {
+      "get": {
+        "operationId": "listDriveVideoAssets",
+        "summary": "List video exports on Google Drive",
+        "responses": { "200": { "description": "Google Drive files." } }
+      }
+    },
+    "/api/chatgpt/content/drive/import": {
+      "post": {
+        "operationId": "importDriveVideoAssets",
+        "summary": "Import video assets from Google Drive into Content Vault",
+        "responses": { "200": { "description": "Assets imported." } }
+      }
+    },
+    "/api/chatgpt/content/analyze-asset": {
+      "post": {
+        "operationId": "analyzeContentAsset",
+        "summary": "AI viral hook, caption & schedule optimization",
+        "responses": { "200": { "description": "Viral analysis generated." } }
+      }
+    },
+    "/api/chatgpt/content/plan-sprint": {
+      "post": {
+        "operationId": "planContentSprint",
+        "summary": "Auto-schedule assets into sprint",
+        "responses": { "200": { "description": "Content sprint planned." } }
+      }
+    },
+    "/api/chatgpt/content/analytics": {
+      "get": {
+        "operationId": "getContentAnalytics",
+        "summary": "Get multi-channel content reach",
+        "responses": { "200": { "description": "Content metrics." } }
+      }
+    },
+    "/api/chatgpt/calendar/sync": {
+      "post": {
+        "operationId": "syncTasksToGoogleCalendar",
+        "summary": "Trigger two-way task sync to Google Calendar",
+        "responses": { "200": { "description": "Calendar sync completed." } }
+      }
+    },
+    "/api/chatgpt/calendar/events": {
+      "get": {
+        "operationId": "getGoogleCalendarEvents",
+        "summary": "Fetch upcoming Google Calendar schedule & events",
+        "responses": { "200": { "description": "Calendar events." } }
       }
     },
     "/api/chatgpt/synthesize": {
       "post": {
-        "operationId": "synthesizePlan",
-        "summary": "Synthesize raw brain dump into phased project/task plan",
-        "description": "Decomposes raw natural language brain dump or meeting notes into a phased project or task plan with optional auto-commit to database.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "text"
-                ],
-                "properties": {
-                  "text": {
-                    "type": "string",
-                    "description": "Brain dump text or meeting notes."
-                  },
-                  "auto_commit": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "If true, automatically creates the project and tasks in the database."
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Plan synthesized successfully."
-          }
-        }
+        "operationId": "synthesizeProjectPlan",
+        "summary": "Synthesize brain dump into phased projects and tasks",
+        "responses": { "200": { "description": "Synthesized plan." } }
+      }
+    },
+    "/api/chatgpt/workspaces": {
+      "get": {
+        "operationId": "listWorkspaces",
+        "summary": "List user workspaces",
+        "responses": { "200": { "description": "Workspaces details." } }
       }
     }
   },
@@ -875,12 +389,24 @@
       "BearerAuth": {
         "type": "http",
         "scheme": "bearer"
+      },
+      "OAuth2Auth": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://cultlike.ahmvsystems.com/api/oauth/authorize",
+            "tokenUrl": "https://cultlike.ahmvsystems.com/api/oauth/token",
+            "scopes": {
+              "read": "Read workspace tasks, projects, meeting intelligence, and content deliverables",
+              "write": "Create, modify, schedule, and publish deliverables, projects, and sprint tasks"
+            }
+          }
+        }
       }
     }
   },
   "security": [
-    {
-      "BearerAuth": []
-    }
+    { "BearerAuth": [] },
+    { "OAuth2Auth": ["read", "write"] }
   ]
 }
