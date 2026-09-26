@@ -199,8 +199,8 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          {/* Center: Iconic Pill Menu Button (Dead center via absolute positioning) */}
-          <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-auto">
+          {/* Center: Iconic Pill Menu Button (Dead center via exact absolute positioning) */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-auto z-10">
             <button 
               onClick={() => setIsMenuOpen(true)}
               type="button"
