@@ -279,61 +279,66 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4 pb-10 animate-fadeIn font-sans">
-      {/* Top Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+      {/* Top Header Section (Bold & Stylish) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
         <div>
-          <div className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider mb-0.5 font-light">
-            DASHBOARD
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-mono uppercase tracking-widest text-indigo-700 font-semibold mb-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.8)] animate-pulse" />
+            <span>DAILY WORKSPACE COCKPIT</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-black">
-            Your Daily Dashboard
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-black flex items-center gap-3">
+            <span>Your Daily Dashboard</span>
           </h1>
         </div>
         <div className="flex items-center gap-2.5 font-body">
           <button
             onClick={() => generateBrief(tasks, projects)}
             disabled={generatingBrief}
-            className="flex items-center gap-2 px-3.5 py-1.5 bg-white hover:bg-neutral-50 border border-black/[0.08] rounded-xl text-xs font-normal text-black transition-all cursor-pointer shadow-2xs"
+            className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-neutral-50 border border-black/[0.1] rounded-full text-xs font-medium text-black transition-all cursor-pointer shadow-2xs active:scale-[0.98]"
             title="Regenerate daily intelligence briefing"
           >
-            <RefreshCw size={12} className={cn(generatingBrief && 'animate-spin')} />
+            <RefreshCw size={13} className={cn(generatingBrief && 'animate-spin text-indigo-600')} />
             <span>Generate Today&apos;s Brief</span>
           </button>
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-sm"
+            className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-black via-neutral-900 to-neutral-800 hover:from-neutral-900 hover:to-black text-white rounded-full text-xs font-medium transition-all cursor-pointer shadow-xs active:scale-[0.98]"
           >
-            <Plus size={14} />
+            <Plus size={15} />
             <span>New Task</span>
           </button>
         </div>
       </div>
 
-      {/* Hero Insight Card */}
-      <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.08] p-6 shadow-xs">
+      {/* Hero Insight Card (Proper Hardware Studio Layout) */}
+      <div className="relative overflow-hidden rounded-3xl bg-white/95 backdrop-blur-xl border border-black/[0.08] p-6 sm:p-7 shadow-[0_12px_36px_rgba(0,0,0,0.03)]">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           {/* Left Column: Greeting & Big Punchy Metric */}
-          <div className="lg:col-span-7 space-y-3.5">
-            <h2 className="text-2xl sm:text-3xl font-normal text-black tracking-tight leading-snug">
-              {totalHours} focused hours logged <br />
+          <div className="lg:col-span-7 space-y-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-light text-black tracking-tight leading-snug">
+              <span className="font-bold text-black">{totalHours} focused hours</span> logged <br className="hidden sm:block" />
               <span className="text-neutral-500 font-light">
                 across {projects.length} active projects.
               </span>
             </h2>
 
-            <div className="flex items-center gap-3 text-xs text-neutral-600">
-              <span className="px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] font-mono text-[10px]">
-                {completionRate}% completed
+            <div className="flex flex-wrap items-center gap-3 text-xs">
+              <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-700 border border-indigo-500/20 font-mono text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
+                <span>{completionRate}% completed</span>
               </span>
-              <span>•</span>
-              <span className="font-normal text-black">{shippedTasks.length} deliverables shipped</span>
+              <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-700 border border-amber-500/20 font-mono text-[11px] font-semibold flex items-center gap-1.5 shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <span>{shippedTasks.length} deliverables shipped</span>
+              </span>
             </div>
 
             {/* Executive Intelligence Brief */}
             <div className="p-4 rounded-2xl bg-[#fafafa] border border-black/[0.06] transition-all">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono text-neutral-500 font-medium uppercase tracking-wide">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                  <span className="text-[10px] font-mono text-neutral-600 font-semibold uppercase tracking-wider">
                     DAILY SUMMARY &amp; NEXT STEPS
                   </span>
                 </div>
@@ -342,7 +347,7 @@ export default function DashboardPage() {
                   className="flex items-center gap-1.5 text-[11px] text-neutral-500 hover:text-black font-medium transition-colors px-2 py-0.5 rounded-lg hover:bg-black/[0.04] cursor-pointer"
                   title={isBriefExpanded ? "Minimize summary" : "Expand summary"}
                 >
-                  <span className="font-mono text-[10px] uppercase tracking-wider">{isBriefExpanded ? 'Minimize' : 'Expand'}</span>
+                  <span className="font-mono text-[10px] uppercase tracking-wider font-semibold">{isBriefExpanded ? 'Minimize' : 'Expand'}</span>
                   {isBriefExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                 </button>
               </div>
@@ -364,15 +369,22 @@ export default function DashboardPage() {
           </div>
 
           {/* Right Column: Radial Arc Donut Gauge */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-center p-5 bg-[#fafafa] border border-black/[0.06] rounded-3xl">
+          <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-[#fafafa] to-neutral-50/80 border border-black/[0.06] rounded-3xl shadow-2xs">
             <div className="relative w-44 h-44 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                <defs>
+                  <linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#6366f1" />
+                    <stop offset="50%" stopColor="#8b5cf6" />
+                    <stop offset="100%" stopColor="#f59e0b" />
+                  </linearGradient>
+                </defs>
                 <circle
                   cx="50"
                   cy="50"
                   r="40"
                   fill="transparent"
-                  stroke="rgba(0, 0, 0, 0.08)"
+                  stroke="rgba(0, 0, 0, 0.06)"
                   strokeWidth="8"
                 />
                 <circle
@@ -380,28 +392,29 @@ export default function DashboardPage() {
                   cy="50"
                   r="40"
                   fill="transparent"
-                  stroke="#111827"
+                  stroke="url(#gaugeGrad)"
                   strokeWidth="8"
                   strokeDasharray="251.2"
                   strokeDashoffset={251.2 - (251.2 * (completionRate || 55)) / 100}
                   strokeLinecap="round"
+                  className="transition-all duration-1000 ease-out"
                 />
               </svg>
 
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-3xl font-medium text-black tracking-tight">{totalFocusMinutes}</span>
-                <span className="text-[10px] text-[#4b5563] font-mono uppercase tracking-wider font-semibold">Minutes Logged</span>
+                <span className="text-3xl font-light text-black tracking-tight">{totalFocusMinutes}</span>
+                <span className="text-[10px] text-neutral-500 font-mono uppercase tracking-wider font-semibold">Minutes Logged</span>
               </div>
             </div>
 
             <div className="flex items-center gap-6 mt-4 text-xs font-mono">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-black"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 shadow-[0_0_6px_rgba(99,102,241,0.5)]"></span>
                 <span className="text-black font-semibold">Completed: {completionRate}%</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#9ca3af]"></span>
-                <span className="text-[#4b5563] font-medium">Target: 100%</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-neutral-300"></span>
+                <span className="text-neutral-500 font-medium">Target: 100%</span>
               </div>
             </div>
           </div>
