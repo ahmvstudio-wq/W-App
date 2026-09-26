@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 
   if (!user) {
     const returnUrl = encodeURIComponent(req.url)
-    return NextResponse.redirect(new URL(`/?return_to=${returnUrl}`, req.url))
+    return NextResponse.redirect(new URL(`/login?return_to=${returnUrl}`, req.url))
   }
 
   const clientName = clientVal.client?.name || 'External AI Connector'

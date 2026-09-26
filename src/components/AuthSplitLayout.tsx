@@ -42,7 +42,10 @@ export default function AuthSplitLayout({ initialMode = 'login' }: AuthSplitLayo
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        router.replace('/dashboard')
+        const search = typeof window !== 'undefined' ? window.location.search : ''
+        const params = new URLSearchParams(search)
+        const returnTo = params.get('return_to')
+        router.replace(returnTo || '/dashboard')
       }
     })
   }, [router])
@@ -72,7 +75,10 @@ export default function AuthSplitLayout({ initialMode = 'login' }: AuthSplitLayo
         if (signInError) {
           setError(signInError.message)
         } else if (data.session) {
-          router.replace('/dashboard')
+          const search = typeof window !== 'undefined' ? window.location.search : ''
+          const params = new URLSearchParams(search)
+          const returnTo = params.get('return_to')
+          router.replace(returnTo || '/dashboard')
         }
       } else {
         const redirectTo = typeof window !== 'undefined' 
