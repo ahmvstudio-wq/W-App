@@ -180,7 +180,7 @@ export default function AuthSplitLayout({ initialMode = 'login' }: AuthSplitLayo
 
           {/* Mobile-only brand logo */}
           <div className="lg:hidden flex items-center gap-2.5">
-            <img src="/logo.png" alt="Logo" className="h-10 w-auto object-contain" />
+            <img src="/logo-cultlike.png" alt="Logo" className="h-8 w-8 object-contain rounded-full" />
             <span className="font-semibold text-base text-black tracking-tight">Cultlike</span>
           </div>
         </div>
