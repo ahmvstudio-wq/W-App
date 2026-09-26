@@ -366,16 +366,28 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Right Column: Radial Arc Donut Gauge */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-[#fafafa] to-neutral-50/80 border border-black/[0.06] rounded-3xl shadow-2xs">
+          {/* Right Column: Radial Arc Donut Gauge with Ambient Lighting */}
+          <div className="lg:col-span-5 relative overflow-hidden flex flex-col items-center justify-center p-6 bg-gradient-to-b from-white via-[#fafafa] to-indigo-50/20 border border-black/[0.06] rounded-3xl shadow-2xs">
+            {/* Ambient Lighting Atmosphere */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.09),transparent_70%)] pointer-events-none" />
+
             <div className="relative w-44 h-44 flex items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+              <svg className="w-full h-full transform -rotate-90 overflow-visible" viewBox="0 0 100 100">
+                <defs>
+                  <linearGradient id="dashboardGaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#4f46e5" />
+                    <stop offset="100%" stopColor="#6366f1" />
+                  </linearGradient>
+                  <filter id="gaugeAmbientGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#6366f1" floodOpacity="0.25" />
+                  </filter>
+                </defs>
                 <circle
                   cx="50"
                   cy="50"
                   r="40"
                   fill="transparent"
-                  stroke="rgba(0, 0, 0, 0.06)"
+                  stroke="rgba(99, 102, 241, 0.08)"
                   strokeWidth="8"
                 />
                 <circle
@@ -383,7 +395,8 @@ export default function DashboardPage() {
                   cy="50"
                   r="40"
                   fill="transparent"
-                  stroke="#111827"
+                  stroke="url(#dashboardGaugeGrad)"
+                  filter="url(#gaugeAmbientGlow)"
                   strokeWidth="8"
                   strokeDasharray="251.2"
                   strokeDashoffset={251.2 - (251.2 * (completionRate || 55)) / 100}
@@ -398,9 +411,9 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-6 mt-4 text-xs font-mono">
+            <div className="flex items-center gap-6 mt-4 text-xs font-mono relative z-10">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-black"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></span>
                 <span className="text-black font-semibold">Completed: {completionRate}%</span>
               </div>
               <div className="flex items-center gap-2">

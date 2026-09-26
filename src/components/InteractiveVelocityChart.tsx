@@ -90,35 +90,47 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
   const activeDay = hoveredIdx !== null ? daysData[hoveredIdx] : daysData[daysData.length - 1]
 
   return (
-    <div className="bg-white border border-black/[0.08] rounded-3xl p-6 shadow-sm space-y-4 font-body">
-      <div className="flex items-center justify-between">
+    <div className="relative overflow-hidden bg-white border border-black/[0.08] rounded-3xl p-6 shadow-sm space-y-4 font-body">
+      {/* Subtle Ambient Lighting Aura */}
+      <div className="absolute inset-x-8 top-12 bottom-12 bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,rgba(99,102,241,0.08),transparent)] pointer-events-none" />
+
+      <div className="flex items-center justify-between relative z-10">
         <div>
           <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">
             WEEKLY PROGRESS
           </span>
           <h3 className="text-base font-normal text-black">Tasks Completed Over the Last 7 Days</h3>
         </div>
-        <div className="flex items-center gap-1 text-xs font-mono text-black font-medium bg-[#f5f5f7] px-2.5 py-1 rounded-lg">
-          <TrendingUp size={13} className="text-neutral-900" />
+        <div className="flex items-center gap-1.5 text-xs font-mono text-indigo-900 font-medium bg-indigo-50/80 border border-indigo-100/80 px-2.5 py-1 rounded-lg">
+          <TrendingUp size={13} className="text-indigo-600" />
           <span>{totalLast7Days} {totalLast7Days === 1 ? 'task' : 'tasks'} this week</span>
         </div>
       </div>
 
-      {/* SVG Velocity Chart with Interactive Hover Rings */}
-      <div className="relative h-32 w-full pt-2">
+      {/* SVG Velocity Chart with Interactive Hover Rings & Ambient Glow */}
+      <div className="relative h-32 w-full pt-2 z-10">
         <svg className="w-full h-full overflow-visible" viewBox={`0 0 ${svgWidth} ${svgHeight}`} preserveAspectRatio="none">
           <defs>
             <linearGradient id="velocityGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="rgba(0, 0, 0, 0.08)" stopOpacity="1" />
-              <stop offset="100%" stopColor="rgba(0, 0, 0, 0.0)" stopOpacity="0" />
+              <stop offset="0%" stopColor="#6366f1" stopOpacity="0.18" />
+              <stop offset="60%" stopColor="#818cf8" stopOpacity="0.05" />
+              <stop offset="100%" stopColor="#c7d2fe" stopOpacity="0.0" />
             </linearGradient>
+            <linearGradient id="velocityStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#4f46e5" />
+              <stop offset="50%" stopColor="#6366f1" />
+              <stop offset="100%" stopColor="#818cf8" />
+            </linearGradient>
+            <filter id="velocityGlowFilter" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#6366f1" floodOpacity="0.3" />
+            </filter>
           </defs>
 
           {/* Glowing Area Fill */}
           <path d={areaPath} fill="url(#velocityGlow)" />
 
-          {/* Smooth Stroke */}
-          <path d={dPath} fill="none" stroke="#111827" strokeWidth="2.5" strokeLinecap="round" />
+          {/* Smooth Stroke with Ambient Glow */}
+          <path d={dPath} fill="none" stroke="url(#velocityStroke)" strokeWidth="2.5" strokeLinecap="round" filter="url(#velocityGlowFilter)" />
 
           {/* Interactive Data Points */}
           {points.map((p, idx) => (
@@ -129,7 +141,7 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
                 r={hoveredIdx === idx ? 6 : 4}
                 className={cn(
                   'transition-all duration-150',
-                  hoveredIdx === idx ? 'fill-neutral-900 stroke-white stroke-2' : 'fill-black'
+                  hoveredIdx === idx ? 'fill-indigo-600 stroke-white stroke-2 shadow-[0_0_8px_rgba(99,102,241,0.6)]' : 'fill-indigo-500'
                 )}
               />
               {hoveredIdx === idx && (
@@ -138,7 +150,7 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
                   y1={0}
                   x2={p.x}
                   y2={svgHeight}
-                  stroke="rgba(0,0,0,0.15)"
+                  stroke="rgba(99,102,241,0.35)"
                   strokeDasharray="3 3"
                 />
               )}
@@ -148,14 +160,14 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
       </div>
 
       {/* Days Label Axis */}
-      <div className="flex justify-between text-[11px] font-mono text-neutral-400 px-3">
+      <div className="flex justify-between text-[11px] font-mono text-neutral-400 px-3 relative z-10">
         {daysData.map((d, idx) => (
           <span
             key={idx}
             onMouseEnter={() => setHoveredIdx(idx)}
             className={cn(
               'cursor-pointer transition-colors',
-              hoveredIdx === idx ? 'text-black font-semibold' : 'hover:text-black'
+              hoveredIdx === idx ? 'text-indigo-600 font-semibold' : 'hover:text-black'
             )}
           >
             {d.dayName}

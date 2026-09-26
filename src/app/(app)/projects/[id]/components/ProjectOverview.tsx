@@ -127,15 +127,19 @@ export default function ProjectOverview({ project, tasks }: ProjectOverviewProps
           </div>
 
           {/* Right Column: Circular Multi-Ring Gauge with Ambient Glow */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 bg-white/80 backdrop-blur-xl border border-black/[0.06] rounded-3xl shadow-sm">
+          {/* Right Column: Circular Multi-Ring Gauge with Ambient Glow */}
+          <div className="lg:col-span-5 relative overflow-hidden flex flex-col items-center justify-center p-6 bg-gradient-to-b from-white via-white to-indigo-50/20 border border-black/[0.06] rounded-3xl shadow-sm">
+            {/* Ambient Lighting Atmosphere */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.08),transparent_70%)] pointer-events-none" />
+
             <div className="relative w-44 h-44 flex items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+              <svg className="w-full h-full transform -rotate-90 overflow-visible" viewBox="0 0 100 100">
                 <circle
                   cx="50"
                   cy="50"
                   r="40"
                   fill="transparent"
-                  stroke="rgba(0, 0, 0, 0.05)"
+                  stroke="rgba(99, 102, 241, 0.08)"
                   strokeWidth="8"
                 />
                 <circle
@@ -151,8 +155,8 @@ export default function ProjectOverview({ project, tasks }: ProjectOverviewProps
                 />
                 <defs>
                   <linearGradient id="ambientIndigoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#111827" />
-                    <stop offset="100%" stopColor="#4b5563" />
+                    <stop offset="0%" stopColor="#4f46e5" />
+                    <stop offset="100%" stopColor="#6366f1" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -163,9 +167,9 @@ export default function ProjectOverview({ project, tasks }: ProjectOverviewProps
               </div>
             </div>
 
-            <div className="flex items-center gap-6 mt-4 text-xs font-mono">
+            <div className="flex items-center gap-6 mt-4 text-xs font-mono relative z-10">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-sm"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 shadow-[0_0_8px_rgba(99,102,241,0.5)]"></span>
                 <span className="text-black font-medium">{stats.shipped} Delivered</span>
               </div>
               <div className="flex items-center gap-2">
@@ -180,24 +184,27 @@ export default function ProjectOverview({ project, tasks }: ProjectOverviewProps
       {/* Charts Grid: Velocity Area Curve + Status Distribution + Priority Load */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Chart 1: Sprint Velocity Area Chart with Ambient Glow */}
-        <div className="lg:col-span-7 p-6 rounded-3xl bg-white border border-black/[0.08] shadow-sm space-y-4 font-body">
-          <div className="flex items-center justify-between">
+        <div className="lg:col-span-7 relative overflow-hidden p-6 rounded-3xl bg-white border border-black/[0.08] shadow-sm space-y-4 font-body">
+          <div className="absolute inset-x-8 top-12 bottom-12 bg-[radial-gradient(ellipse_70%_50%_at_50%_50%,rgba(99,102,241,0.08),transparent)] pointer-events-none" />
+
+          <div className="flex items-center justify-between relative z-10">
             <div>
               <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">VELOCITY GRAPH</span>
               <h3 className="text-sm font-normal text-black">Delivery & Planned Output Curve</h3>
             </div>
-            <span className="text-xs font-mono text-black bg-neutral-100 border border-black/[0.08] px-2.5 py-1 rounded-lg flex items-center gap-1 font-medium">
-              <TrendingUp size={13} className="text-black" /> {stats.velocity.toFixed(1)} Tasks/Day
+            <span className="text-xs font-mono text-indigo-900 bg-indigo-50/80 border border-indigo-100/80 px-2.5 py-1 rounded-lg flex items-center gap-1 font-medium">
+              <TrendingUp size={13} className="text-indigo-600" /> {stats.velocity.toFixed(1)} Tasks/Day
             </span>
           </div>
 
-          <div className="h-64 pt-2">
+          <div className="h-64 pt-2 relative z-10">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={velocityTrendData}>
                 <defs>
                   <linearGradient id="glowVelocityFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#111827" stopOpacity="0.12" />
-                    <stop offset="100%" stopColor="#111827" stopOpacity="0.0" />
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity="0.22" />
+                    <stop offset="60%" stopColor="#818cf8" stopOpacity="0.08" />
+                    <stop offset="100%" stopColor="#c7d2fe" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
@@ -207,7 +214,7 @@ export default function ProjectOverview({ project, tasks }: ProjectOverviewProps
                   contentStyle={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
                   itemStyle={{ color: '#111827', fontSize: '12px' }}
                 />
-                <Area type="monotone" dataKey="completed" stroke="#111827" strokeWidth={2} fill="url(#glowVelocityFill)" name="Completed Tasks" />
+                <Area type="monotone" dataKey="completed" stroke="#6366f1" strokeWidth={2.5} fill="url(#glowVelocityFill)" name="Completed Tasks" />
               </AreaChart>
             </ResponsiveContainer>
           </div>

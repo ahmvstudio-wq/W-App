@@ -498,9 +498,18 @@ export function CreatorAnalyticsView({
               <svg viewBox="0 0 500 160" className="w-full h-full overflow-visible">
                 <defs>
                   <linearGradient id="retentionGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity="0.22" />
+                    <stop offset="60%" stopColor="#818cf8" stopOpacity="0.06" />
+                    <stop offset="100%" stopColor="#c7d2fe" stopOpacity="0.0" />
                   </linearGradient>
+                  <linearGradient id="retentionStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#4f46e5" />
+                    <stop offset="50%" stopColor="#6366f1" />
+                    <stop offset="100%" stopColor="#818cf8" />
+                  </linearGradient>
+                  <filter id="retentionGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#6366f1" floodOpacity="0.28" />
+                  </filter>
                 </defs>
 
                 {/* Viral 70% Benchmark Reference Line */}
@@ -512,7 +521,7 @@ export function CreatorAnalyticsView({
                   stroke="#9ca3af"
                   strokeWidth="1"
                   strokeDasharray="4 4"
-                  strokeOpacity="0.6"
+                  strokeOpacity="0.5"
                 />
                 <text x="430" y="42" fill="#9ca3af" fontSize="9" fontFamily="monospace">
                   70% VIRAL LINE
@@ -528,17 +537,18 @@ export function CreatorAnalyticsView({
                 <path
                   d="M 0,0 C 30,35 60,42 120,54 C 200,70 300,85 400,98 C 450,105 480,108 500,110"
                   fill="none"
-                  stroke="#000000"
+                  stroke="url(#retentionStroke)"
                   strokeWidth="2.5"
                   strokeLinecap="round"
+                  filter="url(#retentionGlow)"
                 />
 
                 {/* Key Point Circles */}
-                <circle cx="0" cy="0" r="4" fill="#000000" />
-                <circle cx="50" cy="40" r="5" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
-                <circle cx="150" cy="62" r="3.5" fill="#000000" />
-                <circle cx="280" cy="82" r="4" fill="#000000" />
-                <circle cx="480" cy="108" r="4" fill="#000000" />
+                <circle cx="0" cy="0" r="4" fill="#4f46e5" />
+                <circle cx="50" cy="40" r="5" fill="#6366f1" stroke="#ffffff" strokeWidth="2" className="shadow-[0_0_8px_rgba(99,102,241,0.6)]" />
+                <circle cx="150" cy="62" r="3.5" fill="#6366f1" />
+                <circle cx="280" cy="82" r="4" fill="#818cf8" />
+                <circle cx="480" cy="108" r="4" fill="#a5b4fc" />
               </svg>
             </div>
 

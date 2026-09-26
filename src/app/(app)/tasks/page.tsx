@@ -455,14 +455,20 @@ export default function TasksPage() {
           </div>
           <div className="h-10 w-full pt-1">
             <svg className="w-full h-full" viewBox="0 0 100 25" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="taskSparklineGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#6366f1" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
               <path
                 d="M0 20 Q 25 5, 50 12 T 100 2 L 100 25 L 0 25 Z"
-                fill="rgba(16, 185, 129, 0.1)"
+                fill="url(#taskSparklineGlow)"
               />
               <path
                 d="M0 20 Q 25 5, 50 12 T 100 2"
                 fill="none"
-                stroke="#10b981"
+                stroke="#6366f1"
                 strokeWidth="2"
                 strokeLinecap="round"
               />

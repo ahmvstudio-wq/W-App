@@ -532,7 +532,7 @@ export default function CultlikeCreatePage() {
 
           {/* Real 52-Week Shipping Heatmap */}
           <div className="bg-white border border-black/[0.08] rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between relative z-10">
               <div>
                 <h3 className="text-base font-semibold text-black">Annual Production Heatmap</h3>
                 <p className="text-xs text-neutral-500 font-normal">Real daily output logged from your tasks and live social feeds</p>
@@ -540,27 +540,27 @@ export default function CultlikeCreatePage() {
               <div className="flex items-center gap-2 text-[11px] text-neutral-400 font-mono font-normal">
                 <span>Less</span>
                 <div className="flex gap-1">
-                  <span className="w-2.5 h-2.5 rounded-xs bg-neutral-100" />
-                  <span className="w-2.5 h-2.5 rounded-xs bg-neutral-300" />
-                  <span className="w-2.5 h-2.5 rounded-xs bg-neutral-600" />
-                  <span className="w-2.5 h-2.5 rounded-xs bg-neutral-900" />
+                  <span className="w-2.5 h-2.5 rounded-xs bg-indigo-50/80 border border-indigo-100/60" />
+                  <span className="w-2.5 h-2.5 rounded-xs bg-indigo-200" />
+                  <span className="w-2.5 h-2.5 rounded-xs bg-indigo-400" />
+                  <span className="w-2.5 h-2.5 rounded-xs bg-indigo-600 shadow-[0_0_6px_rgba(99,102,241,0.4)]" />
                 </div>
                 <span>More</span>
               </div>
             </div>
 
-            <div className="overflow-x-auto pb-2">
+            <div className="overflow-x-auto pb-2 relative z-10">
               <div className="flex gap-1 min-w-[700px]">
                 {(heatmapData.length > 0 ? heatmapData : Array.from({ length: 52 }, () => [0,0,0,0,0,0,0])).map((week, wIdx) => (
                   <div key={wIdx} className="flex flex-col gap-1">
                     {week.map((level, dIdx) => (
                       <div
                         key={dIdx}
-                        className={`w-3 h-3 rounded-xs transition-colors cursor-pointer ${
-                          level === 3 ? 'bg-neutral-900 hover:bg-neutral-800 shadow-xs' :
-                          level === 2 ? 'bg-neutral-500 hover:bg-neutral-400' :
-                          level === 1 ? 'bg-neutral-200 hover:bg-neutral-300' :
-                          'bg-neutral-100 hover:bg-neutral-200'
+                        className={`w-3 h-3 rounded-xs transition-all cursor-pointer ${
+                          level === 3 ? 'bg-indigo-600 hover:bg-indigo-500 shadow-[0_0_6px_rgba(99,102,241,0.4)] scale-105' :
+                          level === 2 ? 'bg-indigo-400 hover:bg-indigo-300' :
+                          level === 1 ? 'bg-indigo-200/90 hover:bg-indigo-200' :
+                          'bg-indigo-50/60 hover:bg-indigo-100/70 border border-indigo-100/40'
                         }`}
                         title={`Week ${wIdx + 1}: ${level > 0 ? `${level} deliverables shipped` : 'No deliverables'}`}
                       />
