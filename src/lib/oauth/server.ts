@@ -1,5 +1,4 @@
 import { getApiClient } from '@/lib/supabase/admin'
-import crypto from 'crypto'
 
 export interface ClientValidation {
   valid: boolean
@@ -41,8 +40,30 @@ export async function validateOAuthClient(clientId: string, clientSecret?: strin
   return { valid: true, client: data }
 }
 
+async function sha256Base64Url(str: string): Promise<string> {
+  if (typeof globalThis !== 'undefined' && globalThis.crypto?.subtle) {
+    const encoder = new TextEncoder()
+    const data = encoder.encode(str)
+    const hashBuffer = await globalThis.crypto.subtle.digest('SHA-256', data)
+    const bytes = new Uint8Array(hashBuffer)
+    let binary = ''
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i])
+    }
+    const base64 = btoa(binary)
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+  }
+  return str
+}
+
 export function generateSecureToken(prefix = 'cult'): string {
-  return `${prefix}_${crypto.randomBytes(24).toString('hex')}`
+  if (typeof globalThis !== 'undefined' && globalThis.crypto?.getRandomValues) {
+    const bytes = new Uint8Array(24)
+    globalThis.crypto.getRandomValues(bytes)
+    const hex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
+    return `${prefix}_${hex}`
+  }
+  return `${prefix}_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`
 }
 
 export async function createAuthorizationCode(
@@ -107,7 +128,7 @@ export async function exchangeCodeForTokens(
     // Verify PKCE if code_challenge was stored
     if (codeData.code_challenge && codeVerifier) {
       if (codeData.code_challenge_method === 'S256') {
-        const hash = crypto.createHash('sha256').update(codeVerifier).digest('base64url')
+        const hash = await sha256Base64Url(codeVerifier)
         if (hash !== codeData.code_challenge) {
           throw new Error('PKCE verification failed: invalid code_verifier')
         }

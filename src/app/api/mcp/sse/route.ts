@@ -1,4 +1,3 @@
-export const runtime = 'edge'
 import { NextRequest, NextResponse } from 'next/server'
 import { getApiClient, getDefaultWorkspaceId, getDefaultUserId } from '@/lib/supabase/admin'
 import { verifyOAuthAccessToken } from '@/lib/oauth/server'
