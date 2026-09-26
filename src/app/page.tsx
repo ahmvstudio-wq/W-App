@@ -246,32 +246,32 @@ export default function LandingPage() {
       />
 
 
-      {/* ─── VIBRANT AMBIENT STUDIO LIGHTING BACKDROPS ─── */}
-      <div className="fixed top-0 left-1/4 w-[700px] h-[600px] bg-gradient-to-br from-indigo-500/25 via-purple-500/20 to-pink-500/15 rounded-full blur-[140px] pointer-events-none z-0 animate-pulse" />
+      {/* ─── VIBRANT AMBIENT STUDIO LIGHTING BACKDROPS (PRESERVED) ─── */}
+      <div className="fixed top-0 left-1/4 w-[700px] h-[600px] bg-gradient-to-br from-indigo-500/25 via-purple-500/20 to-pink-500/15 rounded-full blur-[140px] pointer-events-none z-0" />
       <div className="fixed top-1/4 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-amber-400/25 via-orange-500/20 to-transparent rounded-full blur-[140px] pointer-events-none z-0" />
       <div className="fixed bottom-10 left-10 w-[700px] h-[600px] bg-gradient-to-tr from-blue-600/20 via-indigo-500/20 to-purple-500/15 rounded-full blur-[150px] pointer-events-none z-0" />
 
       {/* ─── HERO SECTION ─── */}
       <section className="pt-28 sm:pt-36 pb-16 sm:pb-24 px-6 sm:px-10 max-w-[1400px] mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-          {/* Left: Text */}
+          {/* Left: Text (Pure Monochrome) */}
           <div className="lg:col-span-6 space-y-8 pt-4">
-            {/* Social proof badge with glowing gradient ring */}
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-indigo-500/20 bg-white/80 backdrop-blur-md text-xs text-neutral-800 font-normal shadow-[0_4px_20px_rgba(99,102,241,0.12)]">
-              <span className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-pulse" />
+            {/* Social proof badge */}
+            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-black/[0.08] bg-white/80 backdrop-blur-md text-xs text-neutral-800 font-normal shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-black animate-pulse" />
               <span className="font-medium">Free for solo builders &amp; creators</span>
             </div>
 
-            {/* Giant headline with rich gradient text */}
-            <h1 className="text-[clamp(36px,5.5vw,72px)] font-light tracking-[-0.035em] leading-[1.05] text-black">
+            {/* Giant headline (Pure Monochrome) */}
+            <h1 className="text-[clamp(36px,5.5vw,72px)] font-bold tracking-[-0.035em] leading-[1.05] text-black">
               <AnimatedText text="One workspace" />
-              <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-amber-500 block">
+              <span className="text-neutral-400 font-light block">
                 <AnimatedText text="for everything you ship." delay={0.2} />
               </span>
             </h1>
 
             {/* Subtitle */}
-            <div className="text-base sm:text-lg text-neutral-600 font-light leading-relaxed max-w-lg">
+            <div className="text-base sm:text-lg text-neutral-500 font-normal leading-relaxed max-w-lg">
               <AnimatedText text="The studio operating system for founders and creators. AI connectors, deep work sprints, meeting intelligence, and content scheduling — unified." delay={0.4} />
             </div>
 
@@ -279,43 +279,40 @@ export default function LandingPage() {
             <div className="flex items-center gap-4 pt-2">
               <button
                 onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
-                className="px-7 py-3.5 rounded-full bg-gradient-to-r from-black via-neutral-900 to-neutral-800 hover:from-neutral-900 hover:to-black text-white text-sm font-medium transition-all cursor-pointer shadow-[0_4px_20px_rgba(0,0,0,0.15)] active:scale-[0.98]"
+                className="px-7 py-3.5 rounded-full bg-black hover:bg-neutral-800 text-white text-sm font-medium transition-all cursor-pointer shadow-sm active:scale-[0.98]"
               >
                 Launch Free Workspace
               </button>
               <button
                 onClick={() => { setMode('login'); setConfirmationSent(false); setIsAuthOpen(true) }}
-                className="px-6 py-3.5 rounded-full border border-black/[0.12] hover:border-indigo-500/40 bg-white/70 backdrop-blur-xs text-sm font-normal text-black transition-all cursor-pointer shadow-xs"
+                className="px-6 py-3.5 rounded-full border border-black/[0.12] hover:border-black/[0.3] bg-white/70 backdrop-blur-xs text-sm font-normal text-black transition-all cursor-pointer shadow-xs"
               >
                 Sign In
               </button>
             </div>
           </div>
 
-          {/* Right: High-End Interactive Telemetry & Graphs Cockpit (Obsidian Glass + Neon Aura) */}
+          {/* Right: High-End Interactive Telemetry & Graphs Cockpit (Monochrome Hardware Deck) */}
           <div className="lg:col-span-6 relative">
-            {/* Ambient Neon Aura Behind the Card */}
-            <div className="absolute -inset-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-500 rounded-[34px] blur-2xl opacity-40 animate-pulse pointer-events-none" />
-
-            <div className="relative rounded-3xl bg-[#0c0d12]/95 backdrop-blur-2xl border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.3)] p-6 space-y-5 text-white overflow-hidden">
+            <div className="relative rounded-3xl bg-[#0c0d12]/95 backdrop-blur-2xl border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.2)] p-6 space-y-5 text-white overflow-hidden">
               
               {/* Top Bar: System Status & Live Velocity */}
               <div className="flex items-center justify-between pb-4 border-b border-white/10">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.9)] animate-pulse" />
-                  <span className="text-[11px] font-mono uppercase tracking-widest text-indigo-200 font-semibold">CULTLIKE TELEMETRY</span>
+                  <div className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-neutral-300 font-medium">CULTLIKE TELEMETRY</span>
                 </div>
                 <div className="flex items-center gap-2.5">
-                  <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-mono font-medium">
+                  <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-neutral-200 border border-white/15 text-[10px] font-mono font-medium">
                     99.8% On-Time
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-mono font-semibold shadow-[0_0_12px_rgba(245,158,11,0.2)]">
+                  <span className="px-2.5 py-0.5 rounded-full bg-white/15 text-white border border-white/20 text-[10px] font-mono font-medium">
                     +34% WoW Velocity
                   </span>
                 </div>
               </div>
 
-              {/* Main Graph 1: 7-Day Velocity Spline Curve */}
+              {/* Main Graph 1: 7-Day Velocity Spline Curve (Monochrome) */}
               <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/[0.08] space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
@@ -325,30 +322,19 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs font-mono font-semibold text-amber-400">18 Deliverables</span>
+                    <span className="text-xs font-mono font-medium text-white">18 Deliverables</span>
                     <div className="text-[10px] text-neutral-400 font-mono">Peak: 6.8h / day</div>
                   </div>
                 </div>
 
-                {/* SVG Spline Graph */}
+                {/* SVG Spline Graph (Pure Monochrome) */}
                 <div className="relative h-28 w-full pt-2">
                   <svg className="w-full h-full overflow-visible" viewBox="0 0 400 100" preserveAspectRatio="none">
                     <defs>
-                      <linearGradient id="heroGradientDark" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#818cf8" stopOpacity="0.45" />
-                        <stop offset="60%" stopColor="#a855f7" stopOpacity="0.15" />
-                        <stop offset="100%" stopColor="#a855f7" stopOpacity="0.0" />
+                      <linearGradient id="monoGradientDark" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.25" />
+                        <stop offset="100%" stopColor="#ffffff" stopOpacity="0.0" />
                       </linearGradient>
-                      <linearGradient id="lineGradDark" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#6366f1" />
-                        <stop offset="40%" stopColor="#a855f7" />
-                        <stop offset="75%" stopColor="#ec4899" />
-                        <stop offset="100%" stopColor="#f59e0b" />
-                      </linearGradient>
-                      <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feGaussianBlur stdDeviation="3" result="blur" />
-                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                      </filter>
                     </defs>
 
                     {/* Grid lines */}
@@ -358,25 +344,24 @@ export default function LandingPage() {
                     {/* Area under curve */}
                     <path
                       d="M 0,80 Q 40,65 80,75 T 160,40 T 240,55 T 320,20 T 400,15 L 400,100 L 0,100 Z"
-                      fill="url(#heroGradientDark)"
+                      fill="url(#monoGradientDark)"
                     />
 
-                    {/* Glowing Stroke line */}
+                    {/* Monochrome Stroke line */}
                     <path
                       d="M 0,80 Q 40,65 80,75 T 160,40 T 240,55 T 320,20 T 400,15"
                       fill="none"
-                      stroke="url(#lineGradDark)"
-                      strokeWidth="3"
+                      stroke="#ffffff"
+                      strokeWidth="2.5"
                       strokeLinecap="round"
-                      filter="url(#glow)"
                     />
 
-                    {/* Interactive Data Nodes */}
-                    <circle cx="80" cy="75" r="4" fill="#0c0d12" stroke="#818cf8" strokeWidth="2.5" />
-                    <circle cx="160" cy="40" r="4" fill="#0c0d12" stroke="#a855f7" strokeWidth="2.5" />
-                    <circle cx="240" cy="55" r="4" fill="#0c0d12" stroke="#ec4899" strokeWidth="2.5" />
-                    <circle cx="320" cy="20" r="5" fill="#f59e0b" stroke="#ffffff" strokeWidth="2" className="animate-pulse" />
-                    <circle cx="400" cy="15" r="5" fill="#f59e0b" stroke="#ffffff" strokeWidth="2" />
+                    {/* Monochrome Data Nodes */}
+                    <circle cx="80" cy="75" r="3.5" fill="#0c0d12" stroke="#ffffff" strokeWidth="2" />
+                    <circle cx="160" cy="40" r="3.5" fill="#0c0d12" stroke="#ffffff" strokeWidth="2" />
+                    <circle cx="240" cy="55" r="3.5" fill="#0c0d12" stroke="#ffffff" strokeWidth="2" />
+                    <circle cx="320" cy="20" r="4.5" fill="#ffffff" stroke="#0c0d12" strokeWidth="1.5" className="animate-pulse" />
+                    <circle cx="400" cy="15" r="4.5" fill="#ffffff" stroke="#0c0d12" strokeWidth="1.5" />
                   </svg>
                 </div>
 
@@ -388,14 +373,14 @@ export default function LandingPage() {
                   <span>Thu</span>
                   <span>Fri</span>
                   <span>Sat</span>
-                  <span className="font-semibold text-amber-400">Sun (Today)</span>
+                  <span className="font-semibold text-white">Sun (Today)</span>
                 </div>
               </div>
 
               {/* Bottom Split: Radial Focus Dial + Annual Execution Matrix */}
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
                 
-                {/* Left Mini: Radial Chronograph */}
+                {/* Left Mini: Radial Chronograph (Monochrome) */}
                 <div className="sm:col-span-5 p-4 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center gap-3.5">
                   <div className="relative w-16 h-16 flex-shrink-0 flex items-center justify-center">
                     <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
@@ -407,7 +392,7 @@ export default function LandingPage() {
                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       />
                       <path
-                        className="text-amber-400"
+                        className="text-white"
                         strokeDasharray="84, 100"
                         strokeLinecap="round"
                         stroke="currentColor"
@@ -417,23 +402,23 @@ export default function LandingPage() {
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-xs font-mono font-semibold text-white">24:18</span>
+                      <span className="text-xs font-mono font-medium text-white">24:18</span>
                     </div>
                   </div>
                   <div>
-                    <span className="text-[10px] font-mono uppercase text-indigo-300 block font-semibold">DEEP WORK</span>
-                    <span className="text-xs font-normal text-white/90 block leading-tight">Sprint: Product Reel</span>
-                    <span className="text-[10px] font-mono text-amber-400 font-semibold mt-0.5 block">14-Day Streak 🔥</span>
+                    <span className="text-[10px] font-mono uppercase text-neutral-400 block font-medium">DEEP WORK</span>
+                    <span className="text-xs font-normal text-white block leading-tight">Sprint: Product Reel</span>
+                    <span className="text-[10px] font-mono text-neutral-300 font-medium mt-0.5 block">14-Day Streak 🔥</span>
                   </div>
                 </div>
 
-                {/* Right Mini: 12-Week Annual Execution Matrix Heatmap */}
+                {/* Right Mini: 12-Week Annual Execution Matrix Heatmap (Monochrome) */}
                 <div className="sm:col-span-7 p-4 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-mono uppercase text-neutral-300 font-medium">ANNUAL CADENCE</span>
-                    <span className="text-[10px] font-mono text-amber-300 font-semibold">142 Shipped</span>
+                    <span className="text-[10px] font-mono uppercase text-neutral-400 font-medium">ANNUAL CADENCE</span>
+                    <span className="text-[10px] font-mono text-neutral-200 font-medium">142 Shipped</span>
                   </div>
-                  {/* Heatmap Grid with Vivid Colors */}
+                  {/* Heatmap Grid (Monochrome Levels) */}
                   <div className="grid grid-cols-12 gap-1">
                     {[
                       [1,2,3,2,1,0,3], [2,3,4,3,2,1,2], [3,4,4,4,3,2,3], [1,2,3,1,0,1,2],
@@ -442,10 +427,10 @@ export default function LandingPage() {
                     ].map((col, cIdx) => (
                       <div key={cIdx} className="flex flex-col gap-1">
                         {col.map((lvl, rIdx) => {
-                          const bg = lvl === 4 ? 'bg-amber-400 shadow-[0_0_6px_rgba(245,158,11,0.6)]' :
-                                     lvl === 3 ? 'bg-purple-500 shadow-[0_0_4px_rgba(168,85,247,0.4)]' :
-                                     lvl === 2 ? 'bg-indigo-500' :
-                                     lvl === 1 ? 'bg-indigo-950/80 border border-indigo-800/40' : 'bg-white/5';
+                          const bg = lvl === 4 ? 'bg-white' :
+                                     lvl === 3 ? 'bg-neutral-400' :
+                                     lvl === 2 ? 'bg-neutral-600' :
+                                     lvl === 1 ? 'bg-neutral-800' : 'bg-white/5';
                           return (
                             <div 
                               key={rIdx} 
@@ -459,7 +444,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex items-center justify-between text-[9px] font-mono text-neutral-400 pt-1.5">
                     <span>12 Weeks Ago</span>
-                    <span className="font-semibold text-amber-400">Active Sprint</span>
+                    <span className="font-semibold text-white">Active Sprint</span>
                   </div>
                 </div>
 
