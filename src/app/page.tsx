@@ -324,299 +324,318 @@ export default function LandingPage() {
 
 
       {/* ─── FULL-COLOR INTEGRATION LOGOS SCROLLING MARQUEE (ACTUAL LOGOS AS-IS) ─── */}
-      <section className="py-10 border-y border-black/[0.06] bg-white/70 backdrop-blur-sm relative overflow-hidden">
-        {/* Infinite Kinetic Marquee of Full-Color Logos */}
+      <section className="py-20 sm:py-24 border-y border-black/[0.06] bg-white relative overflow-hidden">
+        <div className="max-w-[1200px] mx-auto text-center px-6 mb-12">
+           <h2 className="text-3xl font-semibold tracking-tight text-black mb-4 uppercase">YOUR AI. YOUR TOOLS.<br/>YOUR OPERATING SYSTEM.</h2>
+           <p className="text-lg text-neutral-500 max-w-2xl mx-auto">Cultlike doesn't ask you to replace the tools you already use. It connects them.</p>
+        </div>
         <div className="flex overflow-hidden select-none [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
           <div className="flex gap-8 sm:gap-12 items-center shrink-0 animate-marquee py-2">
             {INTEGRATION_APPS.concat(INTEGRATION_APPS).map((item, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-white border border-black/[0.07] shadow-xs hover:shadow-md hover:scale-110 transition-all cursor-default shrink-0 group p-3 sm:p-4"
-                title={item.name}
-              >
+              <div key={idx} className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-[#fafafc] border border-black/[0.07] shadow-xs hover:shadow-md hover:scale-110 transition-all cursor-default shrink-0 group p-3 sm:p-4" title={item.name}>
                 <item.Logo className="w-full h-full object-contain" />
               </div>
             ))}
           </div>
         </div>
-      </section>
-
-
-      {/* ─── ONE SOLE PLACE OF TRUTH (NARRATIVE SECTION) ─── */}
-      <section className="py-20 sm:py-32 px-6 sm:px-10 max-w-[1200px] mx-auto relative z-10 text-center space-y-6">
-        <h2 className="text-3xl sm:text-5xl font-medium tracking-tight text-black max-w-2xl mx-auto leading-tight">
-          The single source of truth for your entire operation.
-        </h2>
-        <p className="text-base sm:text-xl text-neutral-500 font-light max-w-2xl mx-auto leading-relaxed">
-          Stop scattering your work across 10 disconnected tabs. Cultlike connects your meetings, sprint deliverables, notes, and social publishing into one clean studio.
-        </p>
-      </section>
-
-
-      {/* ─── 3 WORKSPACE PILLARS ─── */}
-      <section className="py-12 sm:py-20 px-6 sm:px-10 bg-white border-t border-black/[0.06] relative z-10">
-        <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10">
-          
-          {/* Pillar 1 */}
-          <div className="p-8 rounded-3xl bg-[#fbfbfd] border border-black/[0.06] hover:border-black/[0.12] transition-all space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-white border border-black/[0.08] flex items-center justify-center text-black shadow-2xs">
-              <Layers size={22} className="text-neutral-900" />
-            </div>
-            <h3 className="text-xl font-medium text-black tracking-tight">
-              Meetings to Tasks
-            </h3>
-            <p className="text-sm text-neutral-500 font-light leading-relaxed">
-              When your Fathom calls end, the takeaways and action items automatically sync into your sprint. Turn any spoken point into a deliverable with one click.
-            </p>
-          </div>
-
-          {/* Pillar 2 */}
-          <div className="p-8 rounded-3xl bg-[#fbfbfd] border border-black/[0.06] hover:border-black/[0.12] transition-all space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-white border border-black/[0.08] flex items-center justify-center text-black shadow-2xs">
-              <Clock size={22} className="text-neutral-900" />
-            </div>
-            <h3 className="text-xl font-medium text-black tracking-tight">
-              25-Min Deep Work
-            </h3>
-            <p className="text-sm text-neutral-500 font-light leading-relaxed">
-              Every deliverable has a built-in focus timer. Ship work in sprint blocks, build your daily streak, and track your annual consistency on a 52-week heatmap.
-            </p>
-          </div>
-
-          {/* Pillar 3 */}
-          <div className="p-8 rounded-3xl bg-[#fbfbfd] border border-black/[0.06] hover:border-black/[0.12] transition-all space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-white border border-black/[0.08] flex items-center justify-center text-black shadow-2xs">
-              <Video size={22} className="text-neutral-900" />
-            </div>
-            <h3 className="text-xl font-medium text-black tracking-tight">
-              Content Pipeline
-            </h3>
-            <p className="text-sm text-neutral-500 font-light leading-relaxed">
-              Connect Google Drive, YouTube, and Instagram in one vault. Plan your schedule, inspect retention curves, and ship content without leaving your workspace.
-            </p>
-          </div>
-
+        <div className="max-w-[1200px] mx-auto text-center px-6 mt-12">
+           <p className="text-xl font-semibold text-black">Your AI becomes the interface. Cultlike becomes the engine underneath it.</p>
         </div>
       </section>
 
+      {/* ─── THE PROBLEM ─── */}
+      <section className="py-20 sm:py-32 px-6 sm:px-10 max-w-[1000px] mx-auto relative z-10 text-center space-y-8">
+        <h2 className="text-3xl sm:text-5xl font-medium tracking-tight text-black leading-tight">
+          Your ideas shouldn't disappear between apps.
+        </h2>
+        <div className="text-lg sm:text-xl text-neutral-500 font-light max-w-2xl mx-auto leading-relaxed space-y-4">
+          <p>Your best ideas live in conversations.</p>
+          <p>Your assets live somewhere else.</p>
+          <p>Your publishing schedule is in another tool.</p>
+          <p>Your tasks are scattered across notes, chats, calendars and spreadsheets.</p>
+          <p className="font-semibold text-black">And somehow, you're still the one holding everything together.</p>
+        </div>
+        <div className="pt-10 border-t border-black/[0.06]">
+          <h3 className="text-2xl font-semibold mb-4 text-black">Cultlike changes that.</h3>
+          <p className="text-lg text-neutral-500 max-w-2xl mx-auto mb-6">
+            It becomes the persistent layer underneath your work — keeping your projects, content, assets, schedules and execution connected while you keep using the tools you already love.
+          </p>
+          <p className="text-xl font-bold text-black">You think. Cultlike operates.</p>
+        </div>
+      </section>
 
-      {/* ─── REAL IN-APP SHOWCASE (POMODORO & VELOCITY PREVIEW) ─── */}
-      <section className="py-20 sm:py-32 px-6 sm:px-10 max-w-[1200px] mx-auto relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          
-          {/* Left: Direct Text */}
-          <div className="lg:col-span-5 space-y-5 text-left">
-            <h2 className="text-3xl sm:text-4xl font-medium tracking-tight text-black leading-tight">
-              Everything in front of you.
-            </h2>
-            <p className="text-base text-neutral-500 font-light leading-relaxed">
-              Open your workspace and see exactly what needs to be delivered today. Clean focus timers, sprint velocity graphs, and direct AI connectors keep you shipping.
-            </p>
-            
-            <div className="space-y-2.5 pt-2">
-              <div className="flex items-center gap-3 text-sm text-neutral-700 font-light">
-                <span className="w-5 h-5 rounded-full bg-sky-50 text-sky-700 flex items-center justify-center text-xs font-semibold">✓</span>
-                <span>Built-in 25-minute deep work timer</span>
+      {/* ─── PERSONAS ─── */}
+      <section className="py-20 sm:py-32 px-6 sm:px-10 bg-[#fafafc] border-t border-black/[0.06] relative z-10">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight text-black mb-4 uppercase">BUILT FOR PEOPLE WHO SHIP.</h2>
+            <p className="text-xl text-neutral-500">Not people who want to organize their lives. <span className="text-black font-medium">People building something.</span></p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+            <div className="p-10 rounded-3xl bg-white border border-black/[0.06] hover:border-black/[0.12] transition-all shadow-sm">
+              <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-neutral-400 mb-3">CREATOR</h3>
+              <h4 className="text-2xl font-medium text-black mb-3">Turn ideas into content.</h4>
+              <p className="text-neutral-500">Keep your entire content operation in one place — from the first idea to the final publish.</p>
+            </div>
+            <div className="p-10 rounded-3xl bg-white border border-black/[0.06] hover:border-black/[0.12] transition-all shadow-sm">
+              <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-neutral-400 mb-3">FOUNDER</h3>
+              <h4 className="text-2xl font-medium text-black mb-3">Keep the company moving.</h4>
+              <p className="text-neutral-500">Projects, decisions, deadlines, documents and execution stay connected instead of disappearing into scattered tools.</p>
+            </div>
+            <div className="p-10 rounded-3xl bg-white border border-black/[0.06] hover:border-black/[0.12] transition-all shadow-sm">
+              <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-neutral-400 mb-3">AGENCY</h3>
+              <h4 className="text-2xl font-medium text-black mb-3">Run the machine behind the work.</h4>
+              <p className="text-neutral-500">Manage clients, content pipelines, deadlines, assets and delivery without turning your operation into a mess of tabs.</p>
+            </div>
+            <div className="p-10 rounded-3xl bg-white border border-black/[0.06] hover:border-black/[0.12] transition-all shadow-sm">
+              <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-neutral-400 mb-3">CREATOR MANAGER</h3>
+              <h4 className="text-2xl font-medium text-black mb-3">Keep talent moving.</h4>
+              <p className="text-neutral-500">See what's being created, what's blocked, what's scheduled and what's actually shipping.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── MEMORY ─── */}
+      <section className="py-20 sm:py-32 px-6 sm:px-10 max-w-[1000px] mx-auto relative z-10 text-center border-t border-black/[0.06]">
+        <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight mb-12 uppercase text-black">STOP STARTING FROM ZERO.</h2>
+        <div className="space-y-4 text-xl sm:text-2xl text-neutral-500 mb-12">
+          <p>Every conversation shouldn't become another dead-end chat.</p>
+          <p>Every idea shouldn't become another forgotten note.</p>
+          <p>Every piece of content shouldn't require rebuilding the same process.</p>
+        </div>
+        <div className="space-y-2 text-lg text-black font-medium mb-12 bg-[#fafafc] p-8 rounded-3xl border border-black/[0.04]">
+          <p className="text-2xl font-bold mb-4">Cultlike gives your work memory.</p>
+          <p>Your projects know what happened.</p>
+          <p>Your content knows where it is.</p>
+          <p>Your schedule knows what's coming.</p>
+          <p>Your AI knows what matters.</p>
+        </div>
+        <p className="text-2xl font-bold text-black">Your system keeps moving.</p>
+      </section>
+
+      {/* ─── THE CONTENT MACHINE ─── */}
+      <section className="py-20 sm:py-32 px-6 sm:px-10 bg-white border-y border-black/[0.06] relative z-10">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl font-semibold tracking-tight mb-6 uppercase text-black">THE CONTENT MACHINE.</h2>
+            <div className="flex items-center justify-center gap-2 flex-wrap text-neutral-400 font-medium text-lg mb-6">
+              <span>Ideas</span><span>→</span>
+              <span>Assets</span><span>→</span>
+              <span>Drafts</span><span>→</span>
+              <span>Review</span><span>→</span>
+              <span>Schedule</span><span>→</span>
+              <span>Publish</span><span>→</span>
+              <span className="text-black">Learn.</span>
+            </div>
+            <p className="text-2xl font-bold text-black">All connected.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 p-10 rounded-[32px] bg-[#fafafc] border border-black/[0.06] shadow-sm flex flex-col justify-between">
+              <div className="mb-12">
+                <h3 className="text-2xl font-semibold text-black uppercase mb-3">Content Vault</h3>
+                <h4 className="text-lg font-medium text-black mb-3">Your content has a home.</h4>
+                <p className="text-neutral-500 max-w-sm leading-relaxed">Upload videos, images and creative assets. Keep drafts organized. Connect content to projects and execution. No more digging through folders to find the thing you need.</p>
               </div>
-              <div className="flex items-center gap-3 text-sm text-neutral-700 font-light">
-                <span className="w-5 h-5 rounded-full bg-sky-50 text-sky-700 flex items-center justify-center text-xs font-semibold">✓</span>
-                <span>Direct ChatGPT and Claude workspace sync</span>
+              <div className="p-4 bg-white border border-black/[0.04] rounded-2xl flex gap-4 shadow-sm w-fit">
+                <div className="w-16 h-24 rounded-lg bg-black relative overflow-hidden shrink-0">
+                  <div className="absolute top-1 left-1 bg-rose-500 text-white text-[8px] font-bold px-1 rounded">YT</div>
+                </div>
+                <div className="py-1 pr-4">
+                  <div className="text-sm font-semibold text-black mb-2">The Discipline Myth</div>
+                  <div className="text-[10px] font-mono text-neutral-400 mb-1">3S HOOK</div>
+                  <div className="text-xs text-black italic">"You're relying on motivation..."</div>
+                </div>
               </div>
-              <div className="flex items-center gap-3 text-sm text-neutral-700 font-light">
-                <span className="w-5 h-5 rounded-full bg-sky-50 text-sky-700 flex items-center justify-center text-xs font-semibold">✓</span>
-                <span>52-Week annual shipping heatmap</span>
+            </div>
+
+            <div className="p-10 rounded-[32px] bg-[#fafafc] border border-black/[0.06] shadow-sm">
+              <h3 className="text-xl font-semibold text-black uppercase mb-3">Publishing Engine</h3>
+              <h4 className="text-base font-medium text-black mb-3">Create the schedule once.</h4>
+              <p className="text-sm text-neutral-500 mb-6">Cultlike handles the operational layer behind distribution — connecting your content to the platforms where it needs to go.</p>
+              <div className="space-y-1.5 text-sm font-medium mb-6 text-neutral-700">
+                <p>YouTube.</p><p>Instagram.</p><p>Your schedule.</p><p>Your pipeline.</p>
+              </div>
+              <p className="font-bold text-black text-sm">From planned to published.</p>
+            </div>
+
+            <div className="md:col-span-3 p-10 rounded-[32px] bg-[#fafafc] border border-black/[0.06] shadow-sm text-center">
+              <h3 className="text-2xl font-semibold text-black uppercase mb-3">Performance Loop</h3>
+              <h4 className="text-lg font-medium text-black mb-4">Publishing isn't the finish line. It's feedback.</h4>
+              <p className="text-neutral-500 mb-8 max-w-2xl mx-auto">Cultlike brings performance data back into the system so you can understand what happened, what worked, and what needs to change.</p>
+              <div className="bg-white p-6 rounded-2xl border border-black/[0.04] shadow-sm inline-block text-left">
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-2">Ask your AI</p>
+                <p className="text-lg font-semibold text-black mb-1">“How did this sprint perform?”</p>
+                <p className="text-sm text-neutral-500">Get the answer from the actual data. Not a guess.</p>
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* Right: Live Interactive In-App Focus Card */}
-          <div className="lg:col-span-7">
-            <div className="p-6 sm:p-8 rounded-3xl bg-white border border-black/[0.08] shadow-[0_20px_60px_rgba(0,0,0,0.06)] space-y-6 relative overflow-hidden">
-              <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-sky-400/50 to-transparent" />
-
-              {/* In-App Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-black/[0.06]">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-black text-white text-xs font-semibold flex items-center justify-center font-mono">
-                    C
+      {/* ─── EVIDENCE / PROOF ─── */}
+      <section className="py-20 sm:py-32 px-6 sm:px-10 max-w-[1200px] mx-auto relative z-10">
+        <div className="p-12 md:p-16 rounded-[48px] bg-black shadow-2xl text-white">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h3 className="text-3xl sm:text-4xl font-semibold tracking-tight mb-6 uppercase">YOUR WORK SHOULD LEAVE EVIDENCE.</h3>
+              <p className="text-neutral-400 text-lg mb-8">Most platforms measure activity. Cultlike measures <strong className="text-white">output.</strong></p>
+              <div className="space-y-2 text-neutral-400 text-sm mb-10">
+                <p>How much did you ship?</p>
+                <p>How consistently did you create?</p>
+                <p>How quickly did you move?</p>
+                <p>What did you improve?</p>
+                <p>What are your personal bests?</p>
+              </div>
+              <h4 className="text-amber-500 font-bold tracking-widest uppercase text-xs mb-4">CULTLIKE CREATE</h4>
+              <p className="font-medium mb-6">Your execution becomes visible.</p>
+              <div className="flex flex-wrap gap-2 text-xs uppercase tracking-wider text-neutral-300 mb-8">
+                <span className="px-3 py-1 bg-white/10 rounded-full">Content shipped</span>
+                <span className="px-3 py-1 bg-white/10 rounded-full">Shipping streaks</span>
+                <span className="px-3 py-1 bg-white/10 rounded-full">Deep work</span>
+                <span className="px-3 py-1 bg-white/10 rounded-full">Velocity</span>
+              </div>
+              <p className="text-xl font-semibold">Not vanity metrics. Proof of work.</p>
+            </div>
+            
+            <div className="p-10 rounded-[32px] border border-white/10 bg-[#0c0d12] shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 blur-[80px] rounded-full pointer-events-none" />
+              <div className="relative z-10">
+                <div className="text-xs text-neutral-500 font-mono uppercase tracking-widest mb-2">Current Streak</div>
+                <div className="text-6xl font-light text-amber-500 tracking-tight">14<span className="text-2xl text-amber-500/50"> DAYS</span></div>
+                
+                <div className="grid grid-cols-2 gap-6 pt-8 mt-8 border-t border-white/10">
+                  <div>
+                    <div className="text-xs text-neutral-500 font-mono uppercase tracking-widest mb-2">Peak Velocity</div>
+                    <div className="text-3xl font-light">8<span className="text-base text-neutral-500"> /day</span></div>
                   </div>
                   <div>
-                    <div className="text-xs font-medium text-black">Active Sprint</div>
-                    <div className="text-[11px] text-neutral-400 font-light">Today&apos;s Deliverables</div>
-                  </div>
-                </div>
-                <div className="text-xs font-medium text-neutral-800">
-                  14-Day Streak 🔥
-                </div>
-              </div>
-
-              {/* Interactive Live Timer */}
-              <div className="p-6 rounded-2xl bg-gradient-to-b from-[#fbfbfd] to-neutral-50 border border-black/[0.04] flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div className="space-y-1 text-center sm:text-left">
-                  <div className="text-base font-medium text-black">
-                    Refactor OAuth token rotation engine
-                  </div>
-                  <div className="text-xs text-neutral-500 font-light">
-                    25-minute focused execution block
-                  </div>
-                </div>
-
-                {/* Clock Controls */}
-                <div className="flex items-center gap-4">
-                  <div className="text-3xl font-light font-mono text-black tracking-tight bg-white px-4 py-2 rounded-2xl border border-black/[0.08] shadow-2xs">
-                    {formatTimer(timerSeconds)}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setTimerActive(!timerActive)}
-                      className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs",
-                        timerActive 
-                          ? "bg-amber-500 text-white hover:bg-amber-600" 
-                          : "bg-black text-white hover:bg-neutral-800"
-                      )}
-                      title={timerActive ? "Pause Timer" : "Start 25-Min Sprint"}
-                    >
-                      {timerActive ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
-                    </button>
-                    <button
-                      onClick={() => { setTimerActive(false); setTimerSeconds(25 * 60) }}
-                      className="w-10 h-10 rounded-full bg-white border border-black/[0.08] text-neutral-600 hover:text-black flex items-center justify-center transition-colors cursor-pointer"
-                      title="Reset Sprint"
-                    >
-                      <RotateCcw size={14} />
-                    </button>
+                    <div className="text-xs text-neutral-500 font-mono uppercase tracking-widest mb-2">Total Shipped</div>
+                    <div className="text-3xl font-light">142</div>
                   </div>
                 </div>
               </div>
-
-              {/* 7-Day Velocity Curve Preview */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-neutral-500 font-light">Weekly Output</span>
-                  <span className="font-medium text-black">18 Tasks Completed this Week</span>
-                </div>
-                
-                <div className="h-20 w-full pt-1">
-                  <svg className="w-full h-full overflow-visible" viewBox="0 0 400 80" preserveAspectRatio="none">
-                    <defs>
-                      <linearGradient id="landingVelocityGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.2" />
-                        <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.0" />
-                      </linearGradient>
-                    </defs>
-                    <path
-                      d="M 0,60 Q 50,45 100,50 T 200,30 T 300,40 T 400,10 L 400,80 L 0,80 Z"
-                      fill="url(#landingVelocityGlow)"
-                    />
-                    <path
-                      d="M 0,60 Q 50,45 100,50 T 200,30 T 300,40 T 400,10"
-                      fill="none"
-                      stroke="#0ea5e9"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                    />
-                    <circle cx="400" cy="10" r="4" fill="#0ea5e9" stroke="#ffffff" strokeWidth="2" />
-                  </svg>
-                </div>
-              </div>
-
             </div>
           </div>
-
         </div>
       </section>
 
+      {/* ─── PROOF IS CURRENCY ─── */}
+      <section className="py-20 sm:py-32 px-6 sm:px-10 max-w-[1000px] mx-auto text-center">
+        <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight mb-12 text-black uppercase">FOR CREATORS, PROOF IS CURRENCY.</h2>
+        <div className="space-y-4 text-xl sm:text-2xl text-neutral-500 mb-12">
+          <p>Sponsors don't just want followers.</p>
+          <p>Clients don't just want promises.</p>
+          <p>Agencies don't just want presentations.</p>
+        </div>
+        <p className="text-2xl sm:text-3xl font-medium text-black mb-8">They want to know: <br/><span className="font-bold text-4xl sm:text-5xl block mt-4">Can you actually execute?</span></p>
+        <p className="text-lg text-neutral-500 max-w-2xl mx-auto mb-12">Cultlike turns your work into a clean, verifiable proof layer you can share.</p>
+        <div className="flex justify-center items-center gap-4 text-xl font-bold text-black flex-wrap">
+          <span>Your output.</span><span>•</span>
+          <span>Your consistency.</span><span>•</span>
+          <span>Your record.</span><span>•</span>
+          <span className="text-3xl">Your proof.</span>
+        </div>
+      </section>
 
-      {/* ─── FAQ SECTION ─── */}
-      <section id="faq" className="py-20 sm:py-32 px-6 sm:px-10 bg-white border-t border-black/[0.06] relative z-10">
-        <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
-          
-          <div className="lg:col-span-4 space-y-3 text-left">
-            <h2 className="text-3xl sm:text-4xl font-medium tracking-tight text-black leading-tight">
-              Common questions.
-            </h2>
-            <p className="text-sm text-neutral-500 font-light">
-              Need help with setup?{' '}
-              <a href="mailto:hello@cultlike.ahmvsystems.com" className="text-black underline underline-offset-4 decoration-black/30 hover:decoration-black transition-colors">
-                Contact our team
-              </a>
-              .
-            </p>
+      {/* ─── ALIVE WORKSPACE ─── */}
+      <section className="py-20 sm:py-32 px-6 sm:px-10 bg-[#fafafc] border-t border-black/[0.06] text-center">
+        <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight text-black uppercase mb-6">YOUR WORKSPACE SHOULD FEEL ALIVE.</h2>
+        <p className="text-xl text-neutral-500 max-w-2xl mx-auto mb-12">Not another dashboard full of numbers. A living environment where your work exists.</p>
+        <div className="flex flex-wrap justify-center gap-4 text-lg font-medium text-black mb-12 max-w-3xl mx-auto">
+          <span>Projects.</span><span className="text-neutral-400">Whiteboards.</span>
+          <span>Content.</span><span className="text-neutral-400">Assets.</span>
+          <span>Schedules.</span><span className="text-neutral-400">Deadlines.</span>
+          <span>Ideas.</span>
+        </div>
+        <p className="text-2xl font-bold text-black mb-2">Everything connected to everything else.</p>
+        <p className="text-lg text-neutral-500">Move something once. The system understands what changed.</p>
+      </section>
+
+      {/* ─── NEVER LEAVE YOUR AI ─── */}
+      <section className="py-20 sm:py-32 px-6 sm:px-10 bg-white border-y border-black/[0.06]">
+        <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight text-black uppercase mb-6">AND YOU NEVER HAVE TO LEAVE YOUR AI.</h2>
+            <p className="text-xl font-medium text-black mb-8">This is the difference.</p>
+            <div className="space-y-4 text-lg text-neutral-500 mb-8">
+              <p>You don't need to constantly open Cultlike to tell it what to do.</p>
+              <p>Ask ChatGPT. Ask Claude.</p>
+              <p>Tell your AI what you're working on. Cultlike can become the system that actually carries it out.</p>
+            </div>
+            <div className="space-y-4 font-medium text-black bg-[#fafafc] p-6 rounded-2xl border border-black/[0.06] mb-8">
+              <p>“Find the latest draft for the campaign.”</p>
+              <p>“Move this content to next week's schedule.”</p>
+              <p>“What is blocking this project?”</p>
+              <p>“Show me how the last sprint performed.”</p>
+            </div>
+            <p className="text-2xl font-bold text-black">Your AI handles the conversation.<br/>Cultlike handles the state.</p>
           </div>
-
-          <div className="lg:col-span-8">
-            <div className="divide-y divide-black/[0.06]">
-              {faqs.map((faq, idx) => (
-                <div key={idx} className="py-6">
-                  <button
-                    onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
-                    className="w-full flex items-center justify-between text-left cursor-pointer group"
-                  >
-                    <span className="text-base sm:text-lg font-medium text-black pr-8 group-hover:text-neutral-600 transition-colors">
-                      {faq.q}
-                    </span>
-                    <span className="text-neutral-400 shrink-0">
-                      {activeFaq === idx ? (
-                        <X size={18} strokeWidth={1.5} className="text-black" />
-                      ) : (
-                        <Plus size={18} strokeWidth={1.5} />
-                      )}
-                    </span>
-                  </button>
-                  <AnimatePresence>
-                    {activeFaq === idx && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.25, ease }}
-                        className="overflow-hidden"
-                      >
-                        <p className="pt-3 text-sm sm:text-base text-neutral-500 font-light leading-relaxed max-w-2xl">
-                          {faq.a}
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ))}
+          <div className="bg-[#f5f5f5] rounded-3xl p-8 border border-black/[0.06] shadow-sm flex flex-col items-center justify-center min-h-[400px]">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-black/[0.04] overflow-hidden">
+               <div className="p-4 border-b border-black/[0.04] bg-[#fafafc] flex items-center gap-2">
+                 <ChatGPTLogo className="w-5 h-5"/>
+                 <span className="font-semibold text-sm text-black">ChatGPT (Cultlike Connected)</span>
+               </div>
+               <div className="p-6 space-y-6">
+                 <div className="flex justify-end">
+                   <div className="bg-black text-white text-sm px-4 py-2.5 rounded-2xl rounded-tr-none">Move the brand assets to next Tuesday.</div>
+                 </div>
+                 <div className="flex gap-4">
+                   <ChatGPTLogo className="w-6 h-6 shrink-0"/>
+                   <div className="space-y-2">
+                     <div className="text-[10px] uppercase font-bold tracking-widest text-emerald-600 bg-emerald-50 px-2 py-1 rounded inline-block">System Updated</div>
+                     <p className="text-sm text-neutral-700 leading-relaxed">Done. I've rescheduled the brand assets for next Tuesday in your Cultlike pipeline.</p>
+                   </div>
+                 </div>
+               </div>
             </div>
           </div>
-
         </div>
       </section>
 
-
-      {/* ─── DARK CTA SECTION ─── */}
-      <section className="bg-[#0c0d12] text-white py-20 sm:py-32 px-6 sm:px-10 rounded-t-[44px] relative overflow-hidden z-10">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.12),transparent_70%)] pointer-events-none" />
-
-        <div className="max-w-[900px] mx-auto text-center space-y-6 relative z-10">
-          <h2 className="text-3xl sm:text-5xl font-medium tracking-tight text-white leading-tight">
-            Stop managing. Start shipping.
-          </h2>
+      {/* ─── MOMENTUM / DARK CTA ─── */}
+      <section className="bg-[#0c0d12] text-white py-24 sm:py-32 px-6 sm:px-10 rounded-t-[44px] relative overflow-hidden z-10 mt-12 text-center max-w-[1400px] mx-auto">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.1),transparent_70%)] pointer-events-none" />
+        <div className="relative z-10 max-w-3xl mx-auto">
+          <h2 className="text-4xl sm:text-6xl font-semibold tracking-tight uppercase mb-8">BUILT FOR MOMENTUM.</h2>
+          <p className="text-xl text-neutral-400 mb-12">Because the goal isn't to have a beautifully organized workspace. <strong className="text-white block mt-2">The goal is to ship.</strong></p>
           
-          <p className="text-base sm:text-lg text-neutral-400 font-light max-w-lg mx-auto leading-relaxed">
-            Launch your workspace in under 30 seconds. Free for solo builders and creators. No credit card required.
-          </p>
+          <div className="text-2xl sm:text-3xl font-medium text-neutral-500 space-y-2 mb-12">
+            <p>One idea. One asset. One project.</p>
+            <p>One publish. One sprint.</p>
+            <p className="text-white">Then another. And another.</p>
+            <p className="text-3xl sm:text-4xl font-bold text-white mt-6">Until the output becomes undeniable.</p>
+          </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-            <button
-              onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
-              className="w-full sm:w-auto px-9 py-4 rounded-full bg-white hover:bg-neutral-100 text-black text-sm font-medium transition-all cursor-pointer shadow-[0_4px_20px_rgba(255,255,255,0.15)] active:scale-[0.98]"
-            >
-              Get Started Free
-            </button>
-            <button
-              onClick={() => { setMode('login'); setConfirmationSent(false); setIsAuthOpen(true) }}
-              className="w-full sm:w-auto px-8 py-4 rounded-full border border-white/20 hover:border-white/40 text-sm font-normal text-white transition-all cursor-pointer bg-white/5"
-            >
-              Sign In
-            </button>
+          <div className="border-t border-white/10 pt-16 mb-16">
+            <h3 className="text-3xl font-semibold mb-6 uppercase">YOU DON'T NEED MORE TOOLS.</h3>
+            <p className="text-xl text-neutral-400 mb-8">You need fewer things sitting between <strong className="text-white">thinking</strong> and <strong className="text-white">doing.</strong></p>
+            <p className="text-2xl font-bold mb-8">Cultlike connects the pieces.</p>
+            <div className="flex flex-wrap justify-center gap-4 text-sm font-bold tracking-widest uppercase text-neutral-500 mb-8">
+              <span>Your AI</span><span>Your Projects</span><span>Your Content</span>
+              <span>Your Schedule</span><span>Your Execution</span><span>Your Proof</span>
+            </div>
+            <p className="text-2xl font-medium text-sky-400">One operating layer.</p>
+          </div>
+
+          <h3 className="text-4xl sm:text-5xl font-bold uppercase mb-8">BUILD WITHOUT LOSING THE THREAD.</h3>
+          
+          <button
+            onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
+            className="px-10 py-4 rounded-full bg-white hover:bg-neutral-200 text-black text-sm font-bold transition-all shadow-xl active:scale-[0.98] inline-flex items-center gap-2 cursor-pointer"
+          >
+            Enter Cultlike <ArrowRight size={16} />
+          </button>
+          
+          <div className="mt-12 text-sm text-neutral-500 space-y-2 font-medium">
+            <p>No productivity hacks. No complicated methodology. No endless setup.</p>
+            <p className="text-white text-base">Just your work — connected, persistent, and moving.</p>
           </div>
         </div>
       </section>
+
 
 
       {/* ─── FOOTER ─── */}

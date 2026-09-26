@@ -1,0 +1,204 @@
+
+
+      {/* ─── FOOTER ─── */}
+      <footer className="bg-white border-t border-black/[0.06] py-16 px-6 sm:px-10 relative z-10">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-12 gap-8 md:gap-12">
+            
+            {/* Logo + Tagline */}
+            <div className="col-span-2 md:col-span-4 space-y-4">
+              <div className="flex items-center">
+                <img 
+                  src="/logo-cultlike.png" 
+                  alt="Cultlike Logo" 
+                  className="h-10 w-10 object-contain rounded-full shadow-2xs" 
+                />
+              </div>
+              <p className="text-sm text-neutral-500 font-light max-w-xs">
+                The anti-productivity operating system for high-agency creators and solo founders.
+              </p>
+            </div>
+
+            {/* Product */}
+            <div className="md:col-span-2 space-y-3">
+              <h4 className="text-xs font-semibold text-black uppercase tracking-wider font-mono">Product</h4>
+              <div className="space-y-2">
+                <a href="#faq" className="block text-sm text-neutral-500 hover:text-black transition-colors font-light">Pomodoro Sprints</a>
+                <a href="#faq" className="block text-sm text-neutral-500 hover:text-black transition-colors font-light">Fathom Sync</a>
+                <a href="#faq" className="block text-sm text-neutral-500 hover:text-black transition-colors font-light">FAQ</a>
+              </div>
+            </div>
+
+            {/* Platform */}
+            <div className="md:col-span-2 space-y-3">
+              <h4 className="text-xs font-semibold text-black uppercase tracking-wider font-mono">Integrations</h4>
+              <div className="space-y-2 text-sm text-neutral-500 font-light">
+                <span className="block">ChatGPT & Claude</span>
+                <span className="block">Fathom Video</span>
+                <span className="block">Google Drive</span>
+                <span className="block">YouTube & Instagram</span>
+              </div>
+            </div>
+
+            {/* Legal */}
+            <div className="md:col-span-2 space-y-3">
+              <h4 className="text-xs font-semibold text-black uppercase tracking-wider font-mono">Legal</h4>
+              <div className="space-y-2">
+                <Link href="/privacy" className="block text-sm text-neutral-500 hover:text-black transition-colors font-light">Privacy Notice</Link>
+                <Link href="/terms" className="block text-sm text-neutral-500 hover:text-black transition-colors font-light">Terms of Use</Link>
+                <Link href="/data-deletion" className="block text-sm text-neutral-500 hover:text-black transition-colors font-light">Data Deletion</Link>
+              </div>
+            </div>
+
+            {/* System Status */}
+            <div className="md:col-span-2 space-y-3">
+              <h4 className="text-xs font-semibold text-black uppercase tracking-wider font-mono">System</h4>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-mono text-neutral-600">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>Operational</span>
+                </div>
+                <span className="block text-xs font-mono text-neutral-400">OpenAPI 3.1 Live</span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Copyright */}
+          <div className="mt-16 pt-8 border-t border-black/[0.06] text-xs text-neutral-400 font-mono flex flex-col sm:flex-row items-center justify-between gap-4">
+            <span>© {new Date().getFullYear()} Cultlike OS. All rights reserved.</span>
+            <span>The Anti-Productivity OS</span>
+          </div>
+        </div>
+      </footer>
+
+
+      {/* ─── AUTH MODAL ─── */}
+      {isAuthOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-md flex items-center justify-center p-4">
+          <div 
+            className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative animate-in fade-in zoom-in-95 duration-150 border border-black/[0.08]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => { setIsAuthOpen(false); setError(null); setConfirmationSent(false) }}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-neutral-500 transition-colors cursor-pointer z-10"
+            >
+              <X size={15} />
+            </button>
+
+            <div className="p-8 sm:p-10">
+              <div className="flex items-center mb-6">
+                <img src="/logo-cultlike.png" alt="Logo" className="h-11 w-11 object-contain rounded-full shadow-2xs" />
+              </div>
+
+              {confirmationSent ? (
+                <div className="space-y-4 text-center py-4">
+                  <div className="w-12 h-12 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center mx-auto text-lg font-semibold">
+                    ✓
+                  </div>
+                  <h3 className="text-lg font-semibold text-black">Check your inbox</h3>
+                  <p className="text-sm text-neutral-500 font-light">
+                    We sent a confirmation link to <strong className="text-black font-medium">{email}</strong>. Click it to activate your workspace.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-1.5 mb-6">
+                    <h3 className="text-2xl font-semibold text-black tracking-tight">
+                      {mode === 'signup' ? 'Launch your workspace' : 'Welcome back'}
+                    </h3>
+                    <p className="text-xs text-neutral-500 font-light">
+                      {mode === 'signup' 
+                        ? 'Zero configuration required. Free for solo creators.' 
+                        : 'Sign in to access your projects, tasks, and content.'}
+                    </p>
+                  </div>
+
+                  {error && (
+                    <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600 font-medium">
+                      {error}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSubmit} className="space-y-3.5">
+                    {mode === 'signup' && (
+                      <div>
+                        <label className="text-[11px] font-mono text-neutral-600 font-medium block mb-1">Your Name</label>
+                        <input
+                          type="text"
+                          required
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="Mohammad"
+                          className="w-full px-4 py-2.5 rounded-xl border border-black/[0.1] text-sm text-black placeholder:text-neutral-400 focus:outline-none focus:border-black transition-colors"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="text-[11px] font-mono text-neutral-600 font-medium block mb-1">Email</label>
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@domain.com"
+                        className="w-full px-4 py-2.5 rounded-xl border border-black/[0.1] text-sm text-black placeholder:text-neutral-400 focus:outline-none focus:border-black transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-mono text-neutral-600 font-medium block mb-1">Password</label>
+                      <input
+                        type="password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full px-4 py-2.5 rounded-xl border border-black/[0.1] text-sm text-black placeholder:text-neutral-400 focus:outline-none focus:border-black transition-colors"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full py-3 rounded-full bg-black hover:bg-neutral-800 text-white text-sm font-medium transition-all cursor-pointer shadow-xs active:scale-[0.98] disabled:opacity-50 mt-2"
+                    >
+                      {loading ? 'Processing...' : (mode === 'signup' ? 'Create Free Workspace' : 'Sign In')}
+                    </button>
+                  </form>
+
+                  <div className="mt-6 text-center text-xs text-neutral-500 font-light">
+                    {mode === 'signup' ? (
+                      <span>
+                        Already have an account?{' '}
+                        <button 
+                          onClick={() => { setMode('login'); setError(null) }} 
+                          className="text-black font-medium underline underline-offset-2 cursor-pointer"
+                        >
+                          Sign in
+                        </button>
+                      </span>
+                    ) : (
+                      <span>
+                        Don&apos;t have an account yet?{' '}
+                        <button 
+                          onClick={() => { setMode('signup'); setError(null) }} 
+                          className="text-black font-medium underline underline-offset-2 cursor-pointer"
+                        >
+                          Create one free
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  )
+}
