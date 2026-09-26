@@ -282,10 +282,10 @@ export default function DashboardPage() {
       {/* Top Header Section (Bold & Stylish Monochrome) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
         <div>
-          <div className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest font-medium mb-1">
+          <div className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest font-semibold mb-1">
             DASHBOARD
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-black flex items-center gap-3">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-[-0.035em] text-black flex items-center gap-3">
             <span>Your Daily Dashboard</span>
           </h1>
         </div>
@@ -293,7 +293,7 @@ export default function DashboardPage() {
           <button
             onClick={() => generateBrief(tasks, projects)}
             disabled={generatingBrief}
-            className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-neutral-50 border border-black/[0.1] rounded-full text-xs font-medium text-black transition-all cursor-pointer shadow-2xs active:scale-[0.98]"
+            className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-neutral-50 border border-black/[0.1] rounded-full text-xs font-semibold tracking-tight text-black transition-all cursor-pointer shadow-2xs active:scale-[0.98]"
             title="Regenerate daily intelligence briefing"
           >
             <RefreshCw size={13} className={cn(generatingBrief && 'animate-spin')} />
@@ -301,7 +301,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2 bg-black hover:bg-neutral-800 text-white rounded-full text-xs font-medium transition-all cursor-pointer shadow-xs active:scale-[0.98]"
+            className="flex items-center gap-2 px-5 py-2 bg-black hover:bg-neutral-800 text-white rounded-full text-xs font-semibold tracking-tight transition-all cursor-pointer shadow-xs active:scale-[0.98]"
           >
             <Plus size={15} />
             <span>New Task</span>
@@ -314,19 +314,12 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           {/* Left Column: Greeting & Big Punchy Metric */}
           <div className="lg:col-span-7 space-y-4">
-            <div className="space-y-1">
-              <div className="flex items-baseline gap-3 flex-wrap">
-                <span className="font-mono text-4xl sm:text-5xl lg:text-6xl font-light tracking-tighter text-black tabular-nums">
-                  {totalHours}
-                </span>
-                <span className="font-mono text-xs sm:text-sm uppercase tracking-widest text-neutral-400 font-medium pb-1">
-                  focused hours logged
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-neutral-500 font-light tracking-tight">
-                Operating across <span className="text-black font-medium">{projects.length} active master programs</span> with continuous live sync.
-              </p>
-            </div>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-light text-black tracking-tight leading-snug">
+              <span className="font-extrabold text-black tracking-[-0.04em]">{totalHours} focused hours</span> logged <br className="hidden sm:block" />
+              <span className="text-neutral-500 font-light">
+                across {projects.length} active projects.
+              </span>
+            </h2>
 
             <div className="flex flex-wrap items-center gap-3 text-xs">
               <span className="px-3 py-1 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] font-mono text-[11px] font-medium flex items-center gap-1.5 shadow-2xs">
