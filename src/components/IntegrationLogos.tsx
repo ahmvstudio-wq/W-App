@@ -1,99 +1,150 @@
 import React from 'react'
 
-export function FathomLogo({ className = "w-5 h-5" }: { className?: string }) {
+export function ChatGPTLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <path
+        d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 8.65a4.475 4.475 0 0 1 2.365-1.993v5.688a.784.784 0 0 0 .392.68l5.82 3.36-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 8.65zm16.597 3.855l-5.833-3.37L15.124 8a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.688zm2.01-4.733l-.143-.086-4.767-2.758a.771.771 0 0 0-.78 0L9.414 8.297V5.965a.08.08 0 0 1 .033-.062L14.28 3.11a4.5 4.5 0 0 1 6.666 4.662zm-8.86-5.875a4.47 4.47 0 0 1 2.876 1.04l-.141.08-4.779 2.758a.795.795 0 0 0-.392.682v6.736L8.64 12.2a.071.071 0 0 1-.038-.052V6.565A4.504 4.504 0 0 1 12.087 1.897zm-1.04 7.643l2.87-1.656 2.87 1.656v3.313l-2.87 1.657-2.87-1.657V9.54z"
+        fill="#10A37F"
+      />
     </svg>
   )
 }
 
-export function GoogleDriveLogo({ className = "w-5 h-5" }: { className?: string }) {
+export function ClaudeLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M7.71 3.5L1.15 15l3.43 6 6.55-11.5L7.71 3.5zm1.72 6.5l3.43 6h9.99l-3.43-6H9.43zm6.86-6.5l-3.43 6 6.55 11.5 3.44-6L16.29 3.5z" />
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <path
+        d="M17.5 2.5a4.5 4.5 0 0 1 4.5 4.5v10a4.5 4.5 0 0 1-4.5 4.5H6.5A4.5 4.5 0 0 1 2 17V7a4.5 4.5 0 0 1 4.5-4.5h11z"
+        fill="#D97706"
+        fillOpacity="0.1"
+      />
+      <path
+        d="M13.8 3.2c-.4-.3-1-.3-1.4 0L4.5 9.9c-.4.3-.6.8-.6 1.3v5.6c0 .5.2 1 .6 1.3l7.9 5.7c.4.3 1 .3 1.4 0l7.9-5.7c.4-.3.6-.8.6-1.3v-5.6c0-.5-.2-1-.6-1.3L13.8 3.2z"
+        fill="#CC5500"
+      />
+      <circle cx="12" cy="12" r="3" fill="#FFFFFF" />
     </svg>
   )
 }
 
-export function YouTubeLogo({ className = "w-5 h-5" }: { className?: string }) {
+export function GoogleDriveLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <path d="M8.2 3.5L1.5 15.2l3.4 6 6.7-11.7L8.2 3.5z" fill="#0066DA" />
+      <path d="M15.8 3.5H8.2l6.7 11.7h7.6L15.8 3.5z" fill="#00AC47" />
+      <path d="M22.5 15.2H7.4l-3.5 6h15.2l3.4-6z" fill="#EA4335" />
+      <path d="M14.9 15.2l-3.3-5.8-3.4 5.8h6.7z" fill="#FFBA00" />
     </svg>
   )
 }
 
-export function InstagramLogo({ className = "w-5 h-5" }: { className?: string }) {
+export function YouTubeLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#FF0000" />
+      <path d="M10 8.5v7l6-3.5-6-3.5z" fill="#FFFFFF" />
     </svg>
   )
 }
 
-export function ClaudeLogo({ className = "w-5 h-5" }: { className?: string }) {
+export function InstagramLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M13.8 2.2c-.4-.3-1-.3-1.4 0L3.5 8.9c-.4.3-.6.8-.6 1.3v7.6c0 .5.2 1 .6 1.3l8.9 6.7c.4.3 1 .3 1.4 0l8.9-6.7c.4-.3.6-.8.6-1.3v-7.6c0-.5-.2-1-.6-1.3L13.8 2.2zm-1.8 3.4l6.5 4.9-2.9 2.2-6.5-4.9 2.9-2.2zm-6.2 6.7l5.3 4-5.3 4v-8zm7.2 9.5l-6.5-4.9 2.9-2.2 6.5 4.9-2.9 2.2zm6.2-4.5l-5.3-4 5.3-4v8z" />
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <defs>
+        <linearGradient id="igGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#FFDC80" />
+          <stop offset="30%" stopColor="#F77737" />
+          <stop offset="50%" stopColor="#F56040" />
+          <stop offset="70%" stopColor="#FD1D1D" />
+          <stop offset="100%" stopColor="#833AB4" />
+        </linearGradient>
+      </defs>
+      <rect width="24" height="24" rx="6" fill="url(#igGradient)" />
+      <rect x="5" y="5" width="14" height="14" rx="4" stroke="#FFFFFF" strokeWidth="1.8" />
+      <circle cx="12" cy="12" r="3.2" stroke="#FFFFFF" strokeWidth="1.8" />
+      <circle cx="15.8" cy="8.2" r="0.9" fill="#FFFFFF" />
     </svg>
   )
 }
 
-export function OpenAILogo({ className = "w-5 h-5" }: { className?: string }) {
+export function FathomLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 8.65a4.475 4.475 0 0 1 2.365-1.993v5.688a.784.784 0 0 0 .392.68l5.82 3.36-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 8.65zm16.597 3.855l-5.833-3.37L15.124 8a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.688zm2.01-4.733l-.143-.086-4.767-2.758a.771.771 0 0 0-.78 0L9.414 8.297V5.965a.08.08 0 0 1 .033-.062L14.28 3.11a4.5 4.5 0 0 1 6.666 4.662zm-8.86-5.875a4.47 4.47 0 0 1 2.876 1.04l-.141.08-4.779 2.758a.795.795 0 0 0-.392.682v6.736L8.64 12.2a.071.071 0 0 1-.038-.052V6.565A4.504 4.504 0 0 1 12.087 1.897zm-1.04 7.643l2.87-1.656 2.87 1.656v3.313l-2.87 1.657-2.87-1.657V9.54z" />
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#2563EB" />
+      <path d="M7 8h10M7 12h7M7 16h5" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="17" cy="15" r="2" fill="#38BDF8" />
     </svg>
   )
 }
 
-export function GitHubLogo({ className = "w-5 h-5" }: { className?: string }) {
+export function FigmaLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <path d="M8 3.5h4v5H8a2.5 2.5 0 0 1 0-5z" fill="#F24E1E" />
+      <path d="M12 3.5h4a2.5 2.5 0 0 1 0 5h-4V3.5z" fill="#FF7262" />
+      <path d="M12 8.5h4a2.5 2.5 0 0 1 0 5h-4V8.5z" fill="#1ABCFE" />
+      <path d="M8 8.5h4v5H8a2.5 2.5 0 0 1 0-5z" fill="#A259FF" />
+      <path d="M8 13.5h4v2.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 1-2.5z" fill="#0ACF83" />
     </svg>
   )
 }
 
-export function FigmaLogo({ className = "w-5 h-5" }: { className?: string }) {
+export function LinearLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 12a3 3 0 1 1 6 0 3 3 0 0 1-6 0zm-6-3a3 3 0 0 1 3-3h3v6H9a3 3 0 0 1-3-3zm0 6a3 3 0 0 1 3-3h3v6H9a3 3 0 0 1-3-3zm6-9h3a3 3 0 1 1 0 6h-3V6zm-3 15a3 3 0 0 1-3-3 3 3 0 0 1 3-3h3v3a3 3 0 0 1-3 3z" />
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#5E6AD2" />
+      <path d="M5.5 5.5l13 13m-9-13l9 9" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" />
     </svg>
   )
 }
 
-export function LinearLogo({ className = "w-5 h-5" }: { className?: string }) {
+export function SlackLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M3.5 3.5l17 17-3.5 3.5-17-17 3.5-3.5zm7 0l10 10-3.5 3.5-10-10L10.5 3.5z" />
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#4A154B" />
+      <path d="M7 11a1.5 1.5 0 0 1-1.5 1.5H4v-1.5A1.5 1.5 0 0 1 5.5 9.5H7v1.5zm1 0a1.5 1.5 0 0 1 1.5-1.5h4v1.5a1.5 1.5 0 0 1-1.5 1.5h-4V11zm4-4a1.5 1.5 0 0 1 1.5-1.5V4h1.5A1.5 1.5 0 0 1 15 5.5V7h-3zm0 1a1.5 1.5 0 0 1-1.5 1.5V13.5H12V8z" fill="#36C5F0" />
+      <circle cx="16.5" cy="15.5" r="1.5" fill="#2EB67D" />
+      <circle cx="8.5" cy="15.5" r="1.5" fill="#ECB22E" />
+      <circle cx="16.5" cy="8.5" r="1.5" fill="#E01E5A" />
     </svg>
   )
 }
 
-export function SlackLogo({ className = "w-5 h-5" }: { className?: string }) {
+export function NotionLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" />
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#000000" />
+      <path
+        d="M7 6.5l8-.5v11.5l-8 .5V6.5zm2 2.5v6.5l4-.25V8.75l-4 .25z"
+        fill="#FFFFFF"
+      />
     </svg>
   )
 }
 
-export function NotionLogo({ className = "w-5 h-5" }: { className?: string }) {
+export function GitHubLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.98-.7-2.053-.607L3.106 2.481c-.466.047-.56.28-.373.467l1.726 1.26zm.933 3.687v12.923c0 .84.42 1.12 1.353 1.073l14.195-.84c.933-.047 1.073-.653 1.073-1.353V6.774c0-.7-.28-.98-1.073-.933l-14.475.84c-.793.047-1.073.42-1.073 1.214zm13.122 1.026c.093.373 0 .746-.373.793l-.7.14v8.445c-.466.28-.933.42-1.353.42-.7 0-.933-.233-1.493-.933l-4.527-6.999v6.86l1.353.326c.373.093.326.56-.093.56l-3.22.187c-.373.047-.327-.373-.093-.42l.84-.233V9.734l-.98-.093c-.373-.047-.28-.467.093-.467l3.407-.233 4.807 7.232v-6.39l-1.073-.14c-.373-.047-.28-.513.093-.513l3.313-.233z" />
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#181717" />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M12 4.5a7.5 7.5 0 0 0-2.37 14.62c.38.07.51-.16.51-.36v-1.39c-2.09.45-2.53-1-2.53-1-.34-.87-.83-1.1-.83-1.1-.68-.47.05-.46.05-.46.75.05 1.15.77 1.15.77.67 1.15 1.76.82 2.19.63.07-.49.26-.82.48-1.01-1.67-.19-3.42-.83-3.42-3.71 0-.82.29-1.49.77-2.02-.08-.19-.33-.96.07-1.99 0 0 .63-.2 2.07.77a7.2 7.2 0 0 1 3.76 0c1.44-.97 2.07-.77 2.07-.77.4 1.03.15 1.8.07 1.99.48.53.77 1.2.77 2.02 0 2.89-1.75 3.52-3.43 3.71.27.23.51.69.51 1.39v2.06c0 .2.13.44.52.36A7.5 7.5 0 0 0 12 4.5z"
+        fill="#FFFFFF"
+      />
     </svg>
   )
 }
 
-export function AppleLogo({ className = "w-5 h-5" }: { className?: string }) {
+export function AppleLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.75 1.04-1.8 0.93-2.85-.9.04-1.98.6-2.62 1.35-.57.65-1.06 1.72-.93 2.74 1 .08 2.02-.49 2.62-1.24z" />
+    <svg className={className} viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="#000000" />
+      <path
+        d="M16.5 16.7c-.5.8-1.1 1.6-2 1.6-.9 0-1.2-.5-2.2-.5s-1.3.5-2.2.5c-.9 0-1.6-.9-2.1-1.7-1.1-1.7-1.9-4.7-.8-6.7.6-1 1.6-1.7 2.7-1.7.9 0 1.7.6 2.2.6.5 0 1.5-.7 2.6-.6.4 0 1.7.2 2.4 1.3-.1.1-1.5.9-1.5 2.6 0 2.1 1.8 2.8 1.9 2.8-.1.5-.4 1.5-1 2.2zM14.7 7.7c.4-.5.7-1.2.6-1.9-.6 0-1.4.4-1.8.9-.4.4-.7 1.2-.6 1.9.7.1 1.4-.4 1.8-.9z"
+        fill="#FFFFFF"
+      />
     </svg>
   )
 }
