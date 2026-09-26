@@ -81,8 +81,8 @@ export default function SettingsPage() {
   }
 
   const getOpenApiUrl = () => {
-    if (typeof window === 'undefined') return '/api/chatgpt/openapi.json'
-    return `${window.location.origin}/api/chatgpt/openapi.json`
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cultlike.ahmvsystems.com'
+    return `${origin}/chatgpt-openapi.json`
   }
 
   const copyOpenApiUrl = () => {
@@ -824,45 +824,44 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Card 6: AI Chief of Staff (ChatGPT & Claude) */}
+              {/* Card 6: ChatGPT Custom GPT & Actions */}
               <div className="p-6 rounded-2xl bg-[#fafafa] border border-black/[0.06] flex flex-col justify-between space-y-4">
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3.5">
-                      {/* Motion Blur Ambient Halo & Minimal Frosted Container */}
                       <div className="relative group shrink-0">
-                        <div className="absolute -inset-1.5 rounded-2xl bg-neutral-900/[0.07] blur-md group-hover:blur-lg group-hover:bg-neutral-900/[0.12] transition-all duration-300 pointer-events-none" />
-                        <div className="relative w-12 h-12 rounded-2xl bg-white border border-black/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-center text-neutral-900 transition-all duration-200 group-hover:border-black/[0.16] group-hover:scale-[1.02]">
+                        <div className="absolute -inset-1.5 rounded-2xl bg-emerald-500/[0.12] blur-md group-hover:blur-lg transition-all duration-300 pointer-events-none" />
+                        <div className="relative w-12 h-12 rounded-2xl bg-white border border-black/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-center text-emerald-600 transition-all duration-200 group-hover:border-black/[0.16] group-hover:scale-[1.02]">
                           {/* Official OpenAI / ChatGPT Spiral Mark */}
-                          <svg className="w-5 h-5 text-neutral-900 fill-current" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                             <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1683a.071.071 0 0 1 .038.052v5.5826a4.5045 4.5045 0 0 1-4.4945 4.4947zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1683a.0757.0757 0 0 1-.071 0l-4.8303-2.7866A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.5973 8.3829l2.02-1.1635a.0804.0804 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.402-.6863zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1635a.0804.0804 0 0 1-.038-.0567V6.0748a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.4598a.7948.7948 0 0 0-.3927.6813v6.7219h-.0048zm1.0977-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.6069 1.4997-2.602-1.4997v-2.9994z"/>
                           </svg>
                         </div>
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-medium text-black">AI Chief of Staff</h3>
+                          <h3 className="text-sm font-medium text-black">ChatGPT Custom GPT</h3>
                           <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono border bg-neutral-100 text-neutral-900 border-black/[0.08]">
-                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" /> OpenAPI 3.1
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" /> Actions &amp; @Mentions
                           </span>
                         </div>
                         <p className="text-xs text-[#6b7280] font-light mt-1">
-                          Connect ChatGPT Custom GPTs and Claude Projects to inspect projects, tasks, and notes.
+                          Connect Cultlike OS into ChatGPT with 25 operations for sprint tasks, roadmap, and multi-channel publishing.
                         </p>
                       </div>
                     </div>
                   </div>
 
                   <p className="text-xs text-[#6b7280] font-light">
-                    ChatGPT and Claude can query active P0 tasks, inspect projects, convert meeting takeaways, and log deep work sessions.
+                    Use this OpenAPI action spec in your Custom GPT builder to control Cultlike OS with natural language or @Mentions in any chat.
                   </p>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-white border border-black/[0.06] space-y-3">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-black">Live OpenAPI Endpoint</span>
+                    <span className="font-medium text-black">OpenAPI Action Spec URL</span>
                     <a
-                      href="/api/chatgpt/openapi.json"
+                      href="/chatgpt-openapi.json"
                       target="_blank"
                       rel="noreferrer"
                       className="text-[11px] text-[#6b7280] hover:text-black flex items-center gap-1 underline"
@@ -884,18 +883,14 @@ export default function SettingsPage() {
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs whitespace-nowrap"
                     >
                       {copiedOpenApi ? <Check size={12} /> : <Copy size={12} />}
-                      <span>{copiedOpenApi ? 'Copied' : 'Copy Spec'}</span>
+                      <span>{copiedOpenApi ? 'Copied' : 'Copy URL'}</span>
                     </button>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-[10px] text-[#6b7280]">
-                    <div className="p-2 rounded-lg bg-neutral-50 border border-black/[0.04]">
-                      <strong className="text-black block mb-0.5">ChatGPT:</strong>
-                      <span>GPT Actions &rarr; Import from URL</span>
-                    </div>
-                    <div className="p-2 rounded-lg bg-neutral-50 border border-black/[0.04]">
-                      <strong className="text-black block mb-0.5">Claude Projects:</strong>
-                      <span>Add to Project &rarr; Custom Endpoint</span>
-                    </div>
+                  <div className="p-2.5 rounded-lg bg-neutral-50 border border-black/[0.04] text-[11px] text-[#6b7280] space-y-1">
+                    <p className="font-medium text-black">How to connect in ChatGPT:</p>
+                    <p>1. Go to <strong>Explore GPTs &rarr; + Create &rarr; Configure &rarr; Add Action</strong></p>
+                    <p>2. Click <strong>Import from URL</strong> and paste this Action Spec URL</p>
+                    <p>3. Set Authentication to <strong>Bearer API Key</strong> or <strong>OAuth</strong> &rarr; Save &amp; use <strong>@Cultlike OS</strong> anywhere!</p>
                   </div>
                 </div>
               </div>
