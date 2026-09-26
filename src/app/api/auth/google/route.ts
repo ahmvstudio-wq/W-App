@@ -19,23 +19,36 @@ export async function GET(req: NextRequest) {
     redirectUri = `${protocol}://${host}/api/auth/google/callback`
   }
 
-  // Extract requested service target (workspace | calendar | youtube)
+  // Extract requested service target (workspace | calendar | youtube | drive)
   const service = req.nextUrl.searchParams.get('service') || 'workspace'
   const returnTo = req.nextUrl.searchParams.get('return_to') || ''
 
-  let scopesList: string[] = [
-    'openid',
-    'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/userinfo.profile',
-    'https://www.googleapis.com/auth/youtube.upload',
-    'https://www.googleapis.com/auth/youtube.readonly',
-    'https://www.googleapis.com/auth/yt-analytics.readonly',
-    'https://www.googleapis.com/auth/calendar.events',
-    'https://www.googleapis.com/auth/calendar.readonly',
-    'https://www.googleapis.com/auth/documents',
-    'https://www.googleapis.com/auth/drive.file',
-    'https://www.googleapis.com/auth/drive.readonly',
-  ]
+  // Google does not allow YouTube sensitive scopes and Google Drive scopes to be requested in the same OAuth request.
+  // We partition scopes strictly by requested service and use incremental auth (include_granted_scopes: true).
+  let scopesList: string[] = []
+
+  if (service === 'youtube') {
+    scopesList = [
+      'openid',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/youtube.upload',
+      'https://www.googleapis.com/auth/youtube.readonly',
+      'https://www.googleapis.com/auth/yt-analytics.readonly',
+    ]
+  } else {
+    // Default to Google Drive, Docs & Calendar
+    scopesList = [
+      'openid',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/drive.file',
+      'https://www.googleapis.com/auth/drive.readonly',
+      'https://www.googleapis.com/auth/calendar.events',
+      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/documents',
+    ]
+  }
 
   const scopes = scopesList.join(' ')
 
@@ -45,7 +58,11 @@ export async function GET(req: NextRequest) {
   googleAuthUrl.searchParams.set('response_type', 'code')
   googleAuthUrl.searchParams.set('scope', scopes)
   googleAuthUrl.searchParams.set('access_type', 'offline')
-  googleAuthUrl.searchParams.set('prompt', 'consent')
+  googleAuthUrl.searchParams.set('prompt', 'select_account consent')
+  // CRITICAL: Do NOT set include_granted_scopes to 'true'.
+  // Google strictly forbids combining YouTube upload/analytics scopes with Google Drive scopes in one token grant.
+  // If include_granted_scopes=true is set, Google automatically merges previously granted Drive scopes with YouTube,
+  // triggering "Error 400: invalid_request - scopes that cannot be requested together".
   
   const stateVal = returnTo ? `${service}::${returnTo}` : service
   googleAuthUrl.searchParams.set('state', stateVal)

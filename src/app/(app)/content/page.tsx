@@ -318,35 +318,38 @@ export default function ContentVaultPage() {
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-black/[0.06] pb-6">
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-neutral-100 border border-black/[0.08] text-neutral-800 font-mono text-[10px] font-medium tracking-wide">
-              <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
-              OMNICHANNEL PIPELINE
+          <span className="text-[11px] font-semibold text-neutral-400 tracking-[0.14em] uppercase block">
+            Creator Studio
+          </span>
+          <div className="flex items-center gap-3 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-black">
+              Content Vault
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] text-[10px] font-mono flex items-center gap-1.5 shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
+              <span>{items.length} items</span>
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-light text-black tracking-tight">
-            Content Studio &amp; Dispatch OS
-          </h1>
-          <p className="text-xs sm:text-sm text-[#6b7280] font-light mt-1">
-            Google Drive video ingestion, multi-platform publishing, and automated timeline scheduling.
+          <p className="text-sm text-neutral-500 font-normal mt-1">
+            Google Drive video files, multi-platform releases, and scheduled posts.
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setIsDriveModalOpen(true)}
-            className="px-3.5 py-2.5 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] rounded-xl text-xs font-normal flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+            className="px-3.5 py-2 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/[0.08] rounded-xl text-xs font-normal flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
             title="Batch Import Video Files from Google Drive"
           >
-            <HardDrive size={14} />
+            <HardDrive size={13} className="text-neutral-500" />
             <span className="hidden sm:inline">Import from Drive</span>
           </button>
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="px-4 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+            className="px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
           >
-            <Plus size={15} />
+            <Plus size={14} className="text-white" />
             <span>New Content</span>
           </button>
         </div>
@@ -355,25 +358,26 @@ export default function ContentVaultPage() {
       {/* Connected Channels & Accounts Strip */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Google Drive Video Storage */}
-        <div className="p-3.5 rounded-2xl bg-white border border-black/[0.08] backdrop-blur-sm flex items-center justify-between gap-3 shadow-xs">
+        <div className="p-4 rounded-2xl bg-white border border-black/[0.08] flex items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-full bg-neutral-100 text-neutral-800 flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
-              <HardDrive size={18} />
+            <div className="w-9 h-9 rounded-xl bg-neutral-100 text-neutral-800 flex items-center justify-center font-bold text-xs flex-shrink-0 border border-black/[0.04]">
+              <HardDrive size={16} />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h4 className="text-xs font-medium text-black">Google Drive</h4>
+              <div className="flex items-center gap-2">
+                <h4 className="text-xs font-semibold text-black">Google Drive</h4>
                 {isDriveConnected ? (
-                  <span className="flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 text-[9px] font-mono border border-emerald-200">
-                    <CheckCircle2 size={8} /> Connected
+                  <span className="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] text-[9px] font-mono flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
+                    Connected
                   </span>
                 ) : (
-                  <span className="px-1.5 py-0.2 rounded-full bg-neutral-100 text-neutral-600 text-[9px] font-mono border border-neutral-200">
-                    Not Connected
+                  <span className="px-2 py-0.5 rounded-full bg-neutral-50 text-neutral-400 border border-black/[0.06] text-[9px] font-mono">
+                    Disconnected
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-[#6b7280] font-light truncate">
+              <p className="text-[11px] text-neutral-500 font-normal truncate mt-0.5">
                 {isDriveConnected ? 'Finished Video Scanner Ready' : 'Authorize to scan finished clips'}
               </p>
             </div>
@@ -382,14 +386,14 @@ export default function ContentVaultPage() {
             {isDriveConnected ? (
               <button
                 onClick={() => setIsDriveModalOpen(true)}
-                className="px-2.5 py-1 bg-black hover:bg-neutral-800 text-white rounded-lg text-[11px] font-medium transition-all shadow-xs cursor-pointer"
+                className="px-3 py-1.5 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/[0.08] rounded-xl text-xs font-normal transition-colors shadow-xs cursor-pointer"
               >
                 Browse
               </button>
             ) : (
               <a
                 href="/api/auth/google?service=workspace&return_to=/content"
-                className="px-3 py-1 bg-black hover:bg-neutral-800 text-white rounded-lg text-[11px] font-medium transition-all shadow-xs whitespace-nowrap"
+                className="px-3 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium transition-colors shadow-xs whitespace-nowrap"
               >
                 Connect
               </a>
@@ -399,20 +403,21 @@ export default function ContentVaultPage() {
 
         {/* Live Instagram Account Banner */}
         {igAccount ? (
-          <div className="p-3.5 rounded-2xl bg-white border border-black/[0.08] backdrop-blur-sm flex items-center justify-between gap-3 shadow-xs">
+          <div className="p-4 rounded-2xl bg-white border border-black/[0.08] flex items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 via-rose-500 to-pink-500 text-white flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-neutral-100 text-neutral-800 flex items-center justify-center font-bold text-xs flex-shrink-0 border border-black/[0.04]">
                 IG
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <h4 className="text-xs font-medium text-black truncate">@{igAccount.username}</h4>
-                  <span className="flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 text-[9px] font-mono border border-emerald-200 flex-shrink-0">
-                    <CheckCircle2 size={8} /> Live
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-semibold text-black truncate">@{igAccount.username}</h4>
+                  <span className="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] text-[9px] font-mono flex items-center gap-1 flex-shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
+                    Live
                   </span>
                 </div>
-                <p className="text-[11px] text-[#6b7280] font-light truncate">
-                  Reels Dispatch • {igAccount.account_type}
+                <p className="text-[11px] text-neutral-500 font-normal truncate mt-0.5">
+                  Reels Dispatch &bull; {igAccount.account_type}
                 </p>
               </div>
             </div>
@@ -420,17 +425,20 @@ export default function ContentVaultPage() {
               href={`https://instagram.com/${igAccount.username}`}
               target="_blank"
               rel="noreferrer"
-              className="p-2 text-[#6b7280] hover:text-black rounded-xl hover:bg-neutral-100 transition-colors flex-shrink-0"
+              className="p-2 text-neutral-400 hover:text-black rounded-xl hover:bg-neutral-50 transition-colors flex-shrink-0"
             >
               <ExternalLink size={13} />
             </a>
           </div>
         ) : (
-          <div className="p-3.5 rounded-2xl bg-[#fafafa] border border-black/[0.06] flex items-center justify-between">
-            <span className="text-xs text-[#6b7280]">Instagram Disconnected</span>
+          <div className="p-4 rounded-2xl bg-white border border-black/[0.08] flex items-center justify-between shadow-xs">
+            <div>
+              <h4 className="text-xs font-semibold text-black">Instagram Professional</h4>
+              <p className="text-[11px] text-neutral-500 font-normal mt-0.5">Direct Reels publishing</p>
+            </div>
             <Link
               href="/settings?tab=integrations"
-              className="text-xs text-indigo-600 hover:underline font-medium"
+              className="px-3 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium transition-colors shadow-xs"
             >
               Connect
             </Link>
@@ -439,46 +447,50 @@ export default function ContentVaultPage() {
 
         {/* Live YouTube Channel Banner */}
         {ytChannel ? (
-          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-rose-500/[0.04] via-rose-500/[0.02] to-transparent border border-rose-500/20 backdrop-blur-sm flex items-center justify-between gap-3 shadow-xs">
+          <div className="p-4 rounded-2xl bg-white border border-black/[0.08] flex items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-3 min-w-0">
               {ytChannel.thumbnail ? (
                 <img
                   src={ytChannel.thumbnail}
                   alt={ytChannel.title}
-                  className="w-10 h-10 rounded-full border border-black/[0.08] object-cover flex-shrink-0"
+                  className="w-9 h-9 rounded-xl border border-black/[0.08] object-cover flex-shrink-0"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-neutral-100 text-neutral-800 flex items-center justify-center font-bold text-xs flex-shrink-0 border border-black/[0.04]">
                   YT
                 </div>
               )}
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <h4 className="text-xs font-medium text-black truncate">{ytChannel.title}</h4>
-                  <span className="flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 text-[9px] font-mono border border-emerald-200 flex-shrink-0">
-                    <CheckCircle2 size={8} /> Live
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-semibold text-black truncate">{ytChannel.title}</h4>
+                  <span className="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] text-[9px] font-mono flex items-center gap-1 flex-shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
+                    Live
                   </span>
                 </div>
-                <p className="text-[11px] text-[#6b7280] font-light truncate">
-                  {parseInt(ytChannel.subscriberCount || '0').toLocaleString()} subs
+                <p className="text-[11px] text-neutral-500 font-normal truncate mt-0.5">
+                  {parseInt(ytChannel.subscriberCount || '0').toLocaleString()} subscribers
                 </p>
               </div>
             </div>
             <button
               onClick={handleManualYtSync}
               disabled={syncingYt}
-              className="p-2 text-[#6b7280] hover:text-black rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer flex-shrink-0"
+              className="p-2 text-neutral-400 hover:text-black rounded-xl hover:bg-neutral-50 transition-colors cursor-pointer flex-shrink-0"
               title="Refresh YouTube uploads"
             >
               <Repeat size={13} className={cn(syncingYt && 'animate-spin')} />
             </button>
           </div>
         ) : (
-          <div className="p-3.5 rounded-2xl bg-[#fafafa] border border-black/[0.06] flex items-center justify-between">
-            <span className="text-xs text-[#6b7280]">YouTube Disconnected</span>
+          <div className="p-4 rounded-2xl bg-white border border-black/[0.08] flex items-center justify-between shadow-xs">
+            <div>
+              <h4 className="text-xs font-semibold text-black">YouTube Channel</h4>
+              <p className="text-[11px] text-neutral-500 font-normal mt-0.5">Shorts &amp; video telemetry</p>
+            </div>
             <Link
               href="/settings?tab=integrations"
-              className="text-xs text-rose-600 hover:underline font-medium"
+              className="px-3 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium transition-colors shadow-xs"
             >
               Connect
             </Link>
@@ -493,16 +505,19 @@ export default function ContentVaultPage() {
           <button
             onClick={() => setActiveTab('inbox')}
             className={cn(
-              'px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-2',
+              'px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-2',
               activeTab === 'inbox'
                 ? 'bg-black text-white shadow-xs'
-                : 'text-[#6b7280] hover:text-black hover:bg-neutral-100'
+                : 'text-neutral-500 hover:text-black hover:bg-black/[0.03]'
             )}
           >
             <Inbox size={14} className={activeTab === 'inbox' ? 'text-white' : ''} />
             <span>Unscheduled Inbox</span>
             {inboxItems.length > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-neutral-800 text-white text-[10px] font-mono font-medium">
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-[10px] font-mono",
+                activeTab === 'inbox' ? "bg-neutral-800 text-white" : "bg-neutral-100 text-neutral-700"
+              )}>
                 {inboxItems.length}
               </span>
             )}
@@ -512,16 +527,19 @@ export default function ContentVaultPage() {
           <button
             onClick={() => setActiveTab('calendar')}
             className={cn(
-              'px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-2',
+              'px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-2',
               activeTab === 'calendar'
-                ? 'bg-indigo-50 text-indigo-900 border border-indigo-300 shadow-xs'
-                : 'text-[#6b7280] hover:text-black hover:bg-neutral-100'
+                ? 'bg-black text-white shadow-xs'
+                : 'text-neutral-500 hover:text-black hover:bg-black/[0.03]'
             )}
           >
-            <CalendarDays size={14} className={activeTab === 'calendar' ? 'text-indigo-600' : ''} />
+            <CalendarDays size={14} className={activeTab === 'calendar' ? 'text-white' : ''} />
             <span>Publishing Timeline</span>
             {scheduledItems.length > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-indigo-600 text-white text-[10px] font-mono">
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-[10px] font-mono",
+                activeTab === 'calendar' ? "bg-neutral-800 text-white" : "bg-neutral-100 text-neutral-700"
+              )}>
                 {scheduledItems.length}
               </span>
             )}
@@ -531,14 +549,14 @@ export default function ContentVaultPage() {
           <button
             onClick={() => setActiveTab('vault')}
             className={cn(
-              'px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-2',
+              'px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-2',
               activeTab === 'vault'
-                ? 'bg-neutral-900 text-white shadow-xs'
-                : 'text-[#6b7280] hover:text-black hover:bg-neutral-100'
+                ? 'bg-black text-white shadow-xs'
+                : 'text-neutral-500 hover:text-black hover:bg-black/[0.03]'
             )}
           >
             <Layers size={14} />
-            <span>Vault All Deliverables</span>
+            <span>All Deliverables</span>
             <span className="text-[10px] font-mono opacity-80">({items.length})</span>
           </button>
 
@@ -546,10 +564,10 @@ export default function ContentVaultPage() {
           <button
             onClick={() => setActiveTab('analytics')}
             className={cn(
-              'px-4 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-2',
+              'px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-2',
               activeTab === 'analytics'
                 ? 'bg-black text-white shadow-xs'
-                : 'text-[#6b7280] hover:text-black hover:bg-neutral-100'
+                : 'text-neutral-500 hover:text-black hover:bg-black/[0.03]'
             )}
           >
             <BarChart3 size={14} className={activeTab === 'analytics' ? 'text-white' : ''} />
@@ -558,15 +576,15 @@ export default function ContentVaultPage() {
         </div>
 
         {/* Global Stats Counter */}
-        <div className="hidden sm:flex items-center gap-4 text-xs font-mono text-[#6b7280]">
+        <div className="hidden sm:flex items-center gap-4 text-xs font-mono text-neutral-500">
           <span>
             Scheduled: <strong className="text-black font-semibold">{scheduledItems.length}</strong>
           </span>
           <span>
-            Live Published: <strong className="text-emerald-700 font-semibold">{publishedItems.length}</strong>
+            Live Published: <strong className="text-black font-semibold">{publishedItems.length}</strong>
           </span>
           <span>
-            Reach: <strong className="text-sky-700 font-semibold">{totalViews.toLocaleString()}</strong>
+            Total Views: <strong className="text-black font-semibold">{totalViews.toLocaleString()}</strong>
           </span>
         </div>
       </div>
@@ -647,14 +665,14 @@ export default function ContentVaultPage() {
 
           {/* Inbox Platform Filter Pills */}
           {inboxItems.length > 0 && (
-            <div className="flex items-center gap-1.5 bg-white/70 backdrop-blur-md p-1.5 rounded-2xl border border-black/[0.06] shadow-xs w-fit">
+            <div className="flex items-center gap-1 bg-[#f5f5f7] p-1 rounded-2xl border border-black/[0.04] overflow-x-auto text-xs w-fit">
               <button
                 onClick={() => setPlatformFilter('all')}
                 className={cn(
-                  'px-3 py-1.5 rounded-xl text-xs font-light transition-all cursor-pointer',
+                  'px-3.5 py-1.5 rounded-xl transition-all cursor-pointer font-normal whitespace-nowrap',
                   platformFilter === 'all'
-                    ? 'bg-black text-white font-medium shadow-xs'
-                    : 'text-[#6b7280] hover:text-black'
+                    ? 'bg-white text-black font-medium shadow-xs'
+                    : 'text-neutral-500 hover:text-black'
                 )}
               >
                 All Platforms ({inboxItems.length})
@@ -662,26 +680,24 @@ export default function ContentVaultPage() {
               <button
                 onClick={() => setPlatformFilter('youtube')}
                 className={cn(
-                  'px-3 py-1.5 rounded-xl text-xs font-light transition-all cursor-pointer flex items-center gap-1.5',
+                  'px-3.5 py-1.5 rounded-xl transition-all cursor-pointer font-normal whitespace-nowrap',
                   platformFilter === 'youtube'
-                    ? 'bg-rose-50 text-rose-700 font-medium shadow-xs border border-rose-200/60'
-                    : 'text-[#6b7280] hover:text-rose-600'
+                    ? 'bg-white text-black font-medium shadow-xs'
+                    : 'text-neutral-500 hover:text-black'
                 )}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                <span>YouTube Shorts ({inboxItems.filter((i) => i.platform === 'youtube').length})</span>
+                YouTube Shorts ({inboxItems.filter((i) => i.platform === 'youtube').length})
               </button>
               <button
                 onClick={() => setPlatformFilter('instagram')}
                 className={cn(
-                  'px-3 py-1.5 rounded-xl text-xs font-light transition-all cursor-pointer flex items-center gap-1.5',
+                  'px-3.5 py-1.5 rounded-xl transition-all cursor-pointer font-normal whitespace-nowrap',
                   platformFilter === 'instagram'
-                    ? 'bg-fuchsia-50 text-fuchsia-700 font-medium shadow-xs border border-fuchsia-200/60'
-                    : 'text-[#6b7280] hover:text-fuchsia-600'
+                    ? 'bg-white text-black font-medium shadow-xs'
+                    : 'text-neutral-500 hover:text-black'
                 )}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500" />
-                <span>Instagram Reels ({inboxItems.filter((i) => i.platform === 'instagram').length})</span>
+                Instagram Reels ({inboxItems.filter((i) => i.platform === 'instagram').length})
               </button>
             </div>
           )}
@@ -865,16 +881,16 @@ export default function ContentVaultPage() {
       {activeTab === 'vault' && (
         <div className="space-y-6">
           {/* Filter Bar */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/70 backdrop-blur-md p-2 rounded-2xl border border-black/[0.06] shadow-xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-2 rounded-2xl border border-black/[0.08] shadow-xs">
             {/* Platform tabs */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 bg-[#f5f5f7] p-1 rounded-2xl border border-black/[0.04] overflow-x-auto text-xs">
               <button
                 onClick={() => setPlatformFilter('all')}
                 className={cn(
-                  'px-3 py-1.5 rounded-xl text-xs font-light transition-all cursor-pointer',
+                  'px-3.5 py-1.5 rounded-xl transition-all cursor-pointer font-normal whitespace-nowrap',
                   platformFilter === 'all'
-                    ? 'bg-white text-black font-normal shadow-xs border border-black/[0.06]'
-                    : 'text-[#6b7280] hover:text-black'
+                    ? 'bg-white text-black font-medium shadow-xs'
+                    : 'text-neutral-500 hover:text-black'
                 )}
               >
                 All Platforms
@@ -882,26 +898,24 @@ export default function ContentVaultPage() {
               <button
                 onClick={() => setPlatformFilter('youtube')}
                 className={cn(
-                  'px-3 py-1.5 rounded-xl text-xs font-light transition-all cursor-pointer flex items-center gap-1.5',
+                  'px-3.5 py-1.5 rounded-xl transition-all cursor-pointer font-normal whitespace-nowrap',
                   platformFilter === 'youtube'
-                    ? 'bg-rose-50 text-rose-700 font-medium shadow-xs border border-rose-200/60'
-                    : 'text-[#6b7280] hover:text-rose-600'
+                    ? 'bg-white text-black font-medium shadow-xs'
+                    : 'text-neutral-500 hover:text-black'
                 )}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                <span>YouTube</span>
+                YouTube
               </button>
               <button
                 onClick={() => setPlatformFilter('instagram')}
                 className={cn(
-                  'px-3 py-1.5 rounded-xl text-xs font-light transition-all cursor-pointer flex items-center gap-1.5',
+                  'px-3.5 py-1.5 rounded-xl transition-all cursor-pointer font-normal whitespace-nowrap',
                   platformFilter === 'instagram'
-                    ? 'bg-fuchsia-50 text-fuchsia-700 font-medium shadow-xs border border-fuchsia-200/60'
-                    : 'text-[#6b7280] hover:text-fuchsia-600'
+                    ? 'bg-white text-black font-medium shadow-xs'
+                    : 'text-neutral-500 hover:text-black'
                 )}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500" />
-                <span>Instagram</span>
+                Instagram
               </button>
             </div>
 

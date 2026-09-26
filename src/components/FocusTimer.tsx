@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { 
-  Play, Pause, X, Minimize2, 
+  Play, Pause, X, Minimize2, Maximize2,
   CheckCircle2, Clock, Volume2, VolumeX,
   Radio, Sliders
 } from 'lucide-react'
@@ -97,6 +97,7 @@ export default function FocusTimer() {
   // Custom Settings
   const [customInput, setCustomInput] = useState('')
   const [showSettings, setShowSettings] = useState(false)
+  const [zenMode, setZenMode] = useState(false)
 
   // Brown Noise State
   const [brownNoiseActive, setBrownNoiseActive] = useState(false)
@@ -242,13 +243,20 @@ export default function FocusTimer() {
 
   const minutes = Math.floor(timeLeft / 60)
   const seconds = timeLeft % 60
+  const totalSeconds = initialMinutes * 60
+  const elapsedSeconds = Math.max(0, totalSeconds - timeLeft)
+  const progressRatio = totalSeconds > 0 ? Math.min(1, Math.max(0, elapsedSeconds / totalSeconds)) : 0
+  const progressPercent = Math.round(progressRatio * 100)
+  const radius = 135
+  const circumference = 2 * Math.PI * radius
+  const strokeDashoffset = circumference * (1 - progressRatio)
 
   if (!isOpen) return null
 
   return (
     <>
       {/* Floating Bottom Pill (Minimized View) */}
-      {!isExpanded && (
+      {!isExpanded && !zenMode && (
         <div 
           onClick={() => setIsExpanded(true)}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white border border-black/[0.1] rounded-full px-5 py-2.5 flex items-center gap-3.5 z-50 cursor-pointer shadow-xl font-sans hover:shadow-2xl transition-all"
@@ -269,11 +277,22 @@ export default function FocusTimer() {
               <span>Brown Noise</span>
             </span>
           )}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setZenMode(true)
+            }}
+            className="p-1 rounded-full text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors ml-1"
+            title="Open Pure Fullscreen Timer"
+          >
+            <Maximize2 size={13} />
+          </button>
         </div>
       )}
 
       {/* Expanded Focus Modal */}
-      {isExpanded && (
+      {isExpanded && !zenMode && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center p-4 font-sans animate-fadeIn">
           <div className="w-full max-w-lg bg-white rounded-3xl border border-neutral-200 shadow-2xl p-6 sm:p-10 relative overflow-hidden">
             {/* Top Bar with Controls */}
@@ -284,6 +303,15 @@ export default function FocusTimer() {
               </div>
 
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setZenMode(true)}
+                  className="p-2 rounded-xl border border-neutral-200 text-neutral-600 hover:text-black hover:bg-neutral-50 text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5"
+                  title="Open Pure Fullscreen Timer"
+                >
+                  <Maximize2 size={14} />
+                  <span className="hidden sm:inline">Pure Timer</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => setShowSettings(!showSettings)}
@@ -467,11 +495,169 @@ export default function FocusTimer() {
                 <button
                   type="button"
                   onClick={handleMarkTaskShipped}
-                  className="h-12 px-4 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-2 cursor-pointer transition-colors text-xs font-medium"
+                  className="h-12 px-4 rounded-full bg-black hover:bg-neutral-800 text-white flex items-center gap-2 cursor-pointer transition-colors text-xs font-medium"
                   title="Mark linked task as done"
                 >
-                  <CheckCircle2 size={16} className="text-emerald-600" />
+                  <CheckCircle2 size={16} className="text-white" />
                   <span>Mark Done</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dedicated Pure Timer Screen (Only Timer, Progress Circle, and Pure Focus) */}
+      {zenMode && (
+        <div className="fixed inset-0 z-[100] bg-[#07080b] text-white flex flex-col justify-between p-6 sm:p-12 animate-fadeIn font-sans selection:bg-white/10">
+          {/* Subtle Ambient Backlight Glow centered on the timer */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-white/[0.04] via-white/[0.02] to-transparent rounded-full blur-3xl pointer-events-none" />
+
+          {/* Top Bar: Minimal context & Exit */}
+          <div className="relative z-10 w-full max-w-4xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className={cn(
+                "w-2.5 h-2.5 rounded-full",
+                isActive ? "bg-white animate-ping" : "bg-neutral-600"
+              )} />
+              <span className="text-xs font-mono text-neutral-400 uppercase tracking-wider">
+                {linkedTaskTitle || 'Pure Focus Session'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setZenMode(false)}
+                className="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.15] border border-white/[0.1] text-xs font-medium text-neutral-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Exit Pure Timer View"
+              >
+                <Minimize2 size={13} />
+                <span>Exit Pure Mode</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Center: The Hypnotic Circular Progress Ring & Numbers */}
+          <div className="relative z-10 my-auto flex flex-col items-center justify-center">
+            <div className="relative w-80 h-80 sm:w-96 sm:h-96 flex items-center justify-center">
+              {/* SVG Circular Progress Track */}
+              <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 320 320">
+                {/* Background Ring Track */}
+                <circle
+                  cx="160"
+                  cy="160"
+                  r={radius}
+                  className="stroke-white/[0.06]"
+                  strokeWidth="7"
+                  fill="transparent"
+                />
+                {/* Dynamic Active Progress Ring */}
+                <circle
+                  cx="160"
+                  cy="160"
+                  r={radius}
+                  stroke="url(#progressGradient)"
+                  strokeWidth="8"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  fill="transparent"
+                  className="transition-[stroke-dashoffset] duration-700 ease-linear"
+                />
+                <defs>
+                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ffffff" />
+                    <stop offset="100%" stopColor="#9ca3af" />
+                  </linearGradient>
+                </defs>
+              </svg>
+
+              {/* Inside the Circle: Giant Digit Display & Progress */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <div className="text-7xl sm:text-8xl font-extralight font-mono text-white tracking-tighter select-none">
+                  {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
+                </div>
+                <div className="text-xs font-mono text-neutral-300 font-medium tracking-widest mt-2 uppercase flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                  <span>{progressPercent}% Elapsed</span>
+                </div>
+                <div className="text-[11px] font-mono text-neutral-500 mt-1">
+                  {Math.round(elapsedSeconds / 60)}m of {initialMinutes}m
+                </div>
+              </div>
+            </div>
+
+            {/* Presets Row */}
+            <div className="flex items-center gap-2 mt-8">
+              {[15, 25, 45, 60, 90].map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setDuration(m)}
+                  className={cn(
+                    'px-3.5 py-1.5 rounded-full text-xs font-mono transition-all cursor-pointer',
+                    initialMinutes === m && !isActive
+                      ? 'bg-white text-black font-semibold shadow-xs'
+                      : 'bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-white border border-white/[0.08]'
+                  )}
+                >
+                  {m}m
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom Bar: Action Controls & Brown Noise */}
+          <div className="relative z-10 w-full max-w-md mx-auto flex flex-col items-center gap-4">
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isActive) playChime('start')
+                  setIsActive(!isActive)
+                }}
+                className="w-16 h-16 rounded-full bg-white hover:bg-neutral-200 text-black flex items-center justify-center cursor-pointer shadow-xl transition-transform active:scale-95"
+                title={isActive ? 'Pause' : 'Start'}
+              >
+                {isActive ? <Pause size={24} fill="#000" /> : <Play size={24} fill="#000" className="ml-1" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsActive(false)
+                  setTimeLeft(initialMinutes * 60)
+                }}
+                className="w-12 h-12 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-neutral-300 hover:text-white flex items-center justify-center cursor-pointer transition-colors text-xs font-medium border border-white/[0.1]"
+                title="Reset timer"
+              >
+                Reset
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBrownNoiseActive(!brownNoiseActive)}
+                className={cn(
+                  'h-12 px-4 rounded-full border text-xs font-medium flex items-center gap-2 transition-all cursor-pointer',
+                  brownNoiseActive
+                    ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-xs'
+                    : 'bg-white/[0.04] border-white/[0.08] text-neutral-400 hover:text-white'
+                )}
+                title="Toggle Brown Noise"
+              >
+                <Radio size={14} className={brownNoiseActive ? 'text-amber-400 animate-pulse' : 'text-neutral-500'} />
+                <span>{brownNoiseActive ? 'Brown Noise ON' : 'Brown Noise'}</span>
+              </button>
+
+              {linkedTaskId && (
+                <button
+                  type="button"
+                  onClick={handleMarkTaskShipped}
+                  className="h-12 px-4 rounded-full bg-white hover:bg-neutral-200 text-black border border-white flex items-center gap-2 cursor-pointer transition-colors text-xs font-medium"
+                >
+                  <CheckCircle2 size={16} className="text-black" />
+                  <span>Done</span>
                 </button>
               )}
             </div>

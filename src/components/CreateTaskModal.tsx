@@ -113,9 +113,11 @@ export default function CreateTaskModal({ onClose, onSuccess, initialProjectId, 
       }
 
       if (!workspaceId) {
+        const rawName = session.user.user_metadata?.name || session.user.email?.split('@')[0]?.replace(/[._]/g, ' ') || 'User'
+        const accurateName = `${rawName.charAt(0).toUpperCase() + rawName.slice(1)}'s Workspace`
         const { data: newWs } = await supabase.from('workspaces').insert({
           owner_id: session.user.id,
-          name: 'My Workspace'
+          name: accurateName
         }).select().single()
         workspaceId = newWs?.id
       }

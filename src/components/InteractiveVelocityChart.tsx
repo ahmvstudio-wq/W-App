@@ -99,7 +99,7 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
           <h3 className="text-base font-normal text-black">Tasks Completed Over the Last 7 Days</h3>
         </div>
         <div className="flex items-center gap-1 text-xs font-mono text-black font-medium bg-[#f5f5f7] px-2.5 py-1 rounded-lg">
-          <TrendingUp size={13} className="text-emerald-600" />
+          <TrendingUp size={13} className="text-neutral-900" />
           <span>{totalLast7Days} {totalLast7Days === 1 ? 'task' : 'tasks'} this week</span>
         </div>
       </div>
@@ -109,8 +109,8 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
         <svg className="w-full h-full overflow-visible" viewBox={`0 0 ${svgWidth} ${svgHeight}`} preserveAspectRatio="none">
           <defs>
             <linearGradient id="velocityGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="rgb(99, 102, 241)" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="rgb(99, 102, 241)" stopOpacity="0.0" />
+              <stop offset="0%" stopColor="rgba(0, 0, 0, 0.08)" stopOpacity="1" />
+              <stop offset="100%" stopColor="rgba(0, 0, 0, 0.0)" stopOpacity="0" />
             </linearGradient>
           </defs>
 
@@ -129,7 +129,7 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
                 r={hoveredIdx === idx ? 6 : 4}
                 className={cn(
                   'transition-all duration-150',
-                  hoveredIdx === idx ? 'fill-indigo-600 stroke-white stroke-2' : 'fill-black'
+                  hoveredIdx === idx ? 'fill-neutral-900 stroke-white stroke-2' : 'fill-black'
                 )}
               />
               {hoveredIdx === idx && (
@@ -148,7 +148,7 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
       </div>
 
       {/* Days Label Axis */}
-      <div className="flex justify-between text-[11px] font-mono text-[#9ca3af] px-3">
+      <div className="flex justify-between text-[11px] font-mono text-neutral-400 px-3">
         {daysData.map((d, idx) => (
           <span
             key={idx}
@@ -169,11 +169,11 @@ export default function InteractiveVelocityChart({ tasks }: InteractiveVelocityC
           <div className="flex items-center gap-2">
             <span className="text-black font-medium">{activeDay.dayName}, {activeDay.dateLabel}</span>
             <span>•</span>
-            <span className="text-emerald-700 font-semibold">
+            <span className="text-black font-semibold">
               {activeDay.tasksShipped} {activeDay.tasksShipped === 1 ? 'task' : 'tasks'} completed ({activeDay.minutesLogged}m focused)
             </span>
           </div>
-          <div className="text-[11px] text-[#6b7280] truncate font-light font-body">
+          <div className="text-[11px] text-neutral-500 truncate font-light font-body">
             {activeDay.topDeliverable}
           </div>
         </div>

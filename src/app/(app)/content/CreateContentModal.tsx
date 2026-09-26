@@ -379,7 +379,7 @@ export function CreateContentModal({
                       <span className="text-xs font-light">Scanning Drive videos...</span>
                     </div>
                   ) : (
-                    <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
+                    <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1.5 overscroll-contain focus:outline-none">
                       {/* Sub-Folders */}
                       {driveFolders.length > 0 && (
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">

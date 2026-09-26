@@ -167,18 +167,23 @@ export function DriveImportModal({ isOpen, onClose, onImportSuccess }: DriveImpo
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl border border-black/[0.08] max-h-[90vh] flex flex-col space-y-5">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+      <div
+        className={cn(
+          'bg-white rounded-3xl max-w-4xl w-full shadow-2xl border border-black/[0.08] flex flex-col overflow-hidden my-auto',
+          connected ? 'h-[88vh] max-h-[92vh]' : 'max-h-[90vh] h-auto p-6 sm:p-8 space-y-5'
+        )}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-black/[0.06] pb-4">
+        <div className="flex items-center justify-between px-6 py-4 sm:px-8 sm:py-5 border-b border-black/[0.06] flex-shrink-0 bg-white">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-neutral-100 border border-black/[0.08] text-black flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-neutral-100 border border-black/[0.08] text-black flex items-center justify-center flex-shrink-0">
               <HardDrive size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-light text-black">Google Drive Video Explorer</h3>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-mono border border-emerald-200">
+                <span className="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-800 text-[10px] font-mono border border-black/[0.08]">
                   Direct Ingestion
                 </span>
               </div>
@@ -190,6 +195,7 @@ export function DriveImportModal({ isOpen, onClose, onImportSuccess }: DriveImpo
           <button
             onClick={onClose}
             className="p-2 text-[#9ca3af] hover:text-black rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+            aria-label="Close"
           >
             <X size={18} />
           </button>
@@ -220,194 +226,202 @@ export function DriveImportModal({ isOpen, onClose, onImportSuccess }: DriveImpo
           </div>
         ) : (
           <>
-            {/* Folder Breadcrumbs & Search Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#fbfbfd] p-3 rounded-2xl border border-black/[0.06]">
-              {/* Breadcrumb path */}
-              <div className="flex items-center gap-1.5 overflow-x-auto text-xs font-light text-black">
-                {folderHistory.map((f, idx) => (
-                  <div key={f.id} className="flex items-center gap-1.5 flex-shrink-0">
-                    <button
-                      onClick={() => navigateBreadcrumb(idx)}
-                      className={cn(
-                        'px-2 py-1 rounded-lg transition-colors cursor-pointer hover:bg-neutral-200/60',
-                        idx === folderHistory.length - 1 ? 'font-medium text-black bg-white shadow-xs' : 'text-[#6b7280]'
-                      )}
-                    >
-                      {f.name}
-                    </button>
-                    {idx < folderHistory.length - 1 && <span className="text-[#9ca3af]">/</span>}
-                  </div>
-                ))}
-              </div>
-
-              {/* Search & Refresh */}
-              <div className="flex items-center gap-2">
-                <form onSubmit={handleSearch} className="relative">
-                  <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
-                  <input
-                    type="text"
-                    placeholder="Search video name..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-7 pr-2.5 py-1.5 bg-white border border-black/[0.08] rounded-xl text-xs text-black font-light outline-none w-40 sm:w-48 focus:border-black"
-                  />
-                </form>
-
-                <button
-                  onClick={() => loadDriveFiles(currentFolder.id === 'root' ? undefined : currentFolder.id, searchQuery)}
-                  disabled={loading}
-                  className="p-1.5 bg-white border border-black/[0.08] rounded-xl text-[#6b7280] hover:text-black cursor-pointer disabled:opacity-50"
-                  title="Refresh Drive files"
-                >
-                  <RefreshCw size={13} className={cn(loading && 'animate-spin')} />
-                </button>
-              </div>
-            </div>
-
-            {/* Folder Grid (if any) */}
-            {folders.length > 0 && (
-              <div className="space-y-1.5">
-                <div className="text-[10px] font-mono uppercase tracking-wider text-[#6b7280]">Folders</div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  {folders.map((folder) => (
-                    <button
-                      key={folder.id}
-                      onClick={() => navigateToFolder(folder)}
-                      className="p-2.5 bg-white hover:bg-neutral-50 border border-black/[0.06] hover:border-black/[0.15] rounded-xl text-left flex items-center gap-2.5 transition-all group cursor-pointer shadow-xs"
-                    >
-                      <Folder size={15} className="text-neutral-700 flex-shrink-0 group-hover:scale-105 transition-transform" />
-                      <span className="text-xs font-light text-black truncate">{folder.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Video Deliverables List */}
-            <div className="flex-1 overflow-y-auto space-y-3 min-h-[260px] pr-1">
-              <div className="flex items-center justify-between text-xs text-[#6b7280]">
-                <span>
-                  Found <strong className="text-black font-medium">{videos.length}</strong> video file(s)
-                </span>
-                {videos.length > 0 && (
-                  <button
-                    onClick={selectAll}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer"
-                  >
-                    {selectedIds.size === videos.length ? 'Deselect All' : 'Select All'}
-                  </button>
-                )}
-              </div>
-
-              {loading ? (
-                <div className="py-20 flex flex-col items-center justify-center gap-3 text-[#6b7280]">
-                  <Loader2 size={24} className="animate-spin text-black" />
-                  <span className="text-xs font-light">Scanning Google Drive for video deliverables...</span>
-                </div>
-              ) : videos.length === 0 ? (
-                <div className="py-16 text-center bg-[#fbfbfd] border border-black/[0.06] rounded-2xl p-6">
-                  <Film size={28} className="mx-auto text-[#9ca3af] mb-2 opacity-60" />
-                  <p className="text-xs font-normal text-black">No video files found in this folder</p>
-                  <p className="text-[11px] text-[#6b7280] font-light mt-0.5">
-                    Upload MP4/MOV videos into this Google Drive folder or select another folder.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {videos.map((video) => {
-                    const isSelected = selectedIds.has(video.id)
-                    const isVertical = video.aspectRatio === '9:16'
-
-                    return (
-                      <div
-                        key={video.id}
-                        onClick={() => toggleSelect(video.id)}
+            {/* Pinned Folder Breadcrumbs & Search Bar */}
+            <div className="px-6 pt-4 pb-1 sm:px-8 flex-shrink-0">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#fbfbfd] p-3 rounded-2xl border border-black/[0.06]">
+                {/* Breadcrumb path */}
+                <div className="flex items-center gap-1.5 overflow-x-auto text-xs font-light text-black py-0.5">
+                  {folderHistory.map((f, idx) => (
+                    <div key={f.id} className="flex items-center gap-1.5 flex-shrink-0">
+                      <button
+                        onClick={() => navigateBreadcrumb(idx)}
                         className={cn(
-                          'p-3 rounded-2xl border transition-all cursor-pointer relative flex flex-col justify-between group shadow-xs',
-                          isSelected
-                            ? 'bg-indigo-500/[0.04] border-indigo-500 shadow-xs ring-1 ring-indigo-500/30'
-                            : 'bg-white hover:bg-neutral-50/80 border-black/[0.06] hover:border-black/[0.14]'
+                          'px-2 py-1 rounded-lg transition-colors cursor-pointer hover:bg-neutral-200/60',
+                          idx === folderHistory.length - 1 ? 'font-medium text-black bg-white shadow-xs' : 'text-[#6b7280]'
                         )}
                       >
-                        {/* Thumbnail or Video Placeholder */}
-                        <div className="aspect-video bg-[#111214] rounded-xl overflow-hidden relative flex items-center justify-center mb-2.5">
-                          {video.thumbnailUrl ? (
-                            <img
-                              src={video.thumbnailUrl}
-                              alt={video.name}
-                              className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
-                            />
-                          ) : (
-                            <div className="flex flex-col items-center gap-1 text-neutral-500">
-                              <Video size={22} className="opacity-60" />
-                              <span className="text-[9px] font-mono uppercase">Video Master</span>
-                            </div>
-                          )}
-
-                          {/* Aspect ratio badge */}
-                          <div className="absolute top-2 left-2 flex items-center gap-1">
-                            <span
-                              className={cn(
-                                'px-1.5 py-0.5 rounded text-[9px] font-mono uppercase font-medium backdrop-blur-md shadow-xs',
-                                isVertical ? 'bg-fuchsia-600/90 text-white' : 'bg-black/75 text-neutral-200'
-                              )}
-                            >
-                              {isVertical ? '9:16 Reel' : '16:9 Video'}
-                            </span>
-                          </div>
-
-                          {/* Duration badge */}
-                          {video.durationFormatted && (
-                            <div className="absolute bottom-2 right-2 bg-black/80 backdrop-blur-xs text-white px-1.5 py-0.5 rounded text-[10px] font-mono flex items-center gap-1">
-                              <Clock size={10} />
-                              <span>{video.durationFormatted}</span>
-                            </div>
-                          )}
-
-                          {/* Checkbox indicator */}
-                          <div
-                            className={cn(
-                              'absolute top-2 right-2 w-5 h-5 rounded-md flex items-center justify-center transition-all',
-                              isSelected
-                                ? 'bg-indigo-600 text-white shadow-xs'
-                                : 'bg-black/50 text-white/50 group-hover:bg-black/70'
-                            )}
-                          >
-                            <CheckCircle2 size={14} className={isSelected ? 'block' : 'opacity-40'} />
-                          </div>
-                        </div>
-
-                        {/* Title & metadata */}
-                        <div>
-                          <h4 className="text-xs font-medium text-black line-clamp-1 group-hover:text-neutral-800">
-                            {video.name}
-                          </h4>
-                          <div className="flex items-center justify-between text-[10px] text-[#6b7280] font-light mt-1">
-                            <span className="font-mono">{video.sizeFormatted || 'MP4'}</span>
-                            {video.webViewLink && (
-                              <a
-                                href={video.webViewLink}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="text-neutral-400 hover:text-black flex items-center gap-0.5"
-                                title="Preview on Drive"
-                              >
-                                <span>Preview</span>
-                                <ExternalLink size={9} />
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
+                        {f.name}
+                      </button>
+                      {idx < folderHistory.length - 1 && <span className="text-[#9ca3af]">/</span>}
+                    </div>
+                  ))}
                 </div>
-              )}
+
+                {/* Search & Refresh */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <form onSubmit={handleSearch} className="relative">
+                    <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+                    <input
+                      type="text"
+                      placeholder="Search video name..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-7 pr-2.5 py-1.5 bg-white border border-black/[0.08] rounded-xl text-xs text-black font-light outline-none w-40 sm:w-48 focus:border-black"
+                    />
+                  </form>
+
+                  <button
+                    onClick={() => loadDriveFiles(currentFolder.id === 'root' ? undefined : currentFolder.id, searchQuery)}
+                    disabled={loading}
+                    className="p-1.5 bg-white border border-black/[0.08] rounded-xl text-[#6b7280] hover:text-black cursor-pointer disabled:opacity-50"
+                    title="Refresh Drive files"
+                  >
+                    <RefreshCw size={13} className={cn(loading && 'animate-spin')} />
+                  </button>
+                </div>
+              </div>
             </div>
 
-            {/* Bottom Actions Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-black/[0.06]">
+            {/* Scrollable Explorer Content Area: Folders + Videos */}
+            <div className="flex-1 min-h-0 overflow-y-auto px-6 py-3 sm:px-8 space-y-4 overscroll-contain focus:outline-none">
+              {/* Folder Grid (if any) */}
+              {folders.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-[#6b7280]">
+                    Folders ({folders.length})
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    {folders.map((folder) => (
+                      <button
+                        key={folder.id}
+                        onClick={() => navigateToFolder(folder)}
+                        className="p-2.5 bg-white hover:bg-neutral-50 border border-black/[0.06] hover:border-black/[0.15] rounded-xl text-left flex items-center gap-2.5 transition-all group cursor-pointer shadow-xs"
+                      >
+                        <Folder size={15} className="text-neutral-700 flex-shrink-0 group-hover:scale-105 transition-transform" />
+                        <span className="text-xs font-light text-black truncate">{folder.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Video Deliverables Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs text-[#6b7280]">
+                  <span>
+                    Found <strong className="text-black font-medium">{videos.length}</strong> video file(s)
+                  </span>
+                  {videos.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={selectAll}
+                      className="text-xs text-black hover:text-neutral-600 font-medium cursor-pointer underline underline-offset-2"
+                    >
+                      {selectedIds.size === videos.length ? 'Deselect All' : 'Select All'}
+                    </button>
+                  )}
+                </div>
+
+                {loading ? (
+                  <div className="py-20 flex flex-col items-center justify-center gap-3 text-[#6b7280]">
+                    <Loader2 size={24} className="animate-spin text-black" />
+                    <span className="text-xs font-light">Scanning Google Drive for video deliverables...</span>
+                  </div>
+                ) : videos.length === 0 ? (
+                  <div className="py-16 text-center bg-[#fbfbfd] border border-black/[0.06] rounded-2xl p-6">
+                    <Film size={28} className="mx-auto text-[#9ca3af] mb-2 opacity-60" />
+                    <p className="text-xs font-normal text-black">No video files found in this folder</p>
+                    <p className="text-[11px] text-[#6b7280] font-light mt-0.5">
+                      Upload MP4/MOV videos into this Google Drive folder or select another folder.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pb-2">
+                    {videos.map((video) => {
+                      const isSelected = selectedIds.has(video.id)
+                      const isVertical = video.aspectRatio === '9:16'
+
+                      return (
+                        <div
+                          key={video.id}
+                          onClick={() => toggleSelect(video.id)}
+                          className={cn(
+                            'p-3 rounded-2xl border transition-all cursor-pointer relative flex flex-col justify-between group shadow-xs',
+                            isSelected
+                              ? 'bg-neutral-900/[0.04] border-black shadow-xs ring-1 ring-black/20'
+                              : 'bg-white hover:bg-neutral-50/80 border-black/[0.06] hover:border-black/[0.14]'
+                          )}
+                        >
+                          {/* Thumbnail or Video Placeholder */}
+                          <div className="aspect-video bg-[#111214] rounded-xl overflow-hidden relative flex items-center justify-center mb-2.5">
+                            {video.thumbnailUrl ? (
+                              <img
+                                src={video.thumbnailUrl}
+                                alt={video.name}
+                                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+                              />
+                            ) : (
+                              <div className="flex flex-col items-center gap-1 text-neutral-500">
+                                <Video size={22} className="opacity-60" />
+                                <span className="text-[9px] font-mono uppercase">Video Master</span>
+                              </div>
+                            )}
+
+                            {/* Aspect ratio badge */}
+                            <div className="absolute top-2 left-2 flex items-center gap-1">
+                              <span
+                                className={cn(
+                                  'px-1.5 py-0.5 rounded text-[9px] font-mono uppercase font-medium backdrop-blur-md shadow-xs',
+                                  isVertical ? 'bg-neutral-900/90 text-white' : 'bg-black/75 text-neutral-200'
+                                )}
+                              >
+                                {isVertical ? '9:16 Reel' : '16:9 Video'}
+                              </span>
+                            </div>
+
+                            {/* Duration badge */}
+                            {video.durationFormatted && (
+                              <div className="absolute bottom-2 right-2 bg-black/80 backdrop-blur-xs text-white px-1.5 py-0.5 rounded text-[10px] font-mono flex items-center gap-1">
+                                <Clock size={10} />
+                                <span>{video.durationFormatted}</span>
+                              </div>
+                            )}
+
+                            {/* Checkbox indicator */}
+                            <div
+                              className={cn(
+                                'absolute top-2 right-2 w-5 h-5 rounded-md flex items-center justify-center transition-all',
+                                isSelected
+                                  ? 'bg-black text-white shadow-xs'
+                                  : 'bg-black/50 text-white/50 group-hover:bg-black/70'
+                              )}
+                            >
+                              <CheckCircle2 size={14} className={isSelected ? 'block' : 'opacity-40'} />
+                            </div>
+                          </div>
+
+                          {/* Title & metadata */}
+                          <div>
+                            <h4 className="text-xs font-medium text-black line-clamp-1 group-hover:text-neutral-800">
+                              {video.name}
+                            </h4>
+                            <div className="flex items-center justify-between text-[10px] text-[#6b7280] font-light mt-1">
+                              <span className="font-mono">{video.sizeFormatted || 'MP4'}</span>
+                              {video.webViewLink && (
+                                <a
+                                  href={video.webViewLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-neutral-400 hover:text-black flex items-center gap-0.5"
+                                  title="Preview on Drive"
+                                >
+                                  <span>Preview</span>
+                                  <ExternalLink size={9} />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Pinned Bottom Actions Bar */}
+            <div className="flex-shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 sm:px-8 border-t border-black/[0.06] bg-white">
               {/* Target platform selector */}
               <div className="flex items-center gap-2">
                 <span className="text-xs text-[#6b7280] font-light">Target Pipeline:</span>
@@ -417,11 +431,10 @@ export function DriveImportModal({ isOpen, onClose, onImportSuccess }: DriveImpo
                   className={cn(
                     'px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1',
                     targetPlatform === 'instagram'
-                      ? 'bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200'
-                      : 'text-[#6b7280] hover:text-black'
+                      ? 'bg-neutral-900 text-white'
+                      : 'text-[#6b7280] hover:text-black bg-neutral-100/70'
                   )}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500" />
                   <span>Instagram Reels</span>
                 </button>
                 <button
@@ -430,11 +443,10 @@ export function DriveImportModal({ isOpen, onClose, onImportSuccess }: DriveImpo
                   className={cn(
                     'px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1',
                     targetPlatform === 'youtube'
-                      ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                      : 'text-[#6b7280] hover:text-black'
+                      ? 'bg-neutral-900 text-white'
+                      : 'text-[#6b7280] hover:text-black bg-neutral-100/70'
                   )}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                   <span>YouTube Shorts</span>
                 </button>
               </div>
@@ -444,7 +456,7 @@ export function DriveImportModal({ isOpen, onClose, onImportSuccess }: DriveImpo
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 border border-black/[0.08] hover:bg-neutral-100 rounded-xl text-xs text-[#6b7280] font-light cursor-pointer"
+                  className="px-4 py-2 border border-black/[0.08] hover:bg-neutral-100 rounded-xl text-xs text-[#6b7280] font-light cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>

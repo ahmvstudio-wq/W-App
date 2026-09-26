@@ -189,13 +189,14 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-b border-black/[0.06]">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-10 h-16 flex items-center justify-between relative">
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <img 
-              src="/logo-cultlike.png" 
-              alt="Cultlike OS" 
-              className="h-9 w-9 object-contain rounded-full" 
-            />
-            <span className="text-sm font-semibold tracking-tight text-black hidden sm:inline">Cultlike OS</span>
+          <div className="flex items-center">
+            <Link href="/" className="flex items-center">
+              <img 
+                src="/logo.png" 
+                alt="Logo" 
+                className="h-10 sm:h-12 w-auto object-contain hover:opacity-85 transition-opacity" 
+              />
+            </Link>
           </div>
 
           {/* Center: Iconic Pill Menu Button (Dead center via absolute positioning) */}
@@ -217,20 +218,18 @@ export default function LandingPage() {
 
           {/* Right: CTA & Auth */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              onClick={() => { setMode('login'); setConfirmationSent(false); setIsAuthOpen(true) }}
-              type="button"
+            <Link
+              href="/login"
               className="hidden sm:inline-block text-xs font-medium text-neutral-600 hover:text-black px-3 py-1.5 transition-colors cursor-pointer"
             >
               Sign In
-            </button>
-            <button
-              onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
-              type="button"
+            </Link>
+            <Link
+              href="/signup"
               className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-black hover:bg-neutral-800 text-white text-xs sm:text-sm font-normal shadow-xs transition-all cursor-pointer"
             >
               Get Started
-            </button>
+            </Link>
           </div>
         </div>
       </nav>
@@ -631,29 +630,29 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-12 gap-8 md:gap-12">
             {/* Logo + Tagline */}
             <div className="col-span-2 md:col-span-4 space-y-4">
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center">
                 <img 
-                  src="/logo-cultlike.png" 
-                  alt="Cultlike OS" 
-                  className="h-10 w-10 object-contain rounded-full" 
+                  src="/logo.png" 
+                  alt="Logo" 
+                  className="h-12 sm:h-14 w-auto object-contain" 
                 />
               </div>
               <p className="text-sm text-neutral-500 font-normal">
-                The executive operating system.
+                The studio workspace for high-agency creators.
               </p>
               <div className="flex items-center gap-3 pt-2">
-                <button
-                  onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
+                <Link
+                  href="/signup"
                   className="px-5 py-2.5 rounded-full bg-black hover:bg-neutral-800 text-white text-xs font-medium transition-all cursor-pointer"
                 >
                   Get Started
-                </button>
-                <button
-                  onClick={() => { setMode('login'); setConfirmationSent(false); setIsAuthOpen(true) }}
+                </Link>
+                <Link
+                  href="/login"
                   className="px-5 py-2.5 rounded-full border border-black/[0.12] hover:border-black/[0.3] text-xs font-normal text-black transition-all cursor-pointer"
                 >
                   Sign In
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -720,9 +719,8 @@ export default function LandingPage() {
 
             <div className="p-8 sm:p-10">
               {/* Logo */}
-              <div className="flex items-center gap-2.5 mb-8">
-                <img src="/logo-cultlike.png" alt="Cultlike OS" className="h-9 w-9 object-contain rounded-full" />
-                <span className="text-sm font-semibold tracking-tight text-black">Cultlike OS</span>
+              <div className="flex items-center mb-8">
+                <img src="/logo.png" alt="Logo" className="h-11 w-auto object-contain" />
               </div>
 
               {confirmationSent ? (

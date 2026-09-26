@@ -126,8 +126,19 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
           .eq('user_id', session.user.id)
       ])
 
+      const rawUserName = session.user.user_metadata?.name || session.user.email?.split('@')[0]?.replace(/[._]/g, ' ') || 'User'
+      const formattedUserName = rawUserName.charAt(0).toUpperCase() + rawUserName.slice(1)
+
+      const formatWsName = (name: string | undefined | null) => {
+        if (!name || name === 'My Workspace' || name === 'Workspace') {
+          return `${formattedUserName}'s Workspace`
+        }
+        return name
+      }
+
       const ownedList = (ownedRes.data || []).map((ws) => ({
         ...ws,
+        name: formatWsName(ws.name),
         role: 'owner' as WorkspaceRole,
       }))
 
@@ -135,6 +146,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
         .filter((r: any) => r.workspace)
         .map((r: any) => ({
           ...r.workspace,
+          name: formatWsName(r.workspace.name),
           role: r.role || 'member',
         }))
 
@@ -148,11 +160,10 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 
       // Auto-provision default workspace if completely empty
       if (list.length === 0) {
-        const userName = session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'My'
         const { data: newWs } = await supabase
           .from('workspaces')
           .insert({
-            name: `${userName}'s Workspace`,
+            name: `${formattedUserName}'s Workspace`,
             owner_id: session.user.id,
             settings: {},
           })

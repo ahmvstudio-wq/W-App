@@ -261,73 +261,63 @@ export default function DashboardPage() {
   const agendaShippedTasks = agendaTasks.filter(t => t.status === 'shipped')
 
   return (
-    <div className="space-y-8 pb-16 animate-fadeIn font-sans">
-      {/* Top Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1 font-light">
-            DASHBOARD
+    <div className="space-y-5 pb-10 animate-fadeIn font-sans">
+      {/* Hero Insight Card */}
+      <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.08] p-6 shadow-xs">
+        {/* Top Card Bar: Founder Identity & Actions */}
+        <div className="flex items-center justify-between pb-4 mb-4 border-b border-black/[0.05]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center font-medium text-xs shadow-xs">
+              {getInitials(userName)}
+            </div>
+            <div>
+              <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">FOUNDER WORKSPACE</span>
+              <span className="text-xs font-medium text-black">{userName}</span>
+            </div>
           </div>
-          <h1 className="text-3xl font-light tracking-tight text-black">
-            Your Daily Dashboard
-          </h1>
-        </div>
 
-        <div className="flex items-center gap-3 font-body">
           <button 
             onClick={() => generateBrief(tasks, projects)}
             disabled={generatingBrief}
-            className="flex items-center gap-2 px-3.5 py-1.5 bg-white hover:bg-[#f5f5f7] border border-black/[0.08] rounded-xl text-xs font-normal text-black transition-all cursor-pointer shadow-sm"
+            className="flex items-center gap-2 px-3.5 py-1.5 bg-white hover:bg-neutral-50 border border-black/[0.08] rounded-xl text-xs font-normal text-black transition-all cursor-pointer shadow-2xs"
+            title="Regenerate daily intelligence briefing"
           >
-            <RefreshCw size={13} className={cn(generatingBrief && 'animate-spin')} />
+            <RefreshCw size={12} className={cn(generatingBrief && 'animate-spin')} />
             <span>Refresh Summary</span>
           </button>
         </div>
-      </div>
 
-      {/* Hero Insight Card: High-Contrast Executive Card */}
-      <div className="relative overflow-hidden rounded-3xl bg-white border-2 border-black/[0.08] p-8 shadow-sm">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           {/* Left Column: Greeting & Big Punchy Metric */}
-          <div className="lg:col-span-7 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-black text-white flex items-center justify-center font-medium text-xs shadow-xs">
-                {getInitials(userName)}
-              </div>
-              <div>
-                <span className="text-xs font-mono text-[#4b5563] uppercase tracking-wider block font-semibold">WELCOME BACK</span>
-                <span className="text-sm font-semibold text-black">{userName}</span>
-              </div>
-            </div>
-
-            <h2 className="text-3xl sm:text-4xl font-normal text-black tracking-tight leading-snug">
+          <div className="lg:col-span-7 space-y-3.5">
+            <h2 className="text-2xl sm:text-3xl font-normal text-black tracking-tight leading-snug">
               {totalHours} focused hours logged <br />
-              <span className="text-[#4b5563] font-light">
+              <span className="text-neutral-500 font-light">
                 across {projects.length} active projects.
               </span>
             </h2>
 
-            <div className="flex items-center gap-3 text-xs text-[#374151] font-body">
-              <span className="px-2.5 py-0.5 rounded-md bg-black text-white font-mono font-medium text-[11px]">
-                {completionRate}% tasks completed
+            <div className="flex items-center gap-3 text-xs text-neutral-600">
+              <span className="px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] font-mono text-[10px]">
+                {completionRate}% completed
               </span>
               <span>•</span>
-              <span className="font-medium text-black">{shippedTasks.length} tasks finished</span>
+              <span className="font-normal text-black">{shippedTasks.length} deliverables shipped</span>
             </div>
 
             {/* Executive Intelligence Brief */}
-            <div className="p-4 rounded-2xl bg-[#f8f9fa] border border-black/[0.08]">
-              <div className="text-xs font-mono text-black font-semibold mb-1.5 uppercase tracking-wide">
+            <div className="p-4 rounded-2xl bg-[#fafafa] border border-black/[0.06]">
+              <div className="text-[10px] font-mono text-neutral-500 font-medium mb-1 uppercase tracking-wide">
                 <span>DAILY SUMMARY &amp; NEXT STEPS</span>
               </div>
-              <div className="text-xs text-[#1f2937] whitespace-pre-line leading-relaxed font-body font-normal">
+              <div className="text-xs text-neutral-700 whitespace-pre-line leading-relaxed font-light">
                 {brief || 'Analyzing current priorities and next steps...'}
               </div>
             </div>
           </div>
 
           {/* Right Column: Radial Arc Donut Gauge */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 bg-[#f8f9fa] border border-black/[0.08] rounded-3xl">
+          <div className="lg:col-span-5 flex flex-col items-center justify-center p-5 bg-[#fafafa] border border-black/[0.06] rounded-3xl">
             <div className="relative w-44 h-44 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                 <circle
@@ -372,19 +362,19 @@ export default function DashboardPage() {
       </div>
 
       {/* Grid: Interactive Velocity Chart + Project Progress Portfolio */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Interactive Sprint Velocity Area Chart */}
         <div className="lg:col-span-7">
           <InteractiveVelocityChart tasks={tasks} />
         </div>
 
         {/* Project Progress Breakdown */}
-        <div className="lg:col-span-5 bg-white border border-black/[0.08] rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-4">
+        <div className="lg:col-span-5 bg-white border border-black/[0.08] rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-4">
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3.5">
               <div>
-                <span className="text-xs font-mono text-[#6b7280] uppercase tracking-wider block font-light">PORTFOLIO</span>
-                <h3 className="text-base font-normal text-black">Active Projects Health</h3>
+                <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block font-light">PORTFOLIO</span>
+                <h3 className="text-sm font-medium text-black">Active Projects Health</h3>
               </div>
               <Link href="/projects" className="text-xs text-[#6b7280] hover:text-black font-body font-light flex items-center gap-1">
                 <span>View All</span>
@@ -392,7 +382,7 @@ export default function DashboardPage() {
               </Link>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {projects.slice(0, 3).map((p) => {
                 const pTasks = p.tasks || []
                 const shipped = pTasks.filter(t => t.status === 'shipped').length
@@ -402,7 +392,7 @@ export default function DashboardPage() {
                   <Link
                     key={p.id}
                     href={`/projects/${p.id}`}
-                    className="p-3.5 rounded-2xl bg-[#f9fafb] hover:bg-[#f3f4f6] border border-black/[0.04] block transition-all group"
+                    className="p-3 rounded-2xl bg-[#f9fafb] hover:bg-[#f3f4f6] border border-black/[0.04] block transition-all group"
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-xs font-normal text-black truncate group-hover:underline">{p.name}</span>
@@ -428,29 +418,27 @@ export default function DashboardPage() {
       <AnnualExecutionGrid tasks={tasks} />
 
       {/* TODAY'S ACTIVE TASKS & DAILY AGENDA SECTION (Requested Feature) */}
-      <div className="bg-white border border-black/[0.08] rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 font-body">
+      <div className="bg-white border border-black/[0.08] rounded-3xl p-6 shadow-xs space-y-5 font-body">
         {/* Section Header with Date Selector & Quick Actions */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-black/[0.06] pb-5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-black/[0.06] pb-4">
           <div>
-            <div className="flex items-center gap-2 text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
-              <Sun size={13} className="text-amber-500" />
-              <span>DAILY EXECUTION AGENDA</span>
-              <span>•</span>
-              <span className="text-black font-medium">{isAgendaToday ? "TODAY'S WORK" : 'SCHEDULED DAY'}</span>
-            </div>
-            <h3 className="text-xl font-normal text-black flex items-center gap-3">
-              <span>Active Tasks to be Done</span>
+            <span className="text-[10px] font-mono text-neutral-400 tracking-[0.14em] uppercase block mb-1">
+              Execution Agenda
+            </span>
+            <h3 className="text-lg font-medium tracking-tight text-black flex items-center gap-2">
+              <span>Active Tasks</span>
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-black text-white font-mono font-medium">
-                {agendaActiveTasks.length} pending
+                {agendaActiveTasks.length}
               </span>
               {agendaShippedTasks.length > 0 && (
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-medium">
+                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] text-[10px] font-mono">
+                  <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
                   {agendaShippedTasks.length} shipped
                 </span>
               )}
             </h3>
-            <p className="text-xs text-[#6b7280] font-light mt-1">
-              Showing active deliverables for <strong className="text-black font-medium">{format(new Date(agendaDate + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}</strong>
+            <p className="text-xs text-[#6b7280] font-light mt-0.5">
+              Deliverables for <strong className="text-black font-medium">{format(new Date(agendaDate + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}</strong>
             </p>
           </div>
 
@@ -465,7 +453,7 @@ export default function DashboardPage() {
                 )}
               >
                 <span>Today</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="w-1.5 h-1.5 rounded-full bg-neutral-900" />
               </button>
               <button
                 onClick={() => setAgendaDate(tomorrowKey)}
@@ -502,7 +490,7 @@ export default function DashboardPage() {
         <div className="space-y-3">
           {agendaActiveTasks.length === 0 ? (
             <div className="py-12 px-6 text-center rounded-2xl bg-[#fafafa] border border-black/[0.06] space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto text-xl shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-neutral-100 text-neutral-800 flex items-center justify-center mx-auto text-xl shadow-xs">
                 🎯
               </div>
               <div className="space-y-1">
@@ -606,7 +594,7 @@ export default function DashboardPage() {
                           className="px-3.5 py-1.5 bg-black text-white hover:bg-neutral-800 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-sm font-body"
                           title="Mark task completed and shipped"
                         >
-                          <Check size={12} className="text-[#c8f135]" />
+                          <Check size={12} className="text-white" />
                           <span>Ship Deliverable</span>
                         </button>
                       )}
@@ -638,11 +626,12 @@ export default function DashboardPage() {
                     className="p-3 rounded-xl bg-[#f9fafb] border border-black/[0.04] flex items-center justify-between text-xs cursor-pointer hover:bg-white transition-colors"
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      <CheckCircle2 size={15} className="text-emerald-600 flex-shrink-0" />
-                      <span className="text-black truncate">{t.title}</span>
-                      <span className="text-[10px] font-mono text-[#9ca3af]">({t.project?.name || 'General'})</span>
+                      <CheckCircle2 size={14} className="text-neutral-900 flex-shrink-0" />
+                      <span className="text-black truncate font-normal">{t.title}</span>
+                      <span className="text-[10px] font-mono text-neutral-400">({t.project?.name || 'General'})</span>
                     </div>
-                    <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md flex-shrink-0">
+                    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] text-[9px] font-mono flex-shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
                       Shipped
                     </span>
                   </div>

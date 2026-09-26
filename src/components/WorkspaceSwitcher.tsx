@@ -78,7 +78,7 @@ export default function WorkspaceSwitcher() {
 
           <div className="flex flex-col min-w-0 pr-0.5">
             <span className="text-xs font-normal text-black truncate max-w-[130px] leading-tight">
-              {currentWorkspace?.name || 'My Workspace'}
+              {currentWorkspace?.name || 'Active Workspace'}
             </span>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-[9px] font-mono tracking-wider text-[#8a8d95] uppercase font-light">
@@ -100,7 +100,7 @@ export default function WorkspaceSwitcher() {
               <span className="text-[10px] font-mono font-medium tracking-wider text-[#8a8d95] uppercase">
                 Workspaces ({workspaces.length})
               </span>
-              <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+              <span className="text-[10px] font-mono text-neutral-700 bg-neutral-100 border border-black/[0.06] px-1.5 py-0.5 rounded">
                 Multi-Tenant
               </span>
             </div>

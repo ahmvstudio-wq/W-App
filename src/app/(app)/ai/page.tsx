@@ -57,34 +57,34 @@ export default function AIPage() {
             <span>New Session</span>
           </button>
 
-          {/* AI Decision Metrics Card with Ambient Soft Lighting */}
-          <div className="p-4 rounded-3xl bg-gradient-to-br from-indigo-50/50 to-purple-50/50 border border-indigo-100/60 space-y-3">
-            <div className="flex items-center gap-1.5 text-[10px] font-mono text-indigo-900 font-medium">
-              <Activity size={12} className="text-indigo-600" />
+          {/* AI Decision Metrics Card */}
+          <div className="p-4 rounded-2xl bg-neutral-50 border border-black/[0.06] space-y-3">
+            <div className="flex items-center gap-1.5 text-[10px] font-mono text-neutral-700 font-semibold tracking-wide">
+              <Activity size={12} className="text-neutral-900" />
               <span>SYSTEM REASONING</span>
             </div>
-            <div className="space-y-1.5 text-xs font-light text-[#4b5563]">
+            <div className="space-y-1.5 text-xs font-normal text-neutral-600">
               <div className="flex justify-between">
                 <span>Scope Audits</span>
-                <span className="font-mono text-black font-medium">24 / 24</span>
+                <span className="font-mono text-black font-semibold">24 / 24</span>
               </div>
               <div className="flex justify-between">
                 <span>Blockers Isolated</span>
-                <span className="font-mono text-black font-medium">94.6%</span>
+                <span className="font-mono text-black font-semibold">94.6%</span>
               </div>
               <div className="flex justify-between">
                 <span>Model Latency</span>
-                <span className="font-mono text-emerald-600 font-medium">0.45s</span>
+                <span className="font-mono text-neutral-900 font-semibold">0.45s</span>
               </div>
             </div>
           </div>
 
           <div>
-            <div className="text-[10px] font-mono text-[#9ca3af] uppercase tracking-wider mb-2 font-light px-2">
+            <div className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider mb-2 font-medium px-2">
               Intelligence Sessions
             </div>
             <div className="space-y-1">
-              <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs bg-black text-white font-normal shadow-sm text-left">
+              <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs bg-black text-white font-medium shadow-xs text-left">
                 <MessageSquare size={13} className="text-white" />
                 <span className="truncate">Current Session</span>
               </button>
@@ -96,10 +96,23 @@ export default function AIPage() {
       {/* Main Chat Interface */}
       <div className="flex-1 flex flex-col justify-between bg-[#fbfbfd]">
         {/* Header */}
-        <header className="px-8 py-4 border-b border-black/[0.06] bg-white flex items-center justify-between font-body">
-          <h1 className="text-sm font-normal text-black">Executive Chief of Staff</h1>
-          <span className="text-[10px] font-mono text-[#6b7280] bg-black/[0.04] px-2 py-0.5 rounded font-light">
-            SYNCED TO WORKSPACE
+        <header className="px-8 py-5 border-b border-black/[0.06] bg-white flex items-center justify-between font-body">
+          <div>
+            <span className="text-[11px] font-semibold text-neutral-400 tracking-[0.14em] uppercase block">
+              Synthesize
+            </span>
+            <div className="flex items-center gap-3 mt-0.5">
+              <h1 className="text-xl font-bold tracking-tight text-black">
+                AI Directives
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] text-[10px] font-mono flex items-center gap-1.5 shadow-xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
+                <span>Live Context Synced</span>
+              </span>
+            </div>
+          </div>
+          <span className="text-[10px] font-mono text-neutral-500 bg-neutral-100 px-2.5 py-1 rounded-full border border-black/[0.04] font-medium">
+            WORKSPACE READY
           </span>
         </header>
 

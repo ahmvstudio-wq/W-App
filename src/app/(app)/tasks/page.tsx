@@ -337,27 +337,27 @@ export default function TasksPage() {
       )}
 
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-shrink-0 pb-4 border-b border-neutral-100">
         <div>
-          <div className="text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1 font-light">
-            <span className="text-black font-normal">{inProgressCount} ACTIVE IN FLIGHT</span>
-          </div>
-          <h1 className="text-3xl font-light tracking-tight text-black flex items-center gap-3">
-            <span>Tasks & Sprints</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-black/[0.05] text-black font-mono font-normal">
-              {tasks.length} Total
+          <span className="text-[11px] font-semibold text-neutral-400 tracking-[0.14em] uppercase block">
+            Product
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-black mt-1 flex items-center gap-3">
+            <span>Tasks</span>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] font-mono font-medium">
+              {tasks.length} total
             </span>
           </h1>
         </div>
 
         {/* View Switcher & Actions */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 font-body">
-          <div className="flex bg-white border border-black/[0.08] rounded-xl p-1 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+          <div className="flex bg-white border border-black/[0.08] rounded-xl p-1 shadow-xs">
             <button
               onClick={() => setView('board')}
               className={cn(
                 'p-1.5 px-3 rounded-lg text-xs font-normal transition-all flex items-center gap-1.5 cursor-pointer',
-                view === 'board' ? 'bg-black text-white shadow-sm' : 'text-[#6b7280] hover:text-black'
+                view === 'board' ? 'bg-black text-white shadow-xs font-medium' : 'text-neutral-500 hover:text-black'
               )}
             >
               <LayoutGrid size={14} />
@@ -367,7 +367,7 @@ export default function TasksPage() {
               onClick={() => setView('list')}
               className={cn(
                 'p-1.5 px-3 rounded-lg text-xs font-normal transition-all flex items-center gap-1.5 cursor-pointer',
-                view === 'list' ? 'bg-black text-white shadow-sm' : 'text-[#6b7280] hover:text-black'
+                view === 'list' ? 'bg-black text-white shadow-xs font-medium' : 'text-neutral-500 hover:text-black'
               )}
             >
               <ListIcon size={14} />
@@ -377,10 +377,10 @@ export default function TasksPage() {
 
           <button
             onClick={() => setIsExportModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
             title="Export high-resolution progress infographic / image"
           >
-            <Download size={14} className="text-indigo-600" />
+            <Download size={13} className="text-neutral-600" />
             <span>Export Progress</span>
           </button>
 
@@ -389,38 +389,31 @@ export default function TasksPage() {
               exportTasksToCSV(tasks)
               toast.success(`Exported ${tasks.length} tasks to CSV!`)
             }}
-            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
             title="Download tasks as spreadsheet CSV"
           >
-            <FileSpreadsheet size={14} className="text-emerald-600" />
+            <FileSpreadsheet size={13} className="text-neutral-600" />
             <span>Export CSV</span>
           </button>
 
           <button
-            onClick={() => setIsSynthesizeOpen(true)}
-            className="flex items-center px-3 sm:px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
-          >
-            <span>Synthesize</span>
-          </button>
-
-          <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white font-medium text-xs rounded-xl shadow-xs transition-all cursor-pointer"
           >
-            <Plus size={15} />
+            <Plus size={14} />
             <span>Create Task</span>
           </button>
         </div>
       </div>
 
-      {/* Task Data Visualization Widgets (Ambient Lighting) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-body">
+      {/* Task Data Visualization Widgets */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Widget 1: Sprint Completion Gauge */}
-        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-blue-50/40 border border-black/[0.06] shadow-sm relative overflow-hidden flex items-center justify-between">
+        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Sprint Progress</span>
-            <div className="text-2xl font-light text-black tracking-tight">{completionRate}%</div>
-            <div className="text-[11px] text-[#9ca3af] font-mono">{shippedCount}/{tasks.length} Shipped</div>
+            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">COMPLETION RATE</span>
+            <div className="text-2xl font-bold text-black tracking-tight">{completionRate}%</div>
+            <div className="text-[11px] text-neutral-500 font-mono">{shippedCount}/{tasks.length} Shipped</div>
           </div>
           <div className="relative w-14 h-14 flex items-center justify-center">
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
@@ -432,7 +425,7 @@ export default function TasksPage() {
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               />
               <path
-                className="text-indigo-600"
+                className="text-neutral-900"
                 strokeDasharray={`${completionRate}, 100`}
                 strokeWidth="3.5"
                 strokeLinecap="round"
@@ -446,38 +439,38 @@ export default function TasksPage() {
         </div>
 
         {/* Widget 2: Weekly Velocity Sparkline */}
-        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-emerald-50/40 border border-black/[0.06] shadow-sm relative overflow-hidden flex flex-col justify-between">
+        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex flex-col justify-between">
           <div className="flex justify-between items-center">
-            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Weekly Output</span>
-            <span className="text-xs font-mono text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-md flex items-center gap-0.5">
-              <TrendingUp size={11} /> +24%
+            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">WEEKLY VELOCITY</span>
+            <span className="text-[10px] font-mono text-neutral-900 bg-neutral-100 border border-black/[0.08] px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-neutral-900" /> +24%
             </span>
           </div>
           <div className="h-10 w-full pt-1">
             <svg className="w-full h-full" viewBox="0 0 100 25" preserveAspectRatio="none">
               <path
                 d="M0 20 Q 25 5, 50 12 T 100 2 L 100 25 L 0 25 Z"
-                fill="rgba(16, 185, 129, 0.1)"
+                fill="rgba(0, 0, 0, 0.03)"
               />
               <path
                 d="M0 20 Q 25 5, 50 12 T 100 2"
                 fill="none"
-                stroke="#10b981"
+                stroke="#171717"
                 strokeWidth="2"
                 strokeLinecap="round"
               />
             </svg>
           </div>
-          <div className="flex justify-between text-[9px] font-mono text-[#9ca3af]">
+          <div className="flex justify-between text-[9px] font-mono text-neutral-400">
             <span>MON</span><span>WED</span><span>TODAY</span>
           </div>
         </div>
 
         {/* Widget 3: Priority Load */}
-        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-amber-50/40 border border-black/[0.06] shadow-sm flex flex-col justify-between space-y-2">
+        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex flex-col justify-between space-y-2">
           <div className="flex justify-between items-center">
-            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Priority Queue</span>
-            <span className="text-[10px] font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md font-medium">
+            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">PRIORITY QUEUE</span>
+            <span className="text-[10px] font-mono text-neutral-900 bg-neutral-100 border border-black/[0.08] px-2 py-0.5 rounded-full font-medium">
               {p0Count} P0 Critical
             </span>
           </div>
@@ -485,36 +478,36 @@ export default function TasksPage() {
             <div className="w-full h-2 bg-black/[0.05] rounded-full overflow-hidden flex">
               <div className="bg-red-500 h-full" style={{ width: `${Math.round((tasks.filter(t => t.priority === 'p0').length / (tasks.length || 1)) * 100)}%` }} />
               <div className="bg-amber-400 h-full" style={{ width: `${Math.round((tasks.filter(t => t.priority === 'p1').length / (tasks.length || 1)) * 100)}%` }} />
-              <div className="bg-blue-400 h-full flex-1" />
+              <div className="bg-neutral-300 h-full flex-1" />
             </div>
-            <div className="flex justify-between text-[9px] font-mono text-[#9ca3af]">
+            <div className="flex justify-between text-[9px] font-mono text-neutral-400">
               <span className="text-red-500">P0</span>
               <span className="text-amber-500">P1</span>
-              <span className="text-blue-500">P2/P3</span>
+              <span className="text-neutral-500">P2/P3</span>
             </div>
           </div>
         </div>
 
         {/* Widget 4: Active Blockers */}
-        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-purple-50/40 border border-black/[0.06] shadow-sm flex flex-col justify-between">
+        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex flex-col justify-between">
           <div className="flex justify-between items-center">
-            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Blocker Status</span>
+            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">BLOCKER STATUS</span>
             <span className={cn(
-              "text-[10px] font-mono px-2 py-0.5 rounded-md font-medium",
-              blockedCount > 0 ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"
+              "text-[10px] font-mono px-2 py-0.5 rounded-full font-medium border",
+              blockedCount > 0 ? "bg-red-50 text-red-700 border-red-200" : "bg-neutral-100 text-neutral-900 border-black/[0.08]"
             )}>
-              {blockedCount > 0 ? `${blockedCount} BLOCKED` : 'CLEAR'}
+              {blockedCount > 0 ? `${blockedCount} BLOCKED` : '• CLEAR'}
             </span>
           </div>
-          <div className="text-2xl font-light text-black tracking-tight">{blockedCount}</div>
-          <div className="text-[11px] text-[#9ca3af] font-mono">
+          <div className="text-2xl font-bold text-black tracking-tight">{blockedCount}</div>
+          <div className="text-[11px] text-neutral-500 font-mono">
             {blockedCount === 0 ? 'Optimal path to ship' : 'Requires immediate unblocking'}
           </div>
         </div>
       </div>
 
       {/* Date-Wise Automatic Filtering & Calendar Bar */}
-      <div className="bg-white border border-black/[0.08] rounded-2xl p-4 shadow-sm space-y-3 font-body">
+      <div className="bg-white border border-black/[0.08] rounded-2xl p-4 shadow-xs space-y-3 font-body">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-black text-white flex-shrink-0 shadow-xs">
@@ -523,11 +516,11 @@ export default function TasksPage() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-black">Date &amp; Schedule Filter</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-black/[0.05] text-black">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-neutral-100 text-neutral-900 border border-black/[0.08]">
                   {selectedDate ? `${filteredTasks.length} tasks on this date` : `${tasks.length} total tasks`}
                 </span>
               </div>
-              <span className="text-[11px] font-mono text-[#6b7280] block">
+              <span className="text-[11px] font-mono text-neutral-500 block">
                 {selectedDate 
                   ? `Active date: ${format(new Date(selectedDate + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}` 
                   : 'Filter Kanban by specific execution date, deadline, or completion day'}
@@ -541,7 +534,7 @@ export default function TasksPage() {
               onClick={() => setSelectedDate('')}
               className={cn(
                 'px-3 py-1.5 rounded-xl border transition-all cursor-pointer font-body text-xs',
-                !selectedDate ? 'bg-black text-white border-black shadow-xs font-medium' : 'bg-[#fafafa] border-black/[0.06] text-[#6b7280] hover:text-black'
+                !selectedDate ? 'bg-black text-white border-black shadow-xs font-medium' : 'bg-[#fafafa] border-black/[0.06] text-neutral-600 hover:text-black'
               )}
             >
               All Dates
@@ -550,11 +543,11 @@ export default function TasksPage() {
               onClick={() => setSelectedDate(todayDateKey)}
               className={cn(
                 'px-3 py-1.5 rounded-xl border transition-all cursor-pointer font-body text-xs flex items-center gap-1.5',
-                selectedDate === todayDateKey ? 'bg-black text-white border-black shadow-xs font-medium' : 'bg-[#fafafa] border-black/[0.06] text-[#6b7280] hover:text-black'
+                selectedDate === todayDateKey ? 'bg-black text-white border-black shadow-xs font-medium' : 'bg-[#fafafa] border-black/[0.06] text-neutral-600 hover:text-black'
               )}
             >
               <span>Today</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="w-1.5 h-1.5 rounded-full bg-neutral-900" />
             </button>
             <button
               onClick={() => setSelectedDate(yesterdayDateKey)}

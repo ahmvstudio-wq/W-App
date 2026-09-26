@@ -132,10 +132,10 @@ export default function LandingMenuModal({
             </div>
           </div>
 
-          {/* Column 2: SOLUTIONS */}
+          {/* Column 2: STUDIO */}
           <div>
             <span className="text-[11px] font-semibold text-neutral-400 tracking-[0.14em] uppercase mb-4 sm:mb-5 block">
-              Solutions
+              Studio
             </span>
             <div className="flex flex-col space-y-4">
               {/* Creator Studio with Soft Ambient Lighting & Accordion Collapse */}
@@ -230,13 +230,12 @@ export default function LandingMenuModal({
         <div className="pt-6 border-t border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <img 
-              src="/logo-cultlike.png" 
-              alt="Cultlike OS" 
-              className="h-8 w-8 object-contain rounded-full border border-black/[0.08]" 
+              src="/logo.png" 
+              alt="Logo" 
+              className="h-10 w-auto object-contain" 
             />
             <div>
-              <div className="text-xs font-semibold text-neutral-900">Cultlike OS</div>
-              <div className="text-[11px] text-neutral-400 font-mono">Executive Operating System</div>
+              <div className="text-xs font-semibold text-neutral-900">Cultlike</div>
             </div>
           </div>
 

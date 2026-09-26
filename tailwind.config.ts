@@ -28,9 +28,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['Poppins', 'Inter', '-apple-system', 'sans-serif'],
-        display: ['Poppins', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
+        sans: ['Poppins', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        display: ['Poppins', '-apple-system', 'sans-serif'],
+        body: ['Poppins', '-apple-system', 'sans-serif'],
         mono: ['DM Mono', 'JetBrains Mono', 'monospace'],
       },
       borderRadius: {

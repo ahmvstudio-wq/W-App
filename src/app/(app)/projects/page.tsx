@@ -378,44 +378,26 @@ export default function ProjectsPage() {
   return (
     <div className="space-y-8 pb-16 font-sans">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-100">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
-            <span>FOCUS</span>
-            <span>•</span>
-            <span>SOLO OS</span>
-            <span>•</span>
-            <span className="text-black font-normal">{allMasterNames.length} CAMPAIGNS &amp; {projects.length} MISSIONS</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-black">
-            Campaigns &amp; Projects
+          <span className="text-[11px] font-semibold text-neutral-400 tracking-[0.14em] uppercase block">
+            Product
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-black mt-1 flex items-center gap-3">
+            <span>Projects</span>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] font-mono font-medium">
+              {projects.length} active
+            </span>
           </h1>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 font-body">
-          {/* Tutorial Guide Button */}
-          <button
-            onClick={() => window.dispatchEvent(new CustomEvent('open-game-tutorial'))}
-            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
-            title="Interactive Video Game Tutorial & Guide"
-          >
-            <Target size={14} className="text-amber-500" />
-            <span>Tutorial Guide</span>
-          </button>
-
-          <button
-            onClick={() => setIsSynthesizeOpen(true)}
-            className="flex items-center px-3 sm:px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
-          >
-            <span>Synthesize</span>
-          </button>
-
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
           <button
             onClick={() => setIsCreateMasterModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
           >
-            <Building2 size={14} className="text-indigo-600" />
-            <span>New Campaign</span>
+            <Building2 size={13} className="text-neutral-600" />
+            <span>New Master Program</span>
           </button>
 
           <button
@@ -423,10 +405,10 @@ export default function ProjectsPage() {
               setCreateInitialMasterProject(activeMasterProjectName)
               setIsCreateModalOpen(true)
             }}
-            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer font-body"
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white font-medium text-xs rounded-xl shadow-xs transition-all cursor-pointer"
           >
-            <Plus size={15} />
-            <span>New Mission</span>
+            <Plus size={14} />
+            <span>New Project</span>
           </button>
         </div>
       </div>
@@ -600,7 +582,7 @@ export default function ProjectsPage() {
                   <div className="space-y-0.5 min-w-0 flex-1">
                     <span className={cn(
                       'text-[9px] font-mono uppercase tracking-wider block',
-                      isSelected ? 'text-emerald-400' : 'text-[#6b7280]'
+                      isSelected ? 'text-neutral-300' : 'text-[#6b7280]'
                     )}>
                       MASTER PROGRAM
                     </span>
@@ -630,7 +612,7 @@ export default function ProjectsPage() {
                   </div>
                   <div className={cn('w-full h-1 rounded-full overflow-hidden', isSelected ? 'bg-white/20' : 'bg-black/[0.06]')}>
                     <div 
-                      className={cn('h-full rounded-full transition-all duration-300', isSelected ? 'bg-emerald-400' : 'bg-black')}
+                      className={cn('h-full rounded-full transition-all duration-300', isSelected ? 'bg-white' : 'bg-black')}
                       style={{ width: `${mProgress}%` }}
                     />
                   </div>
@@ -657,13 +639,9 @@ export default function ProjectsPage() {
       {/* ACTIVE MASTER PROGRAM COMMAND BANNER (COLLAPSIBLE & EXPANDABLE ON CHOICE) */}
       {/* ========================================================================= */}
       <div className={cn(
-        "rounded-3xl bg-white text-black shadow-md relative overflow-hidden font-body border-2 border-black/[0.08] transition-all duration-300 animate-fadeIn",
+        "rounded-3xl bg-white text-black shadow-xs relative overflow-hidden font-body border border-black/[0.08] transition-all duration-300 animate-fadeIn",
         isCommandHubExpanded ? "p-6 sm:p-8" : "p-5 sm:p-6"
       )}>
-        {/* Subtle Ambient Background Accents */}
-        <div className="absolute right-0 top-0 w-80 h-80 bg-emerald-50/60 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute left-1/3 bottom-0 w-80 h-80 bg-indigo-50/50 rounded-full blur-3xl pointer-events-none" />
-
         <div className="relative z-10 space-y-6">
           {/* Top Row: Master Program Meta & Actions */}
           <div className={cn(
@@ -672,12 +650,12 @@ export default function ProjectsPage() {
           )}>
             <div className="space-y-1.5 min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-lg bg-emerald-100/90 text-emerald-950 font-mono text-[10px] uppercase tracking-wider font-semibold border border-emerald-300 flex items-center gap-1.5 shadow-xs">
-                  <Building2 size={12} className="text-emerald-700" />
-                  ACTIVE MASTER PROGRAM
+                <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] font-mono text-[10px] uppercase tracking-wider font-medium shadow-2xs">
+                  <Building2 size={11} className="text-neutral-700" />
+                  <span>Master Program</span>
                 </span>
-                <span className="text-black/30 text-xs font-mono">•</span>
-                <span className="text-emerald-700 text-xs font-mono font-semibold">Executive Command Hub</span>
+                <span className="text-neutral-300 text-xs font-mono">•</span>
+                <span className="text-neutral-500 text-xs font-mono">Command Hub</span>
 
                 {/* Collapsed Pill Badge with Quick Stats */}
                 {!isCommandHubExpanded && (
@@ -726,7 +704,7 @@ export default function ProjectsPage() {
                   setCreateInitialMasterProject(activeMasterObj.name)
                   setIsCreateModalOpen(true)
                 }}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium transition-all cursor-pointer shadow-sm"
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium transition-all cursor-pointer shadow-xs"
               >
                 <Plus size={14} />
                 <span>Add Initiative to {activeMasterObj.name}</span>
@@ -789,7 +767,7 @@ export default function ProjectsPage() {
                           className="p-4 rounded-2xl bg-[#f8f9fa] hover:bg-white border border-black/[0.08] hover:border-black/[0.22] hover:shadow-md transition-all block group space-y-2"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-semibold text-black truncate group-hover:text-emerald-700 transition-colors">
+                            <span className="text-xs font-semibold text-black truncate transition-colors">
                               {p.name}
                             </span>
                             <ArrowUpRight size={13} className="text-[#6b7280] group-hover:text-black transition-colors flex-shrink-0" />
@@ -806,7 +784,7 @@ export default function ProjectsPage() {
                             </div>
                             <div className="w-full h-1.5 bg-black/[0.08] rounded-full overflow-hidden">
                               <div 
-                                className="h-full bg-emerald-600 rounded-full transition-all duration-300"
+                                className="h-full bg-black rounded-full transition-all duration-300"
                                 style={{ width: `${pProg}%` }}
                               />
                             </div>
@@ -822,19 +800,19 @@ export default function ProjectsPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-black/[0.08] text-xs font-mono">
                 <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
                   <span className="text-[10px] text-[#6b7280] block uppercase font-medium">TOTAL INITIATIVES</span>
-                  <span className="text-lg font-normal text-black">{activeMasterProjects.length} Active</span>
+                  <span className="text-lg font-medium text-black">{activeMasterProjects.length} Active</span>
                 </div>
                 <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
                   <span className="text-[10px] text-[#6b7280] block uppercase font-medium">OVERALL COMPLETION</span>
-                  <span className="text-lg font-semibold text-emerald-700">{activeMasterProgress}% Shipped</span>
+                  <span className="text-lg font-semibold text-black">{activeMasterProgress}% Shipped</span>
                 </div>
                 <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
                   <span className="text-[10px] text-[#6b7280] block uppercase font-medium">DELIVERABLES</span>
-                  <span className="text-lg font-normal text-black">{activeMasterShipped} / {activeMasterTasks.length} Done</span>
+                  <span className="text-lg font-medium text-black">{activeMasterShipped} / {activeMasterTasks.length} Done</span>
                 </div>
                 <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
                   <span className="text-[10px] text-[#6b7280] block uppercase font-medium">PROGRAM STATUS</span>
-                  <span className="text-lg font-normal text-indigo-700">High Velocity</span>
+                  <span className="text-lg font-medium text-black">Active Focus</span>
                 </div>
               </div>
             </div>
@@ -842,65 +820,65 @@ export default function ProjectsPage() {
         </div>
       </div>
 
-      {/* Program & Portfolio Metrics Overview (Context-Aware to Chosen Master Program) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-body">
+      {/* Program & Portfolio Metrics Overview */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1: Delivery Rate */}
-        <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-sm flex items-center justify-between">
+        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-semibold">
-              {isAllFilter ? 'Portfolio Delivery' : `${scopedMasterName} Delivery`}
+            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">
+              {isAllFilter ? 'PORTFOLIO DELIVERY' : `${scopedMasterName.toUpperCase()} DELIVERY`}
             </span>
-            <div className="text-2xl font-normal text-black tracking-tight">{scopedDeliveryRate}%</div>
-            <div className="text-[11px] text-[#4b5563] font-mono">{scopedShippedTasks}/{scopedTotalTasks} Tasks Shipped</div>
+            <div className="text-2xl font-bold text-black tracking-tight">{scopedDeliveryRate}%</div>
+            <div className="text-[11px] text-neutral-500 font-mono">{scopedShippedTasks}/{scopedTotalTasks} Tasks Shipped</div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-600 flex items-center justify-center">
-            <CheckCircle2 size={22} />
+          <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-black/[0.06] text-neutral-800 flex items-center justify-center">
+            <CheckCircle2 size={18} />
           </div>
         </div>
 
         {/* Metric 2: Program Health */}
-        <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-sm flex items-center justify-between">
+        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-semibold">
-              {isAllFilter ? 'Portfolio Health' : `${scopedMasterName} Health`}
+            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">
+              {isAllFilter ? 'PORTFOLIO HEALTH' : `${scopedMasterName.toUpperCase()} HEALTH`}
             </span>
-            <div className="text-2xl font-normal text-emerald-700 tracking-tight">{scopedHealthyCount}/{scopedProjects.length || 1}</div>
-            <div className="text-[11px] text-[#4b5563] font-mono">Initiatives On Track</div>
+            <div className="text-2xl font-bold text-black tracking-tight">{scopedHealthyCount}/{scopedProjects.length || 1}</div>
+            <div className="text-[11px] text-neutral-500 font-mono">Initiatives On Track</div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 flex items-center justify-center">
-            <Activity size={22} />
+          <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-black/[0.06] text-neutral-800 flex items-center justify-center">
+            <Activity size={18} />
           </div>
         </div>
 
-        {/* Metric 3: Scope Scale (Master Programs or Sub-Initiatives) */}
-        <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-sm flex items-center justify-between">
+        {/* Metric 3: Scope Scale */}
+        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-semibold">
-              {isAllFilter ? 'Master Programs' : `${scopedMasterName} Scope`}
+            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">
+              {isAllFilter ? 'MASTER PROGRAMS' : `${scopedMasterName.toUpperCase()} SCOPE`}
             </span>
-            <div className="text-2xl font-normal text-purple-700 tracking-tight">
+            <div className="text-2xl font-bold text-black tracking-tight">
               {isAllFilter ? allMasterNames.length : scopedProjects.length}
             </div>
-            <div className="text-[11px] text-[#4b5563] font-mono">
-              {isAllFilter ? 'Selectable Program Hubs' : `${scopedProjects.length === 1 ? 'Active Sub-Initiative' : 'Active Sub-Initiatives'}`}
+            <div className="text-[11px] text-neutral-500 font-mono">
+              {isAllFilter ? 'Program Hubs' : `${scopedProjects.length === 1 ? 'Active Initiative' : 'Active Initiatives'}`}
             </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-600 flex items-center justify-center">
-            <Building2 size={22} />
+          <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-black/[0.06] text-neutral-800 flex items-center justify-center">
+            <Layers size={18} />
           </div>
         </div>
 
         {/* Metric 4: Risk / Attention Required */}
-        <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-sm flex items-center justify-between">
+        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-semibold">
-              {isAllFilter ? 'Attention Needed' : `${scopedMasterName} Bottlenecks`}
+            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">
+              {isAllFilter ? 'ATTENTION NEEDED' : `${scopedMasterName.toUpperCase()} BOTTLENECKS`}
             </span>
-            <div className="text-2xl font-normal text-amber-600 tracking-tight">{scopedAtRiskCount}</div>
-            <div className="text-[11px] text-[#4b5563] font-mono">{scopedAtRiskCount === 0 ? 'Zero active bottlenecks' : 'Requires scope review'}</div>
+            <div className="text-2xl font-bold text-black tracking-tight">{scopedAtRiskCount}</div>
+            <div className="text-[11px] text-neutral-500 font-mono">{scopedAtRiskCount === 0 ? 'Zero active bottlenecks' : 'Requires scope review'}</div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center">
-            <Target size={22} />
+          <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-black/[0.06] text-neutral-800 flex items-center justify-center">
+            <Target size={18} />
           </div>
         </div>
       </div>
@@ -938,7 +916,7 @@ export default function ProjectsPage() {
                     : 'text-[#6b7280] hover:text-black'
                 )}
               >
-                <Building2 size={12} className={isFilterSelected ? 'text-emerald-600' : 'text-[#9ca3af]'} />
+                <Building2 size={12} className={isFilterSelected ? 'text-black' : 'text-[#9ca3af]'} />
                 <span>{mName}</span>
                 <span className="px-1.5 py-0.2 bg-black/[0.05] rounded-full text-[10px] font-mono">
                   {count}
@@ -993,8 +971,8 @@ export default function ProjectsPage() {
                   {/* Top Badges & Master Program Tag */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1 min-w-0">
-                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono uppercase bg-emerald-50 text-emerald-800 border border-emerald-200 inline-flex items-center gap-1 font-medium">
-                        <Building2 size={11} className="text-emerald-600" />
+                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono uppercase bg-neutral-100 text-neutral-900 border border-black/[0.08] inline-flex items-center gap-1 font-medium">
+                        <Building2 size={11} className="text-black" />
                         {masterName}
                       </span>
                       <h3 className="text-base font-normal text-black tracking-tight group-hover:underline truncate">
@@ -1005,7 +983,7 @@ export default function ProjectsPage() {
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <span className={cn(
                         'w-2.5 h-2.5 rounded-full shadow-sm',
-                        health === 'green' ? 'bg-emerald-500 shadow-emerald-200' : health === 'amber' ? 'bg-amber-500 shadow-amber-200' : 'bg-red-500 shadow-red-200'
+                        health === 'green' ? 'bg-neutral-900 shadow-neutral-200' : health === 'amber' ? 'bg-amber-500 shadow-amber-200' : 'bg-red-500 shadow-red-200'
                       )} title={`Health: ${health}`} />
                       <button
                         onClick={(e) => {
@@ -1048,7 +1026,7 @@ export default function ProjectsPage() {
                   </div>
                   <div className="w-full h-2 bg-black/[0.06] rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-300"
+                      className="h-full bg-black rounded-full transition-all duration-300"
                       style={{ width: `${pProgress}%` }}
                     />
                   </div>
@@ -1119,7 +1097,7 @@ function CreateMasterProjectModal({
         {/* Header */}
         <div className="p-6 border-b border-black/[0.06] flex items-center justify-between bg-white">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center border border-emerald-200">
+            <div className="w-8 h-8 rounded-xl bg-neutral-100 text-neutral-900 flex items-center justify-center border border-black/[0.08]">
               <Building2 size={16} />
             </div>
             <div>
@@ -1345,7 +1323,7 @@ function CreateProjectWizard({
               <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block font-light">
                 STEP {step} OF 6
               </span>
-              <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[10px] font-mono font-medium">
+              <span className="px-2 py-0.5 rounded bg-neutral-100 text-neutral-900 border border-black/[0.08] text-[10px] font-mono font-medium">
                 {isTypingCustomMaster && customMasterInput ? customMasterInput : (formData.master_project || 'General')}
               </span>
             </div>
@@ -1395,11 +1373,11 @@ function CreateProjectWizard({
                       className={cn(
                         'p-2.5 rounded-xl border text-xs text-left cursor-pointer transition-all flex items-center gap-2 truncate',
                         !isTypingCustomMaster && formData.master_project === mp
-                          ? 'bg-emerald-50 border-emerald-400 text-emerald-950 font-medium shadow-xs'
+                          ? 'bg-neutral-100 border-neutral-900 text-black font-medium shadow-xs'
                           : 'bg-white border-black/[0.08] text-[#6b7280] hover:text-black'
                       )}
                     >
-                      <Building2 size={13} className={!isTypingCustomMaster && formData.master_project === mp ? 'text-emerald-600' : 'text-[#9ca3af]'} />
+                      <Building2 size={13} className={!isTypingCustomMaster && formData.master_project === mp ? 'text-black' : 'text-[#9ca3af]'} />
                       <span className="truncate">{mp}</span>
                     </button>
                   ))}
@@ -1572,15 +1550,15 @@ function CreateProjectWizard({
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
+              <div className="flex items-start gap-3 p-4 bg-neutral-100 border border-black/[0.08] rounded-2xl">
                 <input
                   type="checkbox"
                   id="ack"
                   checked={ack}
                   onChange={(e) => setAck(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded accent-emerald-600 cursor-pointer"
+                  className="mt-0.5 w-4 h-4 rounded accent-black cursor-pointer"
                 />
-                <label htmlFor="ack" className="text-xs text-emerald-950 font-light cursor-pointer">
+                <label htmlFor="ack" className="text-xs text-neutral-900 font-light cursor-pointer">
                   I authorize this initiative under master program <strong>{formData.master_project}</strong> with the stated scope boundaries.
                 </label>
               </div>
@@ -1628,7 +1606,7 @@ function CreateProjectWizard({
                 type="button"
                 disabled={!ack || saving}
                 onClick={handleCreateProject}
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                className="px-6 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {saving ? 'Creating Initiative...' : 'Authorize Initiative'}
               </button>

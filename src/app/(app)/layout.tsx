@@ -165,7 +165,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* Left: Brand Identity */}
           <div className="flex items-center gap-3">
             <Link href="/dashboard" className="flex items-center group">
-              <img src="/logo.png" alt="Cultlike OS" className="h-9 sm:h-10 w-auto object-contain hover:opacity-80 transition-opacity" />
+              <img src="/logo.png" alt="Logo" className="h-10 sm:h-12 w-auto object-contain hover:opacity-80 transition-opacity" />
             </Link>
           </div>
 
@@ -263,7 +263,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Main Full-Width Page Body */}
-        <main className="flex-1 p-4 sm:p-8 lg:p-10 pb-16 max-w-[1500px] w-full mx-auto overflow-x-hidden">
+        <main className="flex-1 px-4 sm:px-8 lg:px-10 pt-2 sm:pt-3 pb-12 max-w-[1500px] w-full mx-auto overflow-x-hidden">
           {children}
         </main>
 

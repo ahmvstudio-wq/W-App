@@ -161,10 +161,10 @@ export default function MinimalMenuModal({
             </div>
           </div>
 
-          {/* Column 2: SOLUTIONS */}
+          {/* Column 2: STUDIO */}
           <div>
             <span className="text-[11px] font-semibold text-neutral-400 tracking-[0.14em] uppercase mb-4 sm:mb-5 block">
-              Solutions
+              Studio
             </span>
             <div className="flex flex-col space-y-4">
               {/* Creator Studio with Soft Ambient Lighting & Accordion Collapse */}

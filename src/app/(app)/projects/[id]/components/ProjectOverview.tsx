@@ -43,7 +43,7 @@ export default function ProjectOverview({ project, tasks }: ProjectOverviewProps
   }, [tasks])
 
   const statusData = useMemo(() => {
-    const palette = ['#6366f1', '#3b82f6', '#f59e0b', '#10b981', '#ef4444']
+    const palette = ['#6366f1', '#3b82f6', '#f59e0b', '#111827', '#ef4444']
     return Object.keys(TASK_STATUS_CONFIG).map((key, idx) => ({
       name: TASK_STATUS_CONFIG[key as keyof typeof TASK_STATUS_CONFIG].label,
       value: tasks.filter(t => t.status === key).length,
@@ -77,7 +77,7 @@ export default function ProjectOverview({ project, tasks }: ProjectOverviewProps
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-[#fafbff] to-[#f3f4ff] border border-black/[0.08] p-8 shadow-sm">
         {/* Soft Ambient Light Backdrops */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 blur-3xl pointer-events-none rounded-full" />
-        <div className="absolute bottom-0 left-1/3 w-72 h-72 bg-emerald-500/10 blur-3xl pointer-events-none rounded-full" />
+        <div className="absolute bottom-0 left-1/3 w-72 h-72 bg-neutral-500/5 blur-3xl pointer-events-none rounded-full" />
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Left Column: Project Vitals */}
@@ -121,7 +121,7 @@ export default function ProjectOverview({ project, tasks }: ProjectOverviewProps
               </div>
               <div className="p-3.5 rounded-2xl bg-white/70 border border-black/[0.04]">
                 <span className="text-[10px] font-mono text-[#9ca3af] uppercase block">Health Score</span>
-                <span className="text-lg font-light text-emerald-600">{stats.healthScore}/100</span>
+                <span className="text-lg font-light text-black">{stats.healthScore}/100</span>
               </div>
             </div>
           </div>
@@ -151,8 +151,8 @@ export default function ProjectOverview({ project, tasks }: ProjectOverviewProps
                 />
                 <defs>
                   <linearGradient id="ambientIndigoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#6366f1" />
-                    <stop offset="100%" stopColor="#10b981" />
+                    <stop offset="0%" stopColor="#111827" />
+                    <stop offset="100%" stopColor="#4b5563" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -186,8 +186,8 @@ export default function ProjectOverview({ project, tasks }: ProjectOverviewProps
               <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">VELOCITY GRAPH</span>
               <h3 className="text-sm font-normal text-black">Delivery & Planned Output Curve</h3>
             </div>
-            <span className="text-xs font-mono text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg flex items-center gap-1 font-medium">
-              <TrendingUp size={13} /> {stats.velocity.toFixed(1)} Tasks/Day
+            <span className="text-xs font-mono text-black bg-neutral-100 border border-black/[0.08] px-2.5 py-1 rounded-lg flex items-center gap-1 font-medium">
+              <TrendingUp size={13} className="text-black" /> {stats.velocity.toFixed(1)} Tasks/Day
             </span>
           </div>
 
@@ -196,8 +196,8 @@ export default function ProjectOverview({ project, tasks }: ProjectOverviewProps
               <AreaChart data={velocityTrendData}>
                 <defs>
                   <linearGradient id="glowVelocityFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#6366f1" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
+                    <stop offset="0%" stopColor="#111827" stopOpacity="0.12" />
+                    <stop offset="100%" stopColor="#111827" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
@@ -207,7 +207,7 @@ export default function ProjectOverview({ project, tasks }: ProjectOverviewProps
                   contentStyle={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
                   itemStyle={{ color: '#111827', fontSize: '12px' }}
                 />
-                <Area type="monotone" dataKey="completed" stroke="#6366f1" strokeWidth={2.5} fill="url(#glowVelocityFill)" name="Completed Tasks" />
+                <Area type="monotone" dataKey="completed" stroke="#111827" strokeWidth={2} fill="url(#glowVelocityFill)" name="Completed Tasks" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -250,7 +250,7 @@ export default function ProjectOverview({ project, tasks }: ProjectOverviewProps
 
           <div className="flex justify-between items-center text-xs font-mono text-[#6b7280] pt-2 border-t border-black/[0.04]">
             <span>Active Blockers</span>
-            <span className={cn("font-medium", stats.activeBlockers > 0 ? "text-red-500" : "text-emerald-600")}>
+            <span className={cn("font-medium", stats.activeBlockers > 0 ? "text-red-500" : "text-black")}>
               {stats.activeBlockers > 0 ? `${stats.activeBlockers} Tasks` : 'Zero Blockers'}
             </span>
           </div>

@@ -460,7 +460,7 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
                   >
                     {day.isToday && (
                       <span className="absolute inset-0 flex items-center justify-center">
-                        <span className="w-1 h-1 rounded-full bg-emerald-500" />
+                        <span className="w-1 h-1 rounded-full bg-neutral-900" />
                       </span>
                     )}
                   </button>
@@ -481,7 +481,7 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
               : (selectedDay ? `${selectedDay.formattedDate}${selectedDay.isToday ? ' (Today)' : ''}` : 'Hover or click any calendar square')}
           </span>
           <span>•</span>
-          <span className="text-emerald-700 font-semibold">
+          <span className="text-black font-semibold">
             {hoveredDay 
               ? `${hoveredDay.taskCount} ${hoveredDay.taskCount === 1 ? 'task' : 'tasks'} shipped (${hoveredDay.totalMinutes}m work duration)` 
               : `${selectedDay ? `${selectedDay.taskCount} tasks shipped` : 'Click to inspect'}`}
@@ -496,7 +496,7 @@ export default function AnnualExecutionGrid({ tasks }: AnnualExecutionGridProps)
       {/* Footer Metrics */}
       <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-black/[0.04] text-xs font-mono">
         <div className="flex items-center gap-2 text-[#6b7280]">
-          <TrendingUp size={14} className="text-emerald-600" />
+          <TrendingUp size={14} className="text-neutral-900" />
           <span className="text-black font-semibold">{totalTasksCompleted} Shipped Deliverables</span>
           <span>across all active projects</span>
         </div>

@@ -498,7 +498,7 @@ export default function TaskDetailDrawer({ task, onClose, onUpdate }: TaskDetail
                 <span className="text-black font-semibold">{subtaskProgress}%</span>
               </div>
               <div className="w-full h-2 bg-black/[0.06] rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-500 rounded-full transition-all duration-300" style={{ width: `${subtaskProgress}%` }} />
+                <div className="h-full bg-neutral-900 rounded-full transition-all duration-300" style={{ width: `${subtaskProgress}%` }} />
               </div>
             </div>
 

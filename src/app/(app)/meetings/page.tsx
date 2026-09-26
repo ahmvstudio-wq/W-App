@@ -607,30 +607,39 @@ export default function MeetingsPage() {
   return (
     <div className="space-y-8 pb-16 font-sans">
       {/* Top Header & Section Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-black/[0.06] pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-black/[0.06] pb-6">
         <div>
-          <div className="text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1 font-light">
-            <span className="text-black font-normal">CALENDAR &amp; MEETINGS</span>
+          <span className="text-[11px] font-semibold text-neutral-400 tracking-[0.14em] uppercase block">
+            Product
+          </span>
+          <div className="flex items-center gap-3 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-black">
+              Meetings
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] text-[10px] font-mono flex items-center gap-1.5 shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
+              <span>{activeMainTab === 'calendar' ? `${unifiedEvents.length} events` : `${meetings.length} calls`}</span>
+            </span>
           </div>
-          <h1 className="text-3xl font-light tracking-tight text-black">
-            {activeMainTab === 'calendar' ? 'Master Schedule & Calendar' : 'Fathom Meeting Recordings'}
-          </h1>
+          <p className="text-sm text-neutral-500 font-normal mt-1">
+            Master schedule, Google Calendar sync, and Fathom AI meeting notes.
+          </p>
         </div>
 
         {/* Tab Switcher & Quick Actions */}
-        <div className="flex flex-wrap items-center gap-3 font-body">
+        <div className="flex flex-wrap items-center gap-2 font-body">
           {/* Main Segmented Toggle */}
           <div className="p-1 bg-[#f5f5f7] rounded-2xl flex items-center gap-1 border border-black/[0.04]">
             <button
               onClick={() => setActiveMainTab('calendar')}
               className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-xl text-xs transition-all cursor-pointer font-normal',
+                'flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs transition-all cursor-pointer font-normal',
                 activeMainTab === 'calendar'
                   ? 'bg-white text-black shadow-xs font-medium'
-                  : 'text-[#6b7280] hover:text-black'
+                  : 'text-neutral-500 hover:text-black'
               )}
             >
-              <CalendarIcon size={14} className={activeMainTab === 'calendar' ? 'text-indigo-600' : ''} />
+              <CalendarIcon size={14} className={activeMainTab === 'calendar' ? 'text-black' : ''} />
               <span>Master Calendar</span>
               <span className="px-1.5 py-0.2 bg-black/[0.05] rounded-full text-[10px] font-mono">
                 {unifiedEvents.length}
@@ -640,15 +649,15 @@ export default function MeetingsPage() {
             <button
               onClick={() => setActiveMainTab('fathom')}
               className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-xl text-xs transition-all cursor-pointer font-normal',
+                'flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs transition-all cursor-pointer font-normal',
                 activeMainTab === 'fathom'
                   ? 'bg-white text-black shadow-xs font-medium'
-                  : 'text-[#6b7280] hover:text-black'
+                  : 'text-neutral-500 hover:text-black'
               )}
             >
-              <Video size={14} className={activeMainTab === 'fathom' ? 'text-purple-600' : ''} />
+              <Video size={14} className={activeMainTab === 'fathom' ? 'text-black' : ''} />
               <span>Fathom AI Calls</span>
-              <span className="px-1.5 py-0.2 bg-purple-100 text-purple-900 rounded-full text-[10px] font-mono font-medium">
+              <span className="px-1.5 py-0.2 bg-black/[0.05] rounded-full text-[10px] font-mono">
                 {meetings.length}
               </span>
             </button>
@@ -658,7 +667,7 @@ export default function MeetingsPage() {
           <button
             onClick={handleSyncAll}
             disabled={syncingAll}
-            className="flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-[#f5f5f7] border border-black/[0.08] rounded-xl text-xs font-normal text-black transition-all cursor-pointer shadow-xs disabled:opacity-50"
+            className="flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-neutral-50 border border-black/[0.08] rounded-xl text-xs font-normal text-neutral-800 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
           >
             <RefreshCw size={13} className={cn(syncingAll && 'animate-spin')} />
             <span>{syncingAll ? 'Syncing...' : 'Sync All'}</span>
@@ -996,7 +1005,7 @@ export default function MeetingsPage() {
                       </span>
                     ) : (
                       <a
-                        href="/api/auth/google"
+                        href="/api/auth/google?service=workspace&return_to=/meetings"
                         className="px-2.5 py-1 bg-black text-white hover:bg-neutral-800 rounded-lg text-[10px] font-normal transition-colors"
                       >
                         Authorize

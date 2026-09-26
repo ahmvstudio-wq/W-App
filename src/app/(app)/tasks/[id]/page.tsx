@@ -433,7 +433,7 @@ export default function DedicatedTaskPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-black/[0.06]">
               <div>
                 <div className="flex items-center gap-2">
-                  <CheckSquare size={16} className="text-emerald-600" />
+                  <CheckSquare size={16} className="text-neutral-900" />
                   <h3 className="text-sm font-normal text-black">Micro-Tasks &amp; Checklist</h3>
                 </div>
                 <p className="text-[11px] text-[#9ca3af] font-mono mt-0.5">
@@ -458,7 +458,7 @@ export default function DedicatedTaskPage() {
               </div>
               <div className="w-full h-2.5 bg-black/[0.04] rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                  className="h-full bg-neutral-900 rounded-full transition-all duration-300"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>

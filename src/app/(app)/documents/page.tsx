@@ -178,22 +178,22 @@ export default function DocumentsPage() {
             <button
               onClick={handleCreateGoogleDoc}
               disabled={creatingGoogleDoc}
-              className="w-full py-2.5 px-3.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-normal text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer font-body"
+              className="w-full py-2.5 px-3.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-medium text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer font-body"
             >
-              <FileText size={14} />
+              <FileText size={14} className="text-white" />
               <span>{creatingGoogleDoc ? 'Creating Doc...' : '+ New Google Doc'}</span>
             </button>
 
             <button
               onClick={handleCreateDoc}
-              className="w-full py-2 px-3.5 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-light text-xs rounded-xl shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer font-body"
+              className="w-full py-2 px-3.5 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer font-body"
             >
-              <Plus size={13} />
+              <Plus size={13} className="text-neutral-500" />
               <span>+ Internal Memo</span>
             </button>
           </div>
 
-          <div className="text-[10px] font-mono text-[#9ca3af] uppercase tracking-wider mb-2 font-light px-2">
+          <div className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider mb-2 font-medium px-2">
             Library
           </div>
 
@@ -203,19 +203,19 @@ export default function DocumentsPage() {
                 key={folder.id}
                 onClick={() => setActiveFolder(folder.id)}
                 className={cn(
-                  'w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all cursor-pointer font-light',
+                  'w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all cursor-pointer font-normal',
                   activeFolder === folder.id
-                    ? folder.isGoogle ? 'bg-blue-600 text-white font-normal shadow-sm' : 'bg-black text-white font-normal shadow-sm'
-                    : 'text-[#6b7280] hover:text-black hover:bg-black/[0.03]'
+                    ? 'bg-black text-white font-medium shadow-xs'
+                    : 'text-neutral-500 hover:text-black hover:bg-black/[0.03]'
                 )}
               >
                 <div className="flex items-center gap-2.5">
-                  <Folder size={14} className={activeFolder === folder.id ? 'text-white' : folder.isGoogle ? 'text-blue-500' : 'text-[#9ca3af]'} />
+                  <Folder size={14} className={activeFolder === folder.id ? 'text-white' : 'text-neutral-400'} />
                   <span>{folder.name}</span>
                 </div>
                 <span className={cn(
-                  'text-[10px] font-mono px-1.5 py-0.5 rounded',
-                  activeFolder === folder.id ? 'bg-white/20 text-white' : folder.isGoogle ? 'bg-blue-50 text-blue-700' : 'bg-black/[0.04] text-[#6b7280]'
+                  'text-[10px] font-mono px-2 py-0.5 rounded-full',
+                  activeFolder === folder.id ? 'bg-neutral-800 text-white' : 'bg-neutral-100 text-neutral-700'
                 )}>
                   {folder.count}
                 </span>
@@ -227,63 +227,72 @@ export default function DocumentsPage() {
 
       {/* Main Documents Area */}
       <div className="flex-1 p-8 overflow-y-auto bg-[#fbfbfd] space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-black/[0.06] pb-6">
           <div>
-            <div className="text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1 font-light">
-              KNOWLEDGE &amp; STRATEGY
+            <span className="text-[11px] font-semibold text-neutral-400 tracking-[0.14em] uppercase block">
+              Product
+            </span>
+            <div className="flex items-center gap-3 mt-1">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-black">
+                Documents
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] text-[10px] font-mono flex items-center gap-1.5 shadow-xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
+                <span>{folders.find((f) => f.id === activeFolder)?.name}</span>
+              </span>
             </div>
-            <h1 className="text-2xl font-light text-black tracking-tight">
-              {folders.find((f) => f.id === activeFolder)?.name}
-            </h1>
+            <p className="text-sm text-neutral-500 font-normal mt-1">
+              Knowledge base, Google Docs repository, and internal strategy memos.
+            </p>
           </div>
 
           <div className="relative w-72 font-body">
-            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search strategy memos & docs..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-black/[0.08] focus:border-black rounded-xl text-xs text-black placeholder:text-[#9ca3af] outline-none shadow-sm font-light"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-black/[0.08] focus:border-black rounded-xl text-xs text-black placeholder:text-neutral-400 outline-none shadow-xs font-normal"
             />
           </div>
         </div>
 
-        {/* Top Documents Analytics with Ambient Lighting */}
+        {/* Top Documents Analytics */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-body">
-          <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-blue-50/50 border border-black/[0.06] shadow-sm flex items-center justify-between">
+          <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex items-center justify-between">
             <div className="space-y-1">
-              <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Live Working Docs</span>
-              <div className="text-2xl font-light text-black tracking-tight">{liveDocsCount}</div>
-              <div className="text-[11px] text-[#9ca3af] font-mono">Active Memos in Edit</div>
+              <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">LIVE WORKING DOCS</span>
+              <div className="text-2xl font-bold text-black tracking-tight">{liveDocsCount}</div>
+              <div className="text-[11px] text-neutral-500 font-mono">Active Memos in Edit</div>
             </div>
-            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-black/[0.06] text-neutral-800 flex items-center justify-center">
               <BookOpen size={18} />
             </div>
           </div>
 
-          <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-purple-50/50 border border-black/[0.06] shadow-sm flex items-center justify-between">
+          <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex items-center justify-between">
             <div className="space-y-1">
-              <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Google Drive &amp; Docs</span>
-              <div className="text-2xl font-light text-blue-700 tracking-tight">{googleFiles.length}</div>
-              <div className="text-[11px] text-[#9ca3af] font-mono">Live Drive Documents</div>
+              <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">GOOGLE DRIVE &amp; DOCS</span>
+              <div className="text-2xl font-bold text-black tracking-tight">{googleFiles.length}</div>
+              <div className="text-[11px] text-neutral-500 font-mono">Live Drive Documents</div>
             </div>
-            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-black/[0.06] text-neutral-800 flex items-center justify-center">
               <FileText size={18} />
             </div>
           </div>
 
-          <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-emerald-50/50 border border-black/[0.06] shadow-sm flex items-center justify-between">
+          <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex items-center justify-between">
             <div className="space-y-1">
-              <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Drive Connection</span>
-              <div className="text-2xl font-light text-emerald-600 tracking-tight">
+              <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">DRIVE REPOSITORY</span>
+              <div className="text-2xl font-bold text-black tracking-tight">
                 {isGoogleConnected ? 'Active' : 'Standby'}
               </div>
-              <div className="text-[11px] text-[#9ca3af] font-mono">
+              <div className="text-[11px] text-neutral-500 font-mono">
                 {isGoogleConnected ? 'Direct 2-way Google Docs API' : 'Not authenticated in Settings'}
               </div>
             </div>
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-black/[0.06] text-neutral-800 flex items-center justify-center">
               <Sparkles size={18} />
             </div>
           </div>

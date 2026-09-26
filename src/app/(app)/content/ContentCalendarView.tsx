@@ -71,9 +71,9 @@ export function ContentCalendarView({
             <CalendarIcon size={18} />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-black">Omnichannel Publishing Timeline</h3>
+            <h3 className="text-sm font-medium text-black">Content Schedule</h3>
             <p className="text-xs text-[#6b7280] font-light">
-              Visual dispatch schedule across Instagram Reels and YouTube Shorts
+              Visual schedule for Instagram Reels and YouTube Shorts
             </p>
           </div>
         </div>

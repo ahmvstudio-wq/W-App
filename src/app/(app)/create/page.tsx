@@ -357,57 +357,60 @@ export default function CultlikeCreatePage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-black/[0.06] pb-6">
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-800 font-mono text-[10px] font-medium tracking-wide">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              CULTLIKE CREATE &bull; OUTPUT OVER ACTIVITY
+          <span className="text-[11px] font-semibold text-neutral-400 tracking-[0.14em] uppercase block">
+            Creator Studio
+          </span>
+          <div className="flex items-center gap-3 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-black">
+              Cultlike Create
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] text-[10px] font-mono flex items-center gap-1.5 shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
+              <span>{stats.creatorTier}</span>
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-light text-black tracking-tight">
-            Creator Command &amp; Planning Hub
-          </h1>
-          <p className="text-sm text-[#6b7280] font-light mt-1">
+          <p className="text-sm text-neutral-500 font-normal mt-1">
             Real execution telemetry, multi-platform publishing planning, and verified proof-of-work.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           {/* Google Drive Status & Quick Ingest */}
           {isDriveConnected ? (
             <Link
               href="/content?open_drive=true"
-              className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              className="px-3.5 py-2 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/[0.08] rounded-xl text-xs font-normal flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
             >
-              <HardDrive size={13} />
+              <HardDrive size={13} className="text-neutral-500" />
               <span>Drive Ready</span>
             </Link>
           ) : (
             <a
               href="/api/auth/google?service=workspace&return_to=/create"
-              className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              className="px-3.5 py-2 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/[0.08] rounded-xl text-xs font-normal flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
             >
-              <HardDrive size={13} />
+              <HardDrive size={13} className="text-neutral-500" />
               <span>Connect Drive</span>
             </a>
           )}
 
           <Link
             href="/content"
-            className="px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+            className="px-3.5 py-2 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/[0.08] rounded-xl text-xs font-normal flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
           >
-            <Layers size={13} />
+            <Layers size={13} className="text-neutral-500" />
             <span>Open Vault</span>
           </Link>
           <button
             onClick={copyShareLink}
-            className="px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+            className="px-3.5 py-2 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/[0.08] rounded-xl text-xs font-normal flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
           >
-            <Copy size={13} />
+            <Copy size={13} className="text-neutral-500" />
             <span>Share Link</span>
           </button>
           <button
             onClick={exportScorecardImage}
-            className="px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+            className="px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
           >
             <Download size={13} className="text-white" />
             <span>Export Scorecard</span>
@@ -419,7 +422,7 @@ export default function CultlikeCreatePage() {
       <div className="flex items-center gap-2 border-b border-black/[0.06] pb-1 overflow-x-auto">
         {[
           { id: 'overview', label: 'Execution Overview', icon: Compass },
-          { id: 'plan', label: 'Plan & Add to Vault', icon: Plus },
+          { id: 'plan', label: 'Plan & Vault Stager', icon: Plus },
           { id: 'analytics', label: 'Cross-Platform Analytics', icon: BarChart3 },
           { id: 'scorecard', label: 'Verified Proof Card', icon: ShieldCheck },
         ].map(tab => {
@@ -433,7 +436,7 @@ export default function CultlikeCreatePage() {
                 "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer whitespace-nowrap",
                 active 
                   ? "bg-black text-white shadow-xs" 
-                  : "text-[#6b7280] hover:text-black hover:bg-black/[0.03]"
+                  : "text-neutral-500 hover:text-black hover:bg-black/[0.03]"
               )}
             >
               <Icon size={14} />
@@ -447,39 +450,34 @@ export default function CultlikeCreatePage() {
       {activeTab === 'overview' && (
         <div className="space-y-8 animate-in fade-in-50 duration-200">
           {/* Hero Streak Banner */}
-          <div className="bg-gradient-to-br from-amber-50/60 via-white to-orange-50/30 border border-amber-500/25 rounded-3xl p-8 text-black relative overflow-hidden shadow-xs">
-            <div className="absolute -right-8 -top-8 w-72 h-72 bg-gradient-to-br from-amber-400/20 via-orange-500/10 to-transparent rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-10 pointer-events-none flex items-center justify-end pr-12 text-amber-500">
-              <Flame size={240} className="text-amber-500" />
-            </div>
-
+          <div className="bg-white border border-black/[0.08] rounded-3xl p-6 sm:p-8 text-black relative overflow-hidden shadow-xs">
             <div className="relative z-10 max-w-xl space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-900 text-[11px] font-mono font-medium shadow-xs">
-                <Flame size={13} className="text-amber-600 fill-amber-500/30" />
-                <span>ACTIVE SHIPPING STREAK</span>
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] text-[10px] font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 shrink-0" />
+                <span>Active Shipping Streak</span>
               </div>
 
               <div>
-                <div className="text-4xl sm:text-5xl font-light tracking-tight flex items-baseline gap-3 text-black">
-                  <span className="font-semibold text-black tracking-tight">{stats.shippingStreak}</span>
-                  <span className="text-xl sm:text-2xl text-neutral-400 font-light">consecutive days output</span>
+                <div className="text-4xl sm:text-5xl font-bold tracking-tight flex items-baseline gap-3 text-black">
+                  <span>{stats.shippingStreak}</span>
+                  <span className="text-xl sm:text-2xl text-neutral-400 font-normal">consecutive days output</span>
                 </div>
-                <p className="text-xs text-[#6b7280] font-light mt-2 max-w-md leading-relaxed">
+                <p className="text-xs text-neutral-500 font-normal mt-2 max-w-md leading-relaxed">
                   Calculated dynamically from real completed sprint deliverables, live YouTube releases, and Instagram Reels.
                 </p>
               </div>
 
-              <div className="pt-2 flex flex-wrap items-center gap-6 text-xs font-mono text-[#6b7280]">
+              <div className="pt-2 flex flex-wrap items-center gap-6 text-xs font-mono text-neutral-600">
                 <div>
-                  <span className="text-amber-800 font-semibold">{stats.shippedThisMonth}</span> shipped this month
+                  <span className="text-black font-semibold">{stats.shippedThisMonth}</span> shipped this month
                 </div>
                 <div className="w-1 h-1 rounded-full bg-neutral-300" />
                 <div>
-                  <span className="text-emerald-700 font-semibold">{stats.totalShipped}</span> total verified deliverables
+                  <span className="text-black font-semibold">{stats.totalShipped}</span> total deliverables
                 </div>
                 <div className="w-1 h-1 rounded-full bg-neutral-300" />
                 <div>
-                  <span className="text-violet-700 font-semibold">{stats.deepWorkHours}h</span> deep work logged
+                  <span className="text-black font-semibold">{stats.deepWorkHours}h</span> deep work logged
                 </div>
               </div>
             </div>
@@ -487,65 +485,65 @@ export default function CultlikeCreatePage() {
 
           {/* Real Personal Records (PRs) */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-5 bg-white/80 backdrop-blur-sm border border-black/[0.06] hover:border-amber-500/25 hover:shadow-xs rounded-2xl transition-all shadow-xs relative overflow-hidden group">
+            <div className="p-5 bg-white border border-black/[0.08] rounded-2xl shadow-xs">
               <div className="flex items-center gap-2 mb-2">
-                <span className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                <span className="w-6 h-6 rounded-lg bg-neutral-100 text-neutral-700 flex items-center justify-center">
                   <Trophy size={13} />
                 </span>
-                <span className="text-[10px] font-mono uppercase tracking-wider font-light text-[#9ca3af]">TOTAL SHIPPED</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400">TOTAL SHIPPED</span>
               </div>
-              <div className="text-2xl font-light text-black">{stats.totalShipped}</div>
-              <div className="text-[11px] text-amber-700/80 font-light mt-1">Verified Deliverables</div>
+              <div className="text-2xl font-semibold text-black">{stats.totalShipped}</div>
+              <div className="text-[11px] text-neutral-500 font-normal mt-1">Verified Deliverables</div>
             </div>
 
-            <div className="p-5 bg-white/80 backdrop-blur-sm border border-black/[0.06] hover:border-violet-500/25 hover:shadow-xs rounded-2xl transition-all shadow-xs relative overflow-hidden group">
+            <div className="p-5 bg-white border border-black/[0.08] rounded-2xl shadow-xs">
               <div className="flex items-center gap-2 mb-2">
-                <span className="w-6 h-6 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center">
+                <span className="w-6 h-6 rounded-lg bg-neutral-100 text-neutral-700 flex items-center justify-center">
                   <Zap size={13} />
                 </span>
-                <span className="text-[10px] font-mono uppercase tracking-wider font-light text-[#9ca3af]">PEAK VELOCITY</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400">PEAK VELOCITY</span>
               </div>
-              <div className="text-2xl font-light text-black">{stats.peakVelocity} Items</div>
-              <div className="text-[11px] text-violet-700/80 font-light mt-1">Shipped in 24 hours</div>
+              <div className="text-2xl font-semibold text-black">{stats.peakVelocity} Items</div>
+              <div className="text-[11px] text-neutral-500 font-normal mt-1">Shipped in 24 hours</div>
             </div>
 
-            <div className="p-5 bg-white/80 backdrop-blur-sm border border-black/[0.06] hover:border-sky-500/25 hover:shadow-xs rounded-2xl transition-all shadow-xs relative overflow-hidden group">
+            <div className="p-5 bg-white border border-black/[0.08] rounded-2xl shadow-xs">
               <div className="flex items-center gap-2 mb-2">
-                <span className="w-6 h-6 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+                <span className="w-6 h-6 rounded-lg bg-neutral-100 text-neutral-700 flex items-center justify-center">
                   <Clock size={13} />
                 </span>
-                <span className="text-[10px] font-mono uppercase tracking-wider font-light text-[#9ca3af]">DEEP WORK TIME</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400">DEEP WORK TIME</span>
               </div>
-              <div className="text-2xl font-light text-black">{stats.deepWorkHours}h</div>
-              <div className="text-[11px] text-sky-700/80 font-light mt-1">Sprint execution time</div>
+              <div className="text-2xl font-semibold text-black">{stats.deepWorkHours}h</div>
+              <div className="text-[11px] text-neutral-500 font-normal mt-1">Sprint execution time</div>
             </div>
 
-            <div className="p-5 bg-white/80 backdrop-blur-sm border border-black/[0.06] hover:border-emerald-500/25 hover:shadow-xs rounded-2xl transition-all shadow-xs relative overflow-hidden group">
+            <div className="p-5 bg-white border border-black/[0.08] rounded-2xl shadow-xs">
               <div className="flex items-center gap-2 mb-2">
-                <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <span className="w-6 h-6 rounded-lg bg-neutral-100 text-neutral-700 flex items-center justify-center">
                   <ShieldCheck size={13} />
                 </span>
-                <span className="text-[10px] font-mono uppercase tracking-wider font-light text-[#9ca3af]">OPERATOR TIER</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400">OPERATOR TIER</span>
               </div>
               <div className="text-sm font-semibold text-black mt-1 truncate">{stats.creatorTier}</div>
-              <div className="text-[11px] text-emerald-700/80 font-light mt-1">Top Velocity Bracket</div>
+              <div className="text-[11px] text-neutral-500 font-normal mt-1">Top Velocity Bracket</div>
             </div>
           </div>
 
           {/* Real 52-Week Shipping Heatmap */}
-          <div className="bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
+          <div className="bg-white border border-black/[0.08] rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-normal text-black">Annual Production Heatmap</h3>
-                <p className="text-xs text-[#6b7280] font-light">Real daily output logged from your tasks and live social feeds</p>
+                <h3 className="text-base font-semibold text-black">Annual Production Heatmap</h3>
+                <p className="text-xs text-neutral-500 font-normal">Real daily output logged from your tasks and live social feeds</p>
               </div>
-              <div className="flex items-center gap-2 text-[11px] text-[#9ca3af] font-mono font-light">
+              <div className="flex items-center gap-2 text-[11px] text-neutral-400 font-mono font-normal">
                 <span>Less</span>
                 <div className="flex gap-1">
                   <span className="w-2.5 h-2.5 rounded-xs bg-neutral-100" />
-                  <span className="w-2.5 h-2.5 rounded-xs bg-emerald-200" />
-                  <span className="w-2.5 h-2.5 rounded-xs bg-emerald-400" />
-                  <span className="w-2.5 h-2.5 rounded-xs bg-emerald-600" />
+                  <span className="w-2.5 h-2.5 rounded-xs bg-neutral-300" />
+                  <span className="w-2.5 h-2.5 rounded-xs bg-neutral-600" />
+                  <span className="w-2.5 h-2.5 rounded-xs bg-neutral-900" />
                 </div>
                 <span>More</span>
               </div>
@@ -559,9 +557,9 @@ export default function CultlikeCreatePage() {
                       <div
                         key={dIdx}
                         className={`w-3 h-3 rounded-xs transition-colors cursor-pointer ${
-                          level === 3 ? 'bg-emerald-600 hover:bg-emerald-500 shadow-xs shadow-emerald-500/20' :
-                          level === 2 ? 'bg-emerald-400 hover:bg-emerald-300' :
-                          level === 1 ? 'bg-emerald-200 hover:bg-emerald-100' :
+                          level === 3 ? 'bg-neutral-900 hover:bg-neutral-800 shadow-xs' :
+                          level === 2 ? 'bg-neutral-500 hover:bg-neutral-400' :
+                          level === 1 ? 'bg-neutral-200 hover:bg-neutral-300' :
                           'bg-neutral-100 hover:bg-neutral-200'
                         }`}
                         title={`Week ${wIdx + 1}: ${level > 0 ? `${level} deliverables shipped` : 'No deliverables'}`}
@@ -574,15 +572,15 @@ export default function CultlikeCreatePage() {
           </div>
 
           {/* Real Deliverables Log */}
-          <div className="bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
+          <div className="bg-white border border-black/[0.08] rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-normal text-black">Live Production Log</h3>
-                <p className="text-xs text-[#6b7280] font-light">Your genuine execution history</p>
+                <h3 className="text-base font-semibold text-black">Live Production Log</h3>
+                <p className="text-xs text-neutral-500 font-normal">Your genuine execution history</p>
               </div>
               <button
                 onClick={() => setActiveTab('plan')}
-                className="px-3 py-1.5 bg-black text-white hover:bg-neutral-800 rounded-xl text-xs font-normal flex items-center gap-1.5 transition-all cursor-pointer"
+                className="px-3 py-1.5 bg-black text-white hover:bg-neutral-800 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
               >
                 <Plus size={12} />
                 <span>Plan New Content</span>
@@ -591,23 +589,18 @@ export default function CultlikeCreatePage() {
 
             <div className="divide-y divide-black/[0.04]">
               {shippedItems.length === 0 ? (
-                <div className="py-8 text-center text-[#9ca3af] text-xs font-light">
+                <div className="py-8 text-center text-neutral-400 text-xs font-normal">
                   No deliverables marked as shipped yet. Complete a task or publish content to start your streak!
                 </div>
               ) : (
                 shippedItems.slice(0, 12).map((item, idx) => (
                   <div key={idx} className="py-3 flex items-center justify-between text-xs hover:bg-black/[0.01] px-2 rounded-lg transition-colors">
                     <div className="flex items-center gap-3">
-                      <CheckCircle2 size={15} className="text-emerald-500 shrink-0" />
+                      <CheckCircle2 size={15} className="text-neutral-900 shrink-0" />
                       <span className="text-black font-normal">{item.title}</span>
                     </div>
-                    <div className="flex items-center gap-3 text-[#9ca3af] font-mono text-[11px]">
-                      <span className={cn(
-                        "px-2 py-0.5 rounded-md border text-[10px]",
-                        item.platform === 'instagram' ? "bg-pink-50 text-pink-700 border-pink-200" :
-                        item.platform === 'youtube' ? "bg-rose-50 text-rose-700 border-rose-200" :
-                        "bg-neutral-100 text-neutral-700 border-neutral-200"
-                      )}>
+                    <div className="flex items-center gap-3 text-neutral-400 font-mono text-[11px]">
+                      <span className="px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-800 border border-black/[0.08] text-[10px] font-mono">
                         {item.type}
                       </span>
                       <span>{new Date(item.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
@@ -628,25 +621,25 @@ export default function CultlikeCreatePage() {
       {/* TAB 2: PLAN & ADD TO VAULT */}
       {activeTab === 'plan' && (
         <div className="space-y-6 animate-in fade-in-50 duration-200">
-          <div className="bg-white/80 backdrop-blur-sm border border-black/[0.06] rounded-3xl p-6 sm:p-8 shadow-xs">
+          <div className="bg-white border border-black/[0.08] rounded-3xl p-6 sm:p-8 shadow-xs">
             <div className="max-w-2xl">
-              <h2 className="text-lg font-medium text-black">Content Production Studio &amp; Vault Stager</h2>
-              <p className="text-xs text-[#6b7280] font-light mt-1">
+              <h2 className="text-lg font-bold text-black">Content Production Studio &amp; Vault Stager</h2>
+              <p className="text-xs text-neutral-500 font-normal mt-1">
                 Plan your next content sprint, write the 3-second hook and caption, and stage it directly into your Content Vault in 1 click.
               </p>
             </div>
 
             {/* Google Drive Ingestion Callout Banner */}
-            <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-amber-500/[0.08] border border-amber-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-[#fafafa] border border-black/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center flex-shrink-0">
-                  <HardDrive size={20} />
+                <div className="w-10 h-10 rounded-xl bg-neutral-100 text-neutral-800 flex items-center justify-center flex-shrink-0 border border-black/[0.04]">
+                  <HardDrive size={18} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-black">
+                  <h3 className="text-sm font-semibold text-black">
                     {isDriveConnected ? 'Google Drive Asset Repository Connected' : 'Connect Google Drive Asset Repository'}
                   </h3>
-                  <p className="text-xs text-[#6b7280] font-light mt-0.5">
+                  <p className="text-xs text-neutral-500 font-normal mt-0.5">
                     {isDriveConnected 
                       ? 'Finished video deliverables from your Drive can be browsed and staged into the Content Vault.'
                       : 'Authorize your Drive to pull finished video deliverables directly into the Vault without manual upload.'}
@@ -664,7 +657,7 @@ export default function CultlikeCreatePage() {
               ) : (
                 <a
                   href="/api/auth/google?service=workspace&return_to=/create"
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 whitespace-nowrap shadow-xs transition-all"
+                  className="px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium flex items-center gap-1.5 whitespace-nowrap shadow-xs transition-all"
                 >
                   <HardDrive size={13} />
                   <span>Connect Google Drive</span>
@@ -697,7 +690,7 @@ export default function CultlikeCreatePage() {
                       className={cn(
                         "py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer transition-all",
                         planPlatform === 'instagram'
-                          ? "bg-pink-50 border-pink-300 text-pink-700 shadow-xs"
+                          ? "bg-black border-black text-white shadow-xs"
                           : "bg-white border-black/[0.08] text-neutral-600 hover:bg-neutral-50"
                       )}
                     >
@@ -709,7 +702,7 @@ export default function CultlikeCreatePage() {
                       className={cn(
                         "py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer transition-all",
                         planPlatform === 'youtube'
-                          ? "bg-rose-50 border-rose-300 text-rose-700 shadow-xs"
+                          ? "bg-black border-black text-white shadow-xs"
                           : "bg-white border-black/[0.08] text-neutral-600 hover:bg-neutral-50"
                       )}
                     >
