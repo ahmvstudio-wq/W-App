@@ -337,13 +337,13 @@ export default function TasksPage() {
       )}
 
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-shrink-0 pb-4 border-b border-neutral-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-shrink-0">
         <div>
-          <span className="text-[11px] font-semibold text-neutral-400 tracking-[0.14em] uppercase block">
-            Product
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-black mt-1 flex items-center gap-3">
-            <span>Tasks</span>
+          <div className="text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1 font-light">
+            TASK ENGINE
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-black flex items-center gap-3">
+            <span>Kanban &amp; Backlog</span>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] font-mono font-medium">
               {tasks.length} total
             </span>

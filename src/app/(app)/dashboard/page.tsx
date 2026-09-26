@@ -261,32 +261,39 @@ export default function DashboardPage() {
   const agendaShippedTasks = agendaTasks.filter(t => t.status === 'shipped')
 
   return (
-    <div className="space-y-5 pb-10 animate-fadeIn font-sans">
-      {/* Hero Insight Card */}
-      <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.08] p-6 shadow-xs">
-        {/* Top Card Bar: Founder Identity & Actions */}
-        <div className="flex items-center justify-between pb-4 mb-4 border-b border-black/[0.05]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center font-medium text-xs shadow-xs">
-              {getInitials(userName)}
-            </div>
-            <div>
-              <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">FOUNDER WORKSPACE</span>
-              <span className="text-xs font-medium text-black">{userName}</span>
-            </div>
+    <div className="space-y-4 pb-10 animate-fadeIn font-sans">
+      {/* Top Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <div className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider mb-0.5 font-light">
+            DASHBOARD
           </div>
-
-          <button 
+          <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-black">
+            Your Daily Dashboard
+          </h1>
+        </div>
+        <div className="flex items-center gap-2.5 font-body">
+          <button
             onClick={() => generateBrief(tasks, projects)}
             disabled={generatingBrief}
             className="flex items-center gap-2 px-3.5 py-1.5 bg-white hover:bg-neutral-50 border border-black/[0.08] rounded-xl text-xs font-normal text-black transition-all cursor-pointer shadow-2xs"
             title="Regenerate daily intelligence briefing"
           >
             <RefreshCw size={12} className={cn(generatingBrief && 'animate-spin')} />
-            <span>Refresh Summary</span>
+            <span>Generate Today&apos;s Brief</span>
+          </button>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-sm"
+          >
+            <Plus size={14} />
+            <span>New Task</span>
           </button>
         </div>
+      </div>
 
+      {/* Hero Insight Card */}
+      <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.08] p-6 shadow-xs">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           {/* Left Column: Greeting & Big Punchy Metric */}
           <div className="lg:col-span-7 space-y-3.5">
