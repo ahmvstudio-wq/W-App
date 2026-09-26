@@ -166,11 +166,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <FocusTimer />
 
         {/* Minimalist Clean Header */}
-        <header className="sticky top-0 z-40 h-16 bg-white/85 backdrop-blur-xl border-b border-black/[0.06] px-4 sm:px-10 flex items-center justify-between relative">
+        <header className="sticky top-0 z-40 h-16 sm:h-[72px] bg-white/85 backdrop-blur-xl border-b border-black/[0.06] px-4 sm:px-10 flex items-center justify-between relative">
           {/* Left: Brand Identity */}
           <div className="flex items-center gap-3">
             <Link href="/dashboard" className="flex items-center group">
-              <img src="/logo-cultlike.png" alt="Logo" className="h-9 w-9 object-contain rounded-full hover:scale-105 transition-transform" />
+              <img src="/logo-cultlike.png" alt="Logo" className="h-11 w-11 sm:h-12 sm:w-12 object-contain rounded-full hover:scale-105 transition-transform shadow-[0_2px_8px_rgba(0,0,0,0.06)]" />
             </Link>
           </div>
 

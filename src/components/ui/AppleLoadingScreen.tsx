@@ -46,11 +46,11 @@ export default function AppleLoadingScreen({
           {/* Centered Cultlike Logo */}
           <div className="relative flex items-center justify-center animate-apple-breathe">
             <img 
-              src="/logo.png" 
+              src="/logo-cultlike.png" 
               alt="Cultlike" 
               className={cn(
-                "object-contain dark:invert drop-shadow-[0_4px_16px_rgba(0,0,0,0.06)] select-none",
-                compact ? "w-12 h-12" : "w-16 h-16 sm:w-20 sm:h-20"
+                "object-contain rounded-full drop-shadow-[0_4px_16px_rgba(0,0,0,0.08)] select-none",
+                compact ? "w-14 h-14" : "w-20 h-20 sm:w-24 sm:h-24"
               )}
               draggable={false}
             />

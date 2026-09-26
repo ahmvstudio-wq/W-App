@@ -194,7 +194,7 @@ export default function LandingPage() {
               <img 
                 src="/logo-cultlike.png" 
                 alt="Logo" 
-                className="h-9 w-9 object-contain rounded-full hover:scale-105 transition-transform" 
+                className="h-11 w-11 sm:h-12 sm:w-12 object-contain rounded-full hover:scale-105 transition-transform" 
               />
             </Link>
           </div>
