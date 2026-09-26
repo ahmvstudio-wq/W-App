@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { cn, getInitials } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useWorkspace } from '@/context/WorkspaceContext'
+import { ChatGPTLogo, ClaudeLogo } from '@/components/IntegrationLogos'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -80,6 +81,24 @@ export default function SettingsPage() {
     setTimeout(() => setCopiedClaudeMcp(false), 2500)
   }
 
+  const handleConnectClaude = () => {
+    const url = getClaudeMcpUrl()
+    try {
+      navigator.clipboard.writeText(url)
+    } catch (e) {
+      console.error('Clipboard copy failed:', e)
+    }
+    setCopiedClaudeMcp(true)
+    toast.success('Connector URL copied to clipboard!', {
+      description: 'Opening Claude Connectors. Paste (Ctrl+V) the URL and click Add connector.',
+      duration: 5000,
+    })
+    if (typeof window !== 'undefined') {
+      window.open('https://claude.ai/customize/connectors', '_blank', 'noopener,noreferrer')
+    }
+    setTimeout(() => setCopiedClaudeMcp(false), 3000)
+  }
+
   const getOpenApiUrl = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cultlike.ahmvsystems.com'
     return `${origin}/chatgpt-openapi.json`
@@ -90,6 +109,24 @@ export default function SettingsPage() {
     setCopiedOpenApi(true)
     toast.success('OpenAPI 3.1 Spec URL copied to clipboard!')
     setTimeout(() => setCopiedOpenApi(false), 2500)
+  }
+
+  const handleConnectChatGPT = () => {
+    const url = getOpenApiUrl()
+    try {
+      navigator.clipboard.writeText(url)
+    } catch (e) {
+      console.error('Clipboard copy failed:', e)
+    }
+    setCopiedOpenApi(true)
+    toast.success('OpenAPI Spec URL copied to clipboard!', {
+      description: 'Opening ChatGPT GPT Editor. Paste (Ctrl+V) under "Import from URL" in Actions.',
+      duration: 5000,
+    })
+    if (typeof window !== 'undefined') {
+      window.open('https://chatgpt.com/gpts/editor', '_blank', 'noopener,noreferrer')
+    }
+    setTimeout(() => setCopiedOpenApi(false), 3000)
   }
 
   useEffect(() => {
@@ -832,10 +869,8 @@ export default function SettingsPage() {
                       <div className="relative group shrink-0">
                         <div className="absolute -inset-1.5 rounded-2xl bg-emerald-500/[0.12] blur-md group-hover:blur-lg transition-all duration-300 pointer-events-none" />
                         <div className="relative w-12 h-12 rounded-2xl bg-white border border-black/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-center text-emerald-600 transition-all duration-200 group-hover:border-black/[0.16] group-hover:scale-[1.02]">
-                          {/* Official OpenAI / ChatGPT Spiral Mark */}
-                          <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                            <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1683a.071.071 0 0 1 .038.052v5.5826a4.5045 4.5045 0 0 1-4.4945 4.4947zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1683a.0757.0757 0 0 1-.071 0l-4.8303-2.7866A4.504 4.504 0 0 1 2.3408 7.8956zm16.0993 3.8558L12.5973 8.3829l2.02-1.1635a.0804.0804 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.402-.6863zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1635a.0804.0804 0 0 1-.038-.0567V6.0748a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.4598a.7948.7948 0 0 0-.3927.6813v6.7219h-.0048zm1.0977-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.6069 1.4997-2.602-1.4997v-2.9994z"/>
-                          </svg>
+                          {/* Official OpenAI / ChatGPT Mark */}
+                          <ChatGPTLogo className="w-5 h-5" fill="#10A37F" />
                         </div>
                       </div>
                       <div>
@@ -857,40 +892,56 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-white border border-black/[0.06] space-y-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-black">OpenAPI Action Spec URL</span>
+                <div className="p-4 rounded-xl bg-white border border-black/[0.06] space-y-3.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-black/[0.04]">
+                    <button
+                      type="button"
+                      onClick={handleConnectChatGPT}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer"
+                    >
+                      <ChatGPTLogo className="w-3.5 h-3.5" fill="#FFFFFF" />
+                      <span>Connect in ChatGPT</span>
+                      <ExternalLink size={12} className="opacity-90" />
+                    </button>
                     <a
                       href="/chatgpt-openapi.json"
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[11px] text-[#6b7280] hover:text-black flex items-center gap-1 underline"
+                      className="text-[11px] text-[#6b7280] hover:text-black flex items-center gap-1 underline font-mono"
                     >
-                      <span>View Spec</span>
+                      <span>View Raw Spec</span>
                       <ExternalLink size={10} />
                     </a>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={getOpenApiUrl()}
-                      className="flex-1 px-3 py-1.5 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-[11px] font-mono text-black outline-none select-all"
-                    />
-                    <button
-                      type="button"
-                      onClick={copyOpenApiUrl}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs whitespace-nowrap"
-                    >
-                      {copiedOpenApi ? <Check size={12} /> : <Copy size={12} />}
-                      <span>{copiedOpenApi ? 'Copied' : 'Copy URL'}</span>
-                    </button>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-black">OpenAPI Action Spec URL</span>
+                      <span className="text-[11px] text-[#8a8d95]">Copied on click</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={getOpenApiUrl()}
+                        className="flex-1 px-3 py-1.5 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-[11px] font-mono text-black outline-none select-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={copyOpenApiUrl}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                      >
+                        {copiedOpenApi ? <Check size={12} /> : <Copy size={12} />}
+                        <span>{copiedOpenApi ? 'Copied' : 'Copy URL'}</span>
+                      </button>
+                    </div>
                   </div>
+
                   <div className="p-2.5 rounded-lg bg-neutral-50 border border-black/[0.04] text-[11px] text-[#6b7280] space-y-1">
-                    <p className="font-medium text-black">How to connect in ChatGPT:</p>
-                    <p>1. Go to <strong>Explore GPTs &rarr; + Create &rarr; Configure &rarr; Add Action</strong></p>
-                    <p>2. Click <strong>Import from URL</strong> and paste this Action Spec URL</p>
-                    <p>3. Set Authentication to <strong>Bearer API Key</strong> or <strong>OAuth</strong> &rarr; Save &amp; use <strong>@Cultlike OS</strong> anywhere!</p>
+                    <p className="font-medium text-black">Quick 1-Click Setup in ChatGPT:</p>
+                    <p>1. Click <strong>Connect in ChatGPT</strong> &mdash; the spec URL is copied and the GPT Editor opens.</p>
+                    <p>2. Under <strong>Actions</strong>, click <strong>Import from URL</strong> &rarr; paste (<strong>Ctrl+V</strong>) the URL.</p>
+                    <p>3. Set Authentication to <strong>Bearer API Key</strong> or <strong>None</strong> &rarr; Save &amp; use <strong>@Cultlike OS</strong> anywhere!</p>
                   </div>
                 </div>
               </div>
@@ -903,10 +954,8 @@ export default function SettingsPage() {
                       <div className="relative group shrink-0">
                         <div className="absolute -inset-1.5 rounded-2xl bg-[#d97757]/[0.12] blur-md group-hover:blur-lg transition-all duration-300 pointer-events-none" />
                         <div className="relative w-12 h-12 rounded-2xl bg-white border border-black/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-center text-[#d97757] transition-all duration-200 group-hover:border-black/[0.16] group-hover:scale-[1.02]">
-                          {/* Anthropic Claude Icon */}
-                          <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14.5h-2v-2h2v2zm0-4h-2V7h2v5.5z"/>
-                          </svg>
+                          {/* Official Anthropic Claude Starburst Mark */}
+                          <ClaudeLogo className="w-5 h-5 text-[#d97757]" fill="currentColor" />
                         </div>
                       </div>
                       <div>
@@ -928,32 +977,48 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-white border border-black/[0.06] space-y-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-black">Personal Connector URL</span>
-                    <span className="text-[11px] text-[#8a8d95]">Streamable HTTP</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={getClaudeMcpUrl()}
-                      className="flex-1 px-3 py-1.5 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-[11px] font-mono text-black outline-none select-all"
-                    />
+                <div className="p-4 rounded-xl bg-white border border-black/[0.06] space-y-3.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-black/[0.04]">
                     <button
                       type="button"
-                      onClick={copyClaudeMcpUrl}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                      onClick={handleConnectClaude}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-[#d97757] hover:bg-[#c66547] text-white rounded-xl text-xs font-medium transition-all shadow-xs cursor-pointer"
                     >
-                      {copiedClaudeMcp ? <Check size={12} /> : <Copy size={12} />}
-                      <span>{copiedClaudeMcp ? 'Copied' : 'Copy Link'}</span>
+                      <ClaudeLogo className="w-3.5 h-3.5 text-white" fill="currentColor" />
+                      <span>Connect to Claude</span>
+                      <ExternalLink size={12} className="opacity-90" />
                     </button>
+                    <span className="text-[11px] text-[#8a8d95] font-mono">Streamable HTTP · No Auth Required</span>
                   </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-black">Personal Connector URL</span>
+                      <span className="text-[11px] text-[#8a8d95]">Copied on click</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={getClaudeMcpUrl()}
+                        className="flex-1 px-3 py-1.5 bg-[#f8f9fc] border border-black/[0.08] rounded-xl text-[11px] font-mono text-black outline-none select-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={copyClaudeMcpUrl}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                      >
+                        {copiedClaudeMcp ? <Check size={12} /> : <Copy size={12} />}
+                        <span>{copiedClaudeMcp ? 'Copied' : 'Copy URL'}</span>
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="p-2.5 rounded-lg bg-neutral-50 border border-black/[0.04] text-[11px] text-[#6b7280] space-y-1">
-                    <p className="font-medium text-black">How to connect in Claude:</p>
-                    <p>1. Open Claude &rarr; <strong>Settings &rarr; Connectors &rarr; Add custom connector</strong></p>
-                    <p>2. Paste your Personal Connector URL</p>
-                    <p>3. Select <strong>No sign-in (Detected)</strong> &rarr; Click <strong>Add connector</strong>. Done!</p>
+                    <p className="font-medium text-black">Quick 1-Click Setup in Claude:</p>
+                    <p>1. Click <strong>Connect to Claude</strong> &mdash; your personal URL is copied to your clipboard and Claude opens.</p>
+                    <p>2. In the Claude connector modal, press <strong>Ctrl+V</strong> (or <strong>Cmd+V</strong>) in the URL box.</p>
+                    <p>3. Claude automatically detects <strong>Streamable HTTP</strong> and <strong>No sign-in</strong> &rarr; click <strong>Add connector</strong>. Done!</p>
                   </div>
                 </div>
               </div>
