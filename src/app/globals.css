@@ -275,3 +275,24 @@ h1, h2, h3, h4, h5, h6 {
   animation: apple-indeterminate 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   will-change: transform;
 }
+
+/* Continuous Kinetic Marquee Fleet Animation */
+@keyframes marquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 32s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
