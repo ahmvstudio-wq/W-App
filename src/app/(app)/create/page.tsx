@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { 
   Flame, Trophy, Zap, Share2, Download, Copy, CheckCircle2, 
-  Sparkles, Calendar, TrendingUp, Clock, ShieldCheck, ArrowUpRight,
+  Activity, Calendar, TrendingUp, Clock, ShieldCheck, ArrowUpRight,
   Plus, Video, Layers, Eye, Heart, MessageSquare, Send, ExternalLink,
   Check, Repeat, Play, BarChart3, Target, Compass, HardDrive
 } from 'lucide-react'
@@ -352,7 +352,7 @@ export default function CultlikeCreatePage() {
     <div className="space-y-8 max-w-6xl mx-auto pb-20 font-body relative">
       {/* Subtle Ambient Lighting Blooms */}
       <div className="absolute top-0 right-10 w-96 h-96 bg-gradient-to-br from-amber-500/[0.07] via-orange-500/[0.04] to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute top-80 left-0 w-80 h-80 bg-gradient-to-tr from-emerald-500/[0.06] via-teal-500/[0.03] to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-80 left-0 w-80 h-80 bg-gradient-to-tr from-indigo-500/[0.06] via-teal-500/[0.03] to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
 
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-black/[0.06] pb-6">
@@ -814,7 +814,7 @@ export default function CultlikeCreatePage() {
             className="bg-[#0b0c0e] border border-neutral-800 rounded-3xl p-8 text-white space-y-6 shadow-2xl relative overflow-hidden max-w-2xl mx-auto"
           >
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-28 bg-white/[0.04] rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -top-10 -right-10 w-48 h-48 bg-emerald-500/[0.08] rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -top-10 -right-10 w-48 h-48 bg-indigo-500/[0.08] rounded-full blur-2xl pointer-events-none" />
 
             <div className="flex items-center justify-between border-b border-neutral-800 pb-5 relative z-10">
               <div className="flex items-center gap-3">
@@ -829,8 +829,8 @@ export default function CultlikeCreatePage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-mono">
-                <CheckCircle2 size={12} className="text-emerald-400" />
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-amber-400 text-xs font-mono">
+                <CheckCircle2 size={12} className="text-amber-400" />
                 <span>{stats.creatorTier.toUpperCase()}</span>
               </div>
             </div>
@@ -847,7 +847,7 @@ export default function CultlikeCreatePage() {
               </div>
 
               <div className="p-4 rounded-2xl bg-neutral-900/90 border border-neutral-800/80">
-                <div className="text-3xl font-light text-emerald-400">{stats.onTimeDeliveryRate}%</div>
+                <div className="text-3xl font-light text-amber-400">{stats.onTimeDeliveryRate}%</div>
                 <div className="text-[10px] text-neutral-400 font-mono uppercase tracking-wider mt-1">On-Time Rate</div>
               </div>
             </div>

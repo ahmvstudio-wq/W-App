@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { 
   Plus, Search, Filter, FolderKanban, Activity, Target, X, Zap, 
   Trash2, ChevronRight, ChevronDown, Clock, TrendingUp, Layers, CheckCircle2, 
-  Building2, Briefcase, Sparkles, ArrowUpRight, Palette, Edit3,
+  Building2, Briefcase, ArrowUpRight, Palette, Edit3,
   Play, ListTodo
 } from 'lucide-react'
 import { getProjectHealth, getInitials, daysUntil, daysSince, cn } from '@/lib/utils'
@@ -27,40 +27,7 @@ export interface MasterProjectInfo {
   colorTheme?: 'emerald' | 'indigo' | 'purple' | 'blue' | 'amber' | 'rose'
 }
 
-const DEFAULT_MASTER_PROJECTS: MasterProjectInfo[] = [
-  {
-    id: 'mp-tadbeer',
-    name: 'Tadbeer TT',
-    subtitle: 'Primary Business Architecture',
-    colorTheme: 'emerald',
-    description: 'Core commercial trading, client CRM, e-commerce products, and operations.'
-  },
-  {
-    id: 'mp-content-ahmed',
-    name: 'Content(ahmed )',
-    subtitle: 'Creator Studio & Content Engine',
-    description: 'Media production, video series, and multi-platform content publishing.',
-    colorTheme: 'purple'
-  },
-  {
-    id: 'mp-cultlike-os',
-    name: 'CULTLIKE OS',
-    subtitle: 'Core Platform & Executive Systems',
-    description: 'Executive OS architecture, workflows, integrations, and tools.',
-    colorTheme: 'emerald'
-  },
-  {
-    id: 'mp-ahmv-systems',
-    name: 'AHMV Systems',
-    subtitle: 'Studio Infrastructure & Client Ventures',
-    description: 'Strategic operations, infrastructure, client initiatives, and commercial growth.',
-    colorTheme: 'indigo'
-  }
-]
-
-function normalizeMasterName(name?: string): string {
-  return (name || '').toLowerCase().replace(/\s+/g, ' ').replace(/\(\s*/g, '(').replace(/\s*\)/g, ')').trim()
-}
+const DEFAULT_MASTER_PROJECTS: MasterProjectInfo[] = []
 
 export default function ProjectsPage() {
   const router = useRouter()
@@ -69,27 +36,16 @@ export default function ProjectsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isCreateMasterModalOpen, setIsCreateMasterModalOpen] = useState(false)
   const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
-  const [createInitialMasterProject, setCreateInitialMasterProject] = useState<string>(DEFAULT_MASTER_PROJECTS[0].name)
+  const [createInitialMasterProject, setCreateInitialMasterProject] = useState<string>('')
   
-  // Data States (Instant 0ms initial paint from SWR cache)
-  const [projects, setProjects] = useState<Project[]>(() => {
-    if (typeof window !== 'undefined') {
-      return getCached<Project[]>('projects_list') || []
-    }
-    return []
-  })
-  const [masterProjects, setMasterProjects] = useState<MasterProjectInfo[]>(DEFAULT_MASTER_PROJECTS)
-  const [loading, setLoading] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const cached = getCached<Project[]>('projects_list')
-      return !cached || cached.length === 0
-    }
-    return true
-  })
+  // Data States
+  const [projects, setProjects] = useState<Project[]>([])
+  const [masterProjects, setMasterProjects] = useState<MasterProjectInfo[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
   const [searchQuery, setSearchQuery] = useState('')
   
   // Selected Master Project for the Command Hub Banner & Filter
-  const [activeMasterProjectName, setActiveMasterProjectName] = useState<string>(DEFAULT_MASTER_PROJECTS[0].name)
+  const [activeMasterProjectName, setActiveMasterProjectName] = useState<string>('')
   const [selectedMasterFilter, setSelectedMasterFilter] = useState<string>('all')
   const [isCommandHubExpanded, setIsCommandHubExpanded] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -115,18 +71,12 @@ export default function ProjectsPage() {
       if (saved) {
         const parsed = JSON.parse(saved)
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const cleaned = parsed.filter((p: MasterProjectInfo) => 
-            p.name !== 'Primary Portfolio' &&
-            p.name !== 'Community Brand'
-          )
+          const cleaned = parsed.filter((p: MasterProjectInfo) => p.name !== 'Primary Portfolio')
           if (cleaned.length > 0) {
             setMasterProjects(cleaned)
-            return
           }
         }
       }
-      setMasterProjects(DEFAULT_MASTER_PROJECTS)
-      localStorage.setItem('focus_master_projects', JSON.stringify(DEFAULT_MASTER_PROJECTS))
     } catch (e) {
       console.warn('Failed to load master projects from localStorage:', e)
     }
@@ -216,36 +166,29 @@ export default function ProjectsPage() {
       return
     }
 
-    // Fetch workspace row and projects concurrently via Promise.all (cuts network wait time by 50%+)
-    const [wsRes, projectsRes] = await Promise.all([
-      supabase
-        .from('workspaces')
-        .select('id, name, owner_id, settings')
-        .eq('id', activeWsId)
-        .single(),
-      supabase
-        .from('projects')
-        .select('*, tasks(*)')
-        .eq('workspace_id', activeWsId)
-        .order('updated_at', { ascending: false })
-    ])
+    // Fetch workspace row to resolve workspace-specific settings & master programs
+    const { data: wsData } = await supabase
+      .from('workspaces')
+      .select('id, name, owner_id, settings')
+      .eq('id', activeWsId)
+      .single()
 
-    const wsSettings = wsRes.data?.settings || {}
+    const wsSettings = wsData?.settings || {}
     const rawSaved: MasterProjectInfo[] = Array.isArray(wsSettings.master_projects) ? wsSettings.master_projects : []
-    let savedMasterProjects: MasterProjectInfo[] = rawSaved.filter((p: MasterProjectInfo) => 
-      p.name !== 'Primary Portfolio' &&
-      p.name !== 'Community Brand'
-    )
-
-    if (savedMasterProjects.length === 0) {
-      savedMasterProjects = DEFAULT_MASTER_PROJECTS
-    }
+    const savedMasterProjects: MasterProjectInfo[] = rawSaved
 
     const projectMasterMap: Record<string, string> = wsSettings.project_master_map || {}
-    const data = projectsRes.data
+
+    let query = supabase
+      .from('projects')
+      .select('*, tasks(*)')
+      .eq('workspace_id', activeWsId)
+      .order('updated_at', { ascending: false })
+    
+    const { data } = await query
     
     if (data) {
-      const fallbackMaster = savedMasterProjects[0]?.name || DEFAULT_MASTER_PROJECTS[0].name
+      const fallbackMaster = savedMasterProjects[0]?.name || ''
       const enriched: Project[] = data.map((p: any) => ({
         ...p,
         master_project: projectMasterMap[p.id] || p.master_project || fallbackMaster
@@ -253,16 +196,30 @@ export default function ProjectsPage() {
       setProjects(enriched)
       setCached('projects_list', enriched)
 
-      setMasterProjects(savedMasterProjects)
-
-      if (savedMasterProjects.length > 0) {
-        if (!activeMasterProjectName || !savedMasterProjects.some(m => normalizeMasterName(m.name) === normalizeMasterName(activeMasterProjectName))) {
-          setActiveMasterProjectName(savedMasterProjects[0].name)
+      // Auto-register any new master_project names found
+      const foundNames = Array.from(new Set(enriched.map(p => p.master_project).filter((n): n is string => Boolean(n))))
+      const mergedMasters = [...savedMasterProjects]
+      foundNames.forEach(name => {
+        if (!mergedMasters.some(m => m.name.toLowerCase() === name.toLowerCase())) {
+          mergedMasters.push({
+            id: `mp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+            name,
+            subtitle: 'Master Campaign',
+            description: `Initiatives under ${name}.`,
+            colorTheme: 'purple'
+          })
         }
-        setCreateInitialMasterProject(savedMasterProjects[0].name)
+      })
+      setMasterProjects(mergedMasters)
+
+      if (mergedMasters.length > 0) {
+        if (!activeMasterProjectName || !mergedMasters.some(m => m.name.toLowerCase() === activeMasterProjectName.toLowerCase())) {
+          setActiveMasterProjectName(mergedMasters[0].name)
+        }
+        setCreateInitialMasterProject(mergedMasters[0].name)
       } else {
-        setActiveMasterProjectName(DEFAULT_MASTER_PROJECTS[0].name)
-        setCreateInitialMasterProject(DEFAULT_MASTER_PROJECTS[0].name)
+        setActiveMasterProjectName('')
+        setCreateInitialMasterProject('')
       }
     }
     setLoading(false)
@@ -301,18 +258,26 @@ export default function ProjectsPage() {
     }
   }, [])
 
-  // All distinct Master Project names (strictly master projects)
+  // All distinct Master Project names
   const allMasterNames = useMemo(() => {
-    const names = masterProjects.map(m => m.name)
-    return names.length > 0 ? names : DEFAULT_MASTER_PROJECTS.map(m => m.name)
-  }, [masterProjects])
+    const set = new Set<string>()
+    masterProjects.forEach(m => set.add(m.name))
+    projects.forEach(p => { if (p.master_project) set.add(p.master_project) })
+    return Array.from(set)
+  }, [masterProjects, projects])
 
   // Active Master Project Object
   const activeMasterObj = useMemo(() => {
     if (!activeMasterProjectName) {
-      return masterProjects[0] || DEFAULT_MASTER_PROJECTS[0]
+      return {
+        id: 'none',
+        name: 'Master Campaign',
+        subtitle: 'Start by creating your first campaign',
+        description: 'Organize your missions under one umbrella brand.',
+        colorTheme: 'emerald' as const
+      }
     }
-    const found = masterProjects.find(m => normalizeMasterName(m.name) === normalizeMasterName(activeMasterProjectName))
+    const found = masterProjects.find(m => m.name.toLowerCase() === activeMasterProjectName.toLowerCase())
     if (found) return found
     return {
       id: 'custom',
@@ -325,7 +290,7 @@ export default function ProjectsPage() {
 
   // Initiatives for Active Master Project
   const activeMasterProjects = useMemo(() => {
-    return projects.filter(p => normalizeMasterName(p.master_project || 'General') === normalizeMasterName(activeMasterProjectName))
+    return projects.filter(p => (p.master_project || 'General').toLowerCase() === activeMasterProjectName.toLowerCase())
   }, [projects, activeMasterProjectName])
 
   const activeMasterTasks = activeMasterProjects.flatMap(p => p.tasks || [])
@@ -338,7 +303,7 @@ export default function ProjectsPage() {
       (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()))
     
     const projectMaster = p.master_project || 'General'
-    const matchesMaster = selectedMasterFilter === 'all' || normalizeMasterName(projectMaster) === normalizeMasterName(selectedMasterFilter)
+    const matchesMaster = selectedMasterFilter === 'all' || projectMaster.toLowerCase() === selectedMasterFilter.toLowerCase()
 
     return matchesSearch && matchesMaster
   })
@@ -347,7 +312,7 @@ export default function ProjectsPage() {
   const isAllFilter = selectedMasterFilter === 'all'
   const scopedProjects = useMemo(() => {
     if (isAllFilter) return projects
-    return projects.filter(p => normalizeMasterName(p.master_project || 'General') === normalizeMasterName(selectedMasterFilter))
+    return projects.filter(p => (p.master_project || 'General').toLowerCase() === selectedMasterFilter.toLowerCase())
   }, [projects, isAllFilter, selectedMasterFilter])
 
   const scopedMasterName = isAllFilter ? 'Portfolio' : selectedMasterFilter
@@ -380,24 +345,42 @@ export default function ProjectsPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1 font-light">
-            PROJECT PORTFOLIO
+          <div className="flex items-center gap-2 text-xs font-mono text-[#6b7280] uppercase tracking-wider mb-1 font-light">
+            <span>FOCUS</span>
+            <span>â€¢</span>
+            <span>SOLO OS</span>
+            <span>â€¢</span>
+            <span className="text-black font-normal">{allMasterNames.length} CAMPAIGNS &amp; {projects.length} MISSIONS</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-black flex items-center gap-3">
-            <span>Projects &amp; Master Programs</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] font-mono font-medium">
-              {projects.length} active
-            </span>
+          <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-black">
+            Campaigns &amp; Projects
           </h1>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 font-body">
+          {/* Tutorial Guide Button */}
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-game-tutorial'))}
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            title="Interactive Video Game Tutorial & Guide"
+          >
+            <Target size={14} className="text-amber-500" />
+            <span>Tutorial Guide</span>
+          </button>
+
+          <button
+            onClick={() => setIsSynthesizeOpen(true)}
+            className="flex items-center px-3 sm:px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+          >
+            <span>Synthesize</span>
+          </button>
+
           <button
             onClick={() => setIsCreateMasterModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
           >
-            <Building2 size={13} className="text-neutral-600" />
-            <span>New Master Program</span>
+            <Building2 size={14} className="text-indigo-600" />
+            <span>New Campaign</span>
           </button>
 
           <button
@@ -405,10 +388,10 @@ export default function ProjectsPage() {
               setCreateInitialMasterProject(activeMasterProjectName)
               setIsCreateModalOpen(true)
             }}
-            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white font-medium text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer font-body"
           >
-            <Plus size={14} />
-            <span>New Project</span>
+            <Plus size={15} />
+            <span>New Mission</span>
           </button>
         </div>
       </div>
@@ -514,15 +497,20 @@ export default function ProjectsPage() {
                   Quick Initialize Preset:
                 </span>
                 <div className="flex flex-wrap gap-2">
-                  {DEFAULT_MASTER_PROJECTS.map((preset) => (
+                  {[
+                    { name: 'Studio & Media', desc: 'Main channel, weekly uploads, and content production.' },
+                    { name: 'Apparel Brand', desc: 'Apparel drops, supply, and e-commerce.' },
+                    { name: 'Advisory Studio', desc: 'Deliverables, consulting, and client sprints.' },
+                    { name: 'Software Product', desc: 'Product development, roadmap, and growth.' },
+                  ].map((preset) => (
                     <button
-                      key={preset.id}
+                      key={preset.name}
                       type="button"
                       onClick={() => handleCreateNewMasterProject({
                         name: preset.name,
-                        subtitle: preset.subtitle || 'Master Portfolio',
-                        description: preset.description || '',
-                        colorTheme: preset.colorTheme || 'emerald'
+                        subtitle: 'Master Portfolio',
+                        description: preset.desc,
+                        colorTheme: 'emerald'
                       })}
                       className="px-3 py-1.5 rounded-xl bg-neutral-50 hover:bg-black hover:text-white border border-black/[0.06] text-xs font-mono transition-all cursor-pointer"
                     >
@@ -556,12 +544,12 @@ export default function ProjectsPage() {
         {/* Master Project Cards Selector */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {allMasterNames.map((mName) => {
-            const isSelected = normalizeMasterName(activeMasterProjectName) === normalizeMasterName(mName)
-            const mProjects = projects.filter(p => normalizeMasterName(p.master_project || 'General') === normalizeMasterName(mName))
+            const isSelected = activeMasterProjectName.toLowerCase() === mName.toLowerCase()
+            const mProjects = projects.filter(p => (p.master_project || 'General').toLowerCase() === mName.toLowerCase())
             const mTasks = mProjects.flatMap(p => p.tasks || [])
             const mShipped = mTasks.filter((t: any) => t.status === 'shipped').length
             const mProgress = mTasks.length > 0 ? Math.round((mShipped / mTasks.length) * 100) : 0
-            const info = masterProjects.find(m => normalizeMasterName(m.name) === normalizeMasterName(mName))
+            const info = masterProjects.find(m => m.name.toLowerCase() === mName.toLowerCase())
 
             return (
               <button
@@ -582,7 +570,7 @@ export default function ProjectsPage() {
                   <div className="space-y-0.5 min-w-0 flex-1">
                     <span className={cn(
                       'text-[9px] font-mono uppercase tracking-wider block',
-                      isSelected ? 'text-neutral-300' : 'text-[#6b7280]'
+                      isSelected ? 'text-indigo-400' : 'text-[#6b7280]'
                     )}>
                       MASTER PROGRAM
                     </span>
@@ -612,7 +600,7 @@ export default function ProjectsPage() {
                   </div>
                   <div className={cn('w-full h-1 rounded-full overflow-hidden', isSelected ? 'bg-white/20' : 'bg-black/[0.06]')}>
                     <div 
-                      className={cn('h-full rounded-full transition-all duration-300', isSelected ? 'bg-white' : 'bg-black')}
+                      className={cn('h-full rounded-full transition-all duration-300', isSelected ? 'bg-indigo-400' : 'bg-black')}
                       style={{ width: `${mProgress}%` }}
                     />
                   </div>
@@ -639,9 +627,13 @@ export default function ProjectsPage() {
       {/* ACTIVE MASTER PROGRAM COMMAND BANNER (COLLAPSIBLE & EXPANDABLE ON CHOICE) */}
       {/* ========================================================================= */}
       <div className={cn(
-        "rounded-3xl bg-white text-black shadow-xs relative overflow-hidden font-body border border-black/[0.08] transition-all duration-300 animate-fadeIn",
+        "rounded-3xl bg-white text-black shadow-md relative overflow-hidden font-body border-2 border-black/[0.08] transition-all duration-300 animate-fadeIn",
         isCommandHubExpanded ? "p-6 sm:p-8" : "p-5 sm:p-6"
       )}>
+        {/* Subtle Ambient Background Accents */}
+        <div className="absolute right-0 top-0 w-80 h-80 bg-indigo-50/60 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute left-1/3 bottom-0 w-80 h-80 bg-indigo-50/50 rounded-full blur-3xl pointer-events-none" />
+
         <div className="relative z-10 space-y-6">
           {/* Top Row: Master Program Meta & Actions */}
           <div className={cn(
@@ -650,17 +642,17 @@ export default function ProjectsPage() {
           )}>
             <div className="space-y-1.5 min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] font-mono text-[10px] uppercase tracking-wider font-medium shadow-2xs">
-                  <Building2 size={11} className="text-neutral-700" />
-                  <span>Master Program</span>
+                <span className="px-2.5 py-0.5 rounded-lg bg-indigo-100/90 text-indigo-950 font-mono text-[10px] uppercase tracking-wider font-semibold border border-indigo-300 flex items-center gap-1.5 shadow-xs">
+                  <Building2 size={12} className="text-indigo-700" />
+                  ACTIVE MASTER PROGRAM
                 </span>
-                <span className="text-neutral-300 text-xs font-mono">•</span>
-                <span className="text-neutral-500 text-xs font-mono">Command Hub</span>
+                <span className="text-black/30 text-xs font-mono">â€¢</span>
+                <span className="text-indigo-700 text-xs font-mono font-semibold">Executive Command Hub</span>
 
                 {/* Collapsed Pill Badge with Quick Stats */}
                 {!isCommandHubExpanded && (
                   <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-neutral-100 border border-black/[0.06] text-neutral-700 font-medium">
-                    {activeMasterProjects.length} Initiatives • {activeMasterProgress}% Shipped
+                    {activeMasterProjects.length} Initiatives â€¢ {activeMasterProgress}% Shipped
                   </span>
                 )}
               </div>
@@ -704,7 +696,7 @@ export default function ProjectsPage() {
                   setCreateInitialMasterProject(activeMasterObj.name)
                   setIsCreateModalOpen(true)
                 }}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-medium transition-all cursor-pointer shadow-xs"
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-medium transition-all cursor-pointer shadow-sm"
               >
                 <Plus size={14} />
                 <span>Add Initiative to {activeMasterObj.name}</span>
@@ -760,14 +752,10 @@ export default function ProjectsPage() {
                         <Link
                           key={p.id}
                           href={`/projects/${p.id}`}
-                          onClick={() => {
-                            setCached(`project_${p.id}`, p)
-                            triggerSyncStart()
-                          }}
                           className="p-4 rounded-2xl bg-[#f8f9fa] hover:bg-white border border-black/[0.08] hover:border-black/[0.22] hover:shadow-md transition-all block group space-y-2"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-semibold text-black truncate transition-colors">
+                            <span className="text-xs font-semibold text-black truncate group-hover:text-indigo-700 transition-colors">
                               {p.name}
                             </span>
                             <ArrowUpRight size={13} className="text-[#6b7280] group-hover:text-black transition-colors flex-shrink-0" />
@@ -784,7 +772,7 @@ export default function ProjectsPage() {
                             </div>
                             <div className="w-full h-1.5 bg-black/[0.08] rounded-full overflow-hidden">
                               <div 
-                                className="h-full bg-black rounded-full transition-all duration-300"
+                                className="h-full bg-indigo-600 rounded-full transition-all duration-300"
                                 style={{ width: `${pProg}%` }}
                               />
                             </div>
@@ -800,19 +788,19 @@ export default function ProjectsPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-black/[0.08] text-xs font-mono">
                 <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
                   <span className="text-[10px] text-[#6b7280] block uppercase font-medium">TOTAL INITIATIVES</span>
-                  <span className="text-lg font-medium text-black">{activeMasterProjects.length} Active</span>
+                  <span className="text-lg font-normal text-black">{activeMasterProjects.length} Active</span>
                 </div>
                 <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
                   <span className="text-[10px] text-[#6b7280] block uppercase font-medium">OVERALL COMPLETION</span>
-                  <span className="text-lg font-semibold text-black">{activeMasterProgress}% Shipped</span>
+                  <span className="text-lg font-semibold text-indigo-700">{activeMasterProgress}% Shipped</span>
                 </div>
                 <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
                   <span className="text-[10px] text-[#6b7280] block uppercase font-medium">DELIVERABLES</span>
-                  <span className="text-lg font-medium text-black">{activeMasterShipped} / {activeMasterTasks.length} Done</span>
+                  <span className="text-lg font-normal text-black">{activeMasterShipped} / {activeMasterTasks.length} Done</span>
                 </div>
                 <div className="p-3 bg-[#f8f9fa] rounded-xl border border-black/[0.04]">
                   <span className="text-[10px] text-[#6b7280] block uppercase font-medium">PROGRAM STATUS</span>
-                  <span className="text-lg font-medium text-black">Active Focus</span>
+                  <span className="text-lg font-normal text-indigo-700">High Velocity</span>
                 </div>
               </div>
             </div>
@@ -820,65 +808,65 @@ export default function ProjectsPage() {
         </div>
       </div>
 
-      {/* Program & Portfolio Metrics Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Program & Portfolio Metrics Overview (Context-Aware to Chosen Master Program) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-body">
         {/* Metric 1: Delivery Rate */}
-        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex items-center justify-between">
+        <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-sm flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">
-              {isAllFilter ? 'PORTFOLIO DELIVERY' : `${scopedMasterName.toUpperCase()} DELIVERY`}
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-semibold">
+              {isAllFilter ? 'Portfolio Delivery' : `${scopedMasterName} Delivery`}
             </span>
-            <div className="text-2xl font-bold text-black tracking-tight">{scopedDeliveryRate}%</div>
-            <div className="text-[11px] text-neutral-500 font-mono">{scopedShippedTasks}/{scopedTotalTasks} Tasks Shipped</div>
+            <div className="text-2xl font-normal text-black tracking-tight">{scopedDeliveryRate}%</div>
+            <div className="text-[11px] text-[#4b5563] font-mono">{scopedShippedTasks}/{scopedTotalTasks} Tasks Shipped</div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-black/[0.06] text-neutral-800 flex items-center justify-center">
-            <CheckCircle2 size={18} />
+          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-600 flex items-center justify-center">
+            <CheckCircle2 size={22} />
           </div>
         </div>
 
         {/* Metric 2: Program Health */}
-        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex items-center justify-between">
+        <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-sm flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">
-              {isAllFilter ? 'PORTFOLIO HEALTH' : `${scopedMasterName.toUpperCase()} HEALTH`}
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-semibold">
+              {isAllFilter ? 'Portfolio Health' : `${scopedMasterName} Health`}
             </span>
-            <div className="text-2xl font-bold text-black tracking-tight">{scopedHealthyCount}/{scopedProjects.length || 1}</div>
-            <div className="text-[11px] text-neutral-500 font-mono">Initiatives On Track</div>
+            <div className="text-2xl font-normal text-indigo-700 tracking-tight">{scopedHealthyCount}/{scopedProjects.length || 1}</div>
+            <div className="text-[11px] text-[#4b5563] font-mono">Initiatives On Track</div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-black/[0.06] text-neutral-800 flex items-center justify-center">
-            <Activity size={18} />
+          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 flex items-center justify-center">
+            <Activity size={22} />
           </div>
         </div>
 
-        {/* Metric 3: Scope Scale */}
-        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex items-center justify-between">
+        {/* Metric 3: Scope Scale (Master Programs or Sub-Initiatives) */}
+        <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-sm flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">
-              {isAllFilter ? 'MASTER PROGRAMS' : `${scopedMasterName.toUpperCase()} SCOPE`}
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-semibold">
+              {isAllFilter ? 'Master Programs' : `${scopedMasterName} Scope`}
             </span>
-            <div className="text-2xl font-bold text-black tracking-tight">
+            <div className="text-2xl font-normal text-purple-700 tracking-tight">
               {isAllFilter ? allMasterNames.length : scopedProjects.length}
             </div>
-            <div className="text-[11px] text-neutral-500 font-mono">
-              {isAllFilter ? 'Program Hubs' : `${scopedProjects.length === 1 ? 'Active Initiative' : 'Active Initiatives'}`}
+            <div className="text-[11px] text-[#4b5563] font-mono">
+              {isAllFilter ? 'Selectable Program Hubs' : `${scopedProjects.length === 1 ? 'Active Sub-Initiative' : 'Active Sub-Initiatives'}`}
             </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-black/[0.06] text-neutral-800 flex items-center justify-center">
-            <Layers size={18} />
+          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-600 flex items-center justify-center">
+            <Building2 size={22} />
           </div>
         </div>
 
         {/* Metric 4: Risk / Attention Required */}
-        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex items-center justify-between">
+        <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-sm flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">
-              {isAllFilter ? 'ATTENTION NEEDED' : `${scopedMasterName.toUpperCase()} BOTTLENECKS`}
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-semibold">
+              {isAllFilter ? 'Attention Needed' : `${scopedMasterName} Bottlenecks`}
             </span>
-            <div className="text-2xl font-bold text-black tracking-tight">{scopedAtRiskCount}</div>
-            <div className="text-[11px] text-neutral-500 font-mono">{scopedAtRiskCount === 0 ? 'Zero active bottlenecks' : 'Requires scope review'}</div>
+            <div className="text-2xl font-normal text-amber-600 tracking-tight">{scopedAtRiskCount}</div>
+            <div className="text-[11px] text-[#4b5563] font-mono">{scopedAtRiskCount === 0 ? 'Zero active bottlenecks' : 'Requires scope review'}</div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-black/[0.06] text-neutral-800 flex items-center justify-center">
-            <Target size={18} />
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 flex items-center justify-center">
+            <Target size={22} />
           </div>
         </div>
       </div>
@@ -900,8 +888,7 @@ export default function ProjectsPage() {
           </button>
 
           {allMasterNames.map((mName) => {
-            const count = projects.filter(p => normalizeMasterName(p.master_project || 'General') === normalizeMasterName(mName)).length
-            const isFilterSelected = normalizeMasterName(selectedMasterFilter) === normalizeMasterName(mName)
+            const count = projects.filter(p => (p.master_project || 'General').toLowerCase() === mName.toLowerCase()).length
             return (
               <button
                 key={mName}
@@ -911,12 +898,12 @@ export default function ProjectsPage() {
                 }}
                 className={cn(
                   'px-3.5 py-1.5 rounded-xl transition-all cursor-pointer font-normal flex items-center gap-1.5 whitespace-nowrap',
-                  isFilterSelected
+                  selectedMasterFilter.toLowerCase() === mName.toLowerCase()
                     ? 'bg-white text-black font-medium shadow-xs'
                     : 'text-[#6b7280] hover:text-black'
                 )}
               >
-                <Building2 size={12} className={isFilterSelected ? 'text-black' : 'text-[#9ca3af]'} />
+                <Building2 size={12} className={selectedMasterFilter.toLowerCase() === mName.toLowerCase() ? 'text-indigo-600' : 'text-[#9ca3af]'} />
                 <span>{mName}</span>
                 <span className="px-1.5 py-0.2 bg-black/[0.05] rounded-full text-[10px] font-mono">
                   {count}
@@ -961,18 +948,14 @@ export default function ProjectsPage() {
               <Link
                 href={`/projects/${project.id}`}
                 key={project.id}
-                onClick={() => {
-                  setCached(`project_${project.id}`, project)
-                  triggerSyncStart()
-                }}
                 className="group block rounded-3xl bg-white hover:bg-[#fafbff] border border-black/[0.08] hover:border-black/[0.18] shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col justify-between"
               >
                 <div className="p-6 space-y-4">
                   {/* Top Badges & Master Program Tag */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1 min-w-0">
-                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono uppercase bg-neutral-100 text-neutral-900 border border-black/[0.08] inline-flex items-center gap-1 font-medium">
-                        <Building2 size={11} className="text-black" />
+                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono uppercase bg-indigo-50 text-indigo-800 border border-indigo-200 inline-flex items-center gap-1 font-medium">
+                        <Building2 size={11} className="text-indigo-600" />
                         {masterName}
                       </span>
                       <h3 className="text-base font-normal text-black tracking-tight group-hover:underline truncate">
@@ -983,7 +966,7 @@ export default function ProjectsPage() {
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <span className={cn(
                         'w-2.5 h-2.5 rounded-full shadow-sm',
-                        health === 'green' ? 'bg-neutral-900 shadow-neutral-200' : health === 'amber' ? 'bg-amber-500 shadow-amber-200' : 'bg-red-500 shadow-red-200'
+                        health === 'green' ? 'bg-indigo-500 shadow-indigo-200' : health === 'amber' ? 'bg-amber-500 shadow-amber-200' : 'bg-red-500 shadow-red-200'
                       )} title={`Health: ${health}`} />
                       <button
                         onClick={(e) => {
@@ -1026,7 +1009,7 @@ export default function ProjectsPage() {
                   </div>
                   <div className="w-full h-2 bg-black/[0.06] rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-black rounded-full transition-all duration-300"
+                      className="h-full bg-gradient-to-r from-indigo-500 to-indigo-500 rounded-full transition-all duration-300"
                       style={{ width: `${pProgress}%` }}
                     />
                   </div>
@@ -1097,7 +1080,7 @@ function CreateMasterProjectModal({
         {/* Header */}
         <div className="p-6 border-b border-black/[0.06] flex items-center justify-between bg-white">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-neutral-100 text-neutral-900 flex items-center justify-center border border-black/[0.08]">
+            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-800 flex items-center justify-center border border-indigo-200">
               <Building2 size={16} />
             </div>
             <div>
@@ -1323,7 +1306,7 @@ function CreateProjectWizard({
               <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider block font-light">
                 STEP {step} OF 6
               </span>
-              <span className="px-2 py-0.5 rounded bg-neutral-100 text-neutral-900 border border-black/[0.08] text-[10px] font-mono font-medium">
+              <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-800 text-[10px] font-mono font-medium">
                 {isTypingCustomMaster && customMasterInput ? customMasterInput : (formData.master_project || 'General')}
               </span>
             </div>
@@ -1373,11 +1356,11 @@ function CreateProjectWizard({
                       className={cn(
                         'p-2.5 rounded-xl border text-xs text-left cursor-pointer transition-all flex items-center gap-2 truncate',
                         !isTypingCustomMaster && formData.master_project === mp
-                          ? 'bg-neutral-100 border-neutral-900 text-black font-medium shadow-xs'
+                          ? 'bg-indigo-50 border-indigo-400 text-indigo-950 font-medium shadow-xs'
                           : 'bg-white border-black/[0.08] text-[#6b7280] hover:text-black'
                       )}
                     >
-                      <Building2 size={13} className={!isTypingCustomMaster && formData.master_project === mp ? 'text-black' : 'text-[#9ca3af]'} />
+                      <Building2 size={13} className={!isTypingCustomMaster && formData.master_project === mp ? 'text-indigo-600' : 'text-[#9ca3af]'} />
                       <span className="truncate">{mp}</span>
                     </button>
                   ))}
@@ -1550,15 +1533,15 @@ function CreateProjectWizard({
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-4 bg-neutral-100 border border-black/[0.08] rounded-2xl">
+              <div className="flex items-start gap-3 p-4 bg-indigo-50 border border-indigo-200 rounded-2xl">
                 <input
                   type="checkbox"
                   id="ack"
                   checked={ack}
                   onChange={(e) => setAck(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 rounded accent-black cursor-pointer"
+                  className="mt-0.5 w-4 h-4 rounded accent-indigo-600 cursor-pointer"
                 />
-                <label htmlFor="ack" className="text-xs text-neutral-900 font-light cursor-pointer">
+                <label htmlFor="ack" className="text-xs text-indigo-950 font-light cursor-pointer">
                   I authorize this initiative under master program <strong>{formData.master_project}</strong> with the stated scope boundaries.
                 </label>
               </div>
@@ -1606,7 +1589,7 @@ function CreateProjectWizard({
                 type="button"
                 disabled={!ack || saving}
                 onClick={handleCreateProject}
-                className="px-6 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-normal transition-all cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {saving ? 'Creating Initiative...' : 'Authorize Initiative'}
               </button>

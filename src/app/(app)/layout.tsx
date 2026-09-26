@@ -153,7 +153,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <WorkspaceProvider>
       <NavigationProgressBar />
-      <div className="min-h-screen bg-[#fbfbfd] text-[#111827] font-sans selection:bg-black/10 flex flex-col relative">
+      <div className="min-h-screen bg-[#fbfbfd] text-[#111827] font-sans selection:bg-black/10 flex flex-col relative overflow-x-hidden">
+        {/* Subtle Ambient Studio Lighting */}
+        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[350px] bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(99,102,241,0.05),rgba(255,255,255,0))] pointer-events-none z-0" />
+        <div className="fixed -bottom-40 right-10 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(245,158,11,0.03),rgba(255,255,255,0))] pointer-events-none z-0" />
+
         <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
         {isCreateTaskOpen && (
           <CreateTaskModal onClose={() => setIsCreateTaskOpen(false)} onSuccess={() => {}} />
@@ -165,7 +169,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* Left: Brand Identity */}
           <div className="flex items-center gap-3">
             <Link href="/dashboard" className="flex items-center group">
-              <img src="/logo.png" alt="Logo" className="h-10 sm:h-12 w-auto object-contain hover:opacity-80 transition-opacity" />
+              <img src="/logo-cultlike.png" alt="Logo" className="h-9 w-9 object-contain rounded-full hover:scale-105 transition-transform" />
             </Link>
           </div>
 

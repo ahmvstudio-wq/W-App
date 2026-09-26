@@ -1,11 +1,13 @@
 'use client'
 
+export const runtime = 'edge'
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { 
   Plus, Search, Filter, LayoutGrid, List as ListIcon, Calendar, 
   X, Zap, Trash2, CheckCircle2, Clock, MoreHorizontal, MessageSquare, 
-  Paperclip, Tag, AlertCircle, ChevronRight, User, Check, Send, Sparkles,
+  Paperclip, Tag, AlertCircle, ChevronRight, User, Check, Send,
   TrendingUp, BarChart2, Activity, ArrowUpRight, Edit3, Download, FileSpreadsheet
 } from 'lucide-react'
 import { PRIORITY_CONFIG, TASK_STATUS_CONFIG, cn, getInitials } from '@/lib/utils'
@@ -27,19 +29,11 @@ export default function TasksPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isSynthesizeOpen, setIsSynthesizeOpen] = useState(false)
   const [isExportModalOpen, setIsExportModalOpen] = useState(false)
-  // Data States (Instant 0ms initial paint from SWR cache)
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    if (typeof window !== 'undefined') {
-      return getCached<Task[]>('tasks_list') || []
-    }
-    return []
-  }) 
+  // Instant 0ms SWR hydration
+  const [tasks, setTasks] = useState<Task[]>(() => getCached<Task[]>('tasks_list') || []) 
   const [loading, setLoading] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const cached = getCached<Task[]>('tasks_list')
-      return !cached || cached.length === 0
-    }
-    return true
+    const cached = getCached<Task[]>('tasks_list')
+    return !cached || cached.length === 0
   })
   const [searchQuery, setSearchQuery] = useState('')
   const [priorityFilter, setPriorityFilter] = useState<string>('all')
@@ -108,13 +102,7 @@ export default function TasksPage() {
   }
 
   useEffect(() => {
-    const cached = getCached<Task[]>('tasks_list')
-    if (cached && cached.length > 0) {
-      setTasks(cached)
-      setLoading(false)
-    }
-
-    fetchTasks(Boolean(cached && cached.length > 0))
+    fetchTasks(false)
     
     const channel = supabase.channel('tasks_channel')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
@@ -131,10 +119,22 @@ export default function TasksPage() {
     }
 
     window.addEventListener('workspace-changed', handleWsChanged)
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    // Silent background poll every 15s to keep UI in sync with ChatGPT actions
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchTasks(true)
+      }
+    }, 15000)
       
     return () => {
       supabase.removeChannel(channel)
       window.removeEventListener('workspace-changed', handleWsChanged)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      clearInterval(pollInterval)
     }
   }, [])
 
@@ -142,7 +142,7 @@ export default function TasksPage() {
     { id: 'todo', label: 'To-Do', accentGradient: 'from-slate-400 to-slate-600' },
     { id: 'in_progress', label: 'In Progress', accentGradient: 'from-blue-500 to-indigo-500' },
     { id: 'blocked', label: 'Blocked', accentGradient: 'from-amber-500 to-orange-500' },
-    { id: 'shipped', label: 'Shipped', accentGradient: 'from-emerald-500 to-teal-500' },
+    { id: 'shipped', label: 'Shipped', accentGradient: 'from-indigo-500 to-teal-500' },
     { id: 'killed', label: 'Killed', accentGradient: 'from-rose-500 to-red-600' },
   ]
 
@@ -340,24 +340,24 @@ export default function TasksPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-shrink-0">
         <div>
           <div className="text-xs font-mono text-neutral-400 uppercase tracking-wider mb-1 font-light">
-            TASK ENGINE
+            <span className="text-black font-normal">{inProgressCount} ACTIVE IN FLIGHT</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-black flex items-center gap-3">
-            <span>Kanban &amp; Backlog</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] font-mono font-medium">
-              {tasks.length} total
+          <h1 className="text-3xl font-light tracking-tight text-black flex items-center gap-3">
+            <span>Tasks & Sprints</span>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-black/[0.05] text-black font-mono font-normal">
+              {tasks.length} Total
             </span>
           </h1>
         </div>
 
         {/* View Switcher & Actions */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-          <div className="flex bg-white border border-black/[0.08] rounded-xl p-1 shadow-xs">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 font-body">
+          <div className="flex bg-white border border-black/[0.08] rounded-xl p-1 shadow-sm">
             <button
               onClick={() => setView('board')}
               className={cn(
                 'p-1.5 px-3 rounded-lg text-xs font-normal transition-all flex items-center gap-1.5 cursor-pointer',
-                view === 'board' ? 'bg-black text-white shadow-xs font-medium' : 'text-neutral-500 hover:text-black'
+                view === 'board' ? 'bg-black text-white shadow-sm' : 'text-[#6b7280] hover:text-black'
               )}
             >
               <LayoutGrid size={14} />
@@ -367,7 +367,7 @@ export default function TasksPage() {
               onClick={() => setView('list')}
               className={cn(
                 'p-1.5 px-3 rounded-lg text-xs font-normal transition-all flex items-center gap-1.5 cursor-pointer',
-                view === 'list' ? 'bg-black text-white shadow-xs font-medium' : 'text-neutral-500 hover:text-black'
+                view === 'list' ? 'bg-black text-white shadow-sm' : 'text-[#6b7280] hover:text-black'
               )}
             >
               <ListIcon size={14} />
@@ -377,10 +377,10 @@ export default function TasksPage() {
 
           <button
             onClick={() => setIsExportModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
             title="Export high-resolution progress infographic / image"
           >
-            <Download size={13} className="text-neutral-600" />
+            <Download size={14} className="text-indigo-600" />
             <span>Export Progress</span>
           </button>
 
@@ -389,31 +389,38 @@ export default function TasksPage() {
               exportTasksToCSV(tasks)
               toast.success(`Exported ${tasks.length} tasks to CSV!`)
             }}
-            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
             title="Download tasks as spreadsheet CSV"
           >
-            <FileSpreadsheet size={13} className="text-neutral-600" />
+            <FileSpreadsheet size={14} className="text-indigo-600" />
             <span>Export CSV</span>
           </button>
 
           <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white font-medium text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            onClick={() => setIsSynthesizeOpen(true)}
+            className="flex items-center px-3 sm:px-4 py-2 bg-white hover:bg-neutral-50 text-black border border-black/[0.08] font-normal text-xs rounded-xl shadow-xs transition-all cursor-pointer"
           >
-            <Plus size={14} />
+            <span>Synthesize</span>
+          </button>
+
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white font-normal text-xs rounded-xl shadow-sm transition-all cursor-pointer"
+          >
+            <Plus size={15} />
             <span>Create Task</span>
           </button>
         </div>
       </div>
 
-      {/* Task Data Visualization Widgets */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Task Data Visualization Widgets (Ambient Lighting) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-body">
         {/* Widget 1: Sprint Completion Gauge */}
-        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex items-center justify-between">
+        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-blue-50/40 border border-black/[0.06] shadow-sm relative overflow-hidden flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">COMPLETION RATE</span>
-            <div className="text-2xl font-bold text-black tracking-tight">{completionRate}%</div>
-            <div className="text-[11px] text-neutral-500 font-mono">{shippedCount}/{tasks.length} Shipped</div>
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Sprint Progress</span>
+            <div className="text-2xl font-light text-black tracking-tight">{completionRate}%</div>
+            <div className="text-[11px] text-[#9ca3af] font-mono">{shippedCount}/{tasks.length} Shipped</div>
           </div>
           <div className="relative w-14 h-14 flex items-center justify-center">
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
@@ -425,7 +432,7 @@ export default function TasksPage() {
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               />
               <path
-                className="text-neutral-900"
+                className="text-indigo-600"
                 strokeDasharray={`${completionRate}, 100`}
                 strokeWidth="3.5"
                 strokeLinecap="round"
@@ -439,38 +446,38 @@ export default function TasksPage() {
         </div>
 
         {/* Widget 2: Weekly Velocity Sparkline */}
-        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex flex-col justify-between">
+        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-indigo-50/40 border border-black/[0.06] shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div className="flex justify-between items-center">
-            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">WEEKLY VELOCITY</span>
-            <span className="text-[10px] font-mono text-neutral-900 bg-neutral-100 border border-black/[0.08] px-2 py-0.5 rounded-full flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-neutral-900" /> +24%
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Weekly Output</span>
+            <span className="text-xs font-mono text-indigo-600 font-medium bg-indigo-50 px-2 py-0.5 rounded-md flex items-center gap-0.5">
+              <TrendingUp size={11} /> +24%
             </span>
           </div>
           <div className="h-10 w-full pt-1">
             <svg className="w-full h-full" viewBox="0 0 100 25" preserveAspectRatio="none">
               <path
                 d="M0 20 Q 25 5, 50 12 T 100 2 L 100 25 L 0 25 Z"
-                fill="rgba(0, 0, 0, 0.03)"
+                fill="rgba(16, 185, 129, 0.1)"
               />
               <path
                 d="M0 20 Q 25 5, 50 12 T 100 2"
                 fill="none"
-                stroke="#171717"
+                stroke="#10b981"
                 strokeWidth="2"
                 strokeLinecap="round"
               />
             </svg>
           </div>
-          <div className="flex justify-between text-[9px] font-mono text-neutral-400">
+          <div className="flex justify-between text-[9px] font-mono text-[#9ca3af]">
             <span>MON</span><span>WED</span><span>TODAY</span>
           </div>
         </div>
 
         {/* Widget 3: Priority Load */}
-        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex flex-col justify-between space-y-2">
+        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-amber-50/40 border border-black/[0.06] shadow-sm flex flex-col justify-between space-y-2">
           <div className="flex justify-between items-center">
-            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">PRIORITY QUEUE</span>
-            <span className="text-[10px] font-mono text-neutral-900 bg-neutral-100 border border-black/[0.08] px-2 py-0.5 rounded-full font-medium">
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Priority Queue</span>
+            <span className="text-[10px] font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md font-medium">
               {p0Count} P0 Critical
             </span>
           </div>
@@ -478,36 +485,36 @@ export default function TasksPage() {
             <div className="w-full h-2 bg-black/[0.05] rounded-full overflow-hidden flex">
               <div className="bg-red-500 h-full" style={{ width: `${Math.round((tasks.filter(t => t.priority === 'p0').length / (tasks.length || 1)) * 100)}%` }} />
               <div className="bg-amber-400 h-full" style={{ width: `${Math.round((tasks.filter(t => t.priority === 'p1').length / (tasks.length || 1)) * 100)}%` }} />
-              <div className="bg-neutral-300 h-full flex-1" />
+              <div className="bg-blue-400 h-full flex-1" />
             </div>
-            <div className="flex justify-between text-[9px] font-mono text-neutral-400">
+            <div className="flex justify-between text-[9px] font-mono text-[#9ca3af]">
               <span className="text-red-500">P0</span>
               <span className="text-amber-500">P1</span>
-              <span className="text-neutral-500">P2/P3</span>
+              <span className="text-blue-500">P2/P3</span>
             </div>
           </div>
         </div>
 
         {/* Widget 4: Active Blockers */}
-        <div className="p-5 rounded-2xl bg-white border border-black/[0.08] shadow-xs flex flex-col justify-between">
+        <div className="p-5 rounded-3xl bg-gradient-to-br from-white via-white to-purple-50/40 border border-black/[0.06] shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-center">
-            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-widest block font-medium">BLOCKER STATUS</span>
+            <span className="text-[10px] font-mono text-[#6b7280] uppercase tracking-wider font-light">Blocker Status</span>
             <span className={cn(
-              "text-[10px] font-mono px-2 py-0.5 rounded-full font-medium border",
-              blockedCount > 0 ? "bg-red-50 text-red-700 border-red-200" : "bg-neutral-100 text-neutral-900 border-black/[0.08]"
+              "text-[10px] font-mono px-2 py-0.5 rounded-md font-medium",
+              blockedCount > 0 ? "bg-red-50 text-red-600" : "bg-indigo-50 text-indigo-600"
             )}>
-              {blockedCount > 0 ? `${blockedCount} BLOCKED` : '• CLEAR'}
+              {blockedCount > 0 ? `${blockedCount} BLOCKED` : 'CLEAR'}
             </span>
           </div>
-          <div className="text-2xl font-bold text-black tracking-tight">{blockedCount}</div>
-          <div className="text-[11px] text-neutral-500 font-mono">
+          <div className="text-2xl font-light text-black tracking-tight">{blockedCount}</div>
+          <div className="text-[11px] text-[#9ca3af] font-mono">
             {blockedCount === 0 ? 'Optimal path to ship' : 'Requires immediate unblocking'}
           </div>
         </div>
       </div>
 
       {/* Date-Wise Automatic Filtering & Calendar Bar */}
-      <div className="bg-white border border-black/[0.08] rounded-2xl p-4 shadow-xs space-y-3 font-body">
+      <div className="bg-white border border-black/[0.08] rounded-2xl p-4 shadow-sm space-y-3 font-body">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-black text-white flex-shrink-0 shadow-xs">
@@ -516,11 +523,11 @@ export default function TasksPage() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-black">Date &amp; Schedule Filter</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-neutral-100 text-neutral-900 border border-black/[0.08]">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-black/[0.05] text-black">
                   {selectedDate ? `${filteredTasks.length} tasks on this date` : `${tasks.length} total tasks`}
                 </span>
               </div>
-              <span className="text-[11px] font-mono text-neutral-500 block">
+              <span className="text-[11px] font-mono text-[#6b7280] block">
                 {selectedDate 
                   ? `Active date: ${format(new Date(selectedDate + 'T00:00:00'), 'EEEE, MMMM d, yyyy')}` 
                   : 'Filter Kanban by specific execution date, deadline, or completion day'}
@@ -534,7 +541,7 @@ export default function TasksPage() {
               onClick={() => setSelectedDate('')}
               className={cn(
                 'px-3 py-1.5 rounded-xl border transition-all cursor-pointer font-body text-xs',
-                !selectedDate ? 'bg-black text-white border-black shadow-xs font-medium' : 'bg-[#fafafa] border-black/[0.06] text-neutral-600 hover:text-black'
+                !selectedDate ? 'bg-black text-white border-black shadow-xs font-medium' : 'bg-[#fafafa] border-black/[0.06] text-[#6b7280] hover:text-black'
               )}
             >
               All Dates
@@ -543,11 +550,11 @@ export default function TasksPage() {
               onClick={() => setSelectedDate(todayDateKey)}
               className={cn(
                 'px-3 py-1.5 rounded-xl border transition-all cursor-pointer font-body text-xs flex items-center gap-1.5',
-                selectedDate === todayDateKey ? 'bg-black text-white border-black shadow-xs font-medium' : 'bg-[#fafafa] border-black/[0.06] text-neutral-600 hover:text-black'
+                selectedDate === todayDateKey ? 'bg-black text-white border-black shadow-xs font-medium' : 'bg-[#fafafa] border-black/[0.06] text-[#6b7280] hover:text-black'
               )}
             >
               <span>Today</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-neutral-900" />
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
             </button>
             <button
               onClick={() => setSelectedDate(yesterdayDateKey)}
@@ -630,7 +637,7 @@ export default function TasksPage() {
               onClick={() => setSelectedDate('')}
               className="text-xs text-black underline hover:opacity-70 cursor-pointer font-light"
             >
-              Reset to view all tasks ({tasks.length}) →
+              Reset to view all tasks ({tasks.length}) â†’
             </button>
           </div>
         )}
@@ -789,25 +796,9 @@ export default function TasksPage() {
                             <span className="text-[10px] font-mono text-[#6b7280]">{task.time_box_minutes || 45}m</span>
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                window.dispatchEvent(new CustomEvent('toggle-focus-timer', {
-                                  detail: { taskId: task.id, taskTitle: task.title, timeBox: task.time_box_minutes || 25 }
-                                }))
-                              }}
-                              className="px-2 py-0.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-[10px] font-medium flex items-center gap-1 transition-colors cursor-pointer"
-                              title="Start custom focus timer with brown noise"
-                            >
-                              <Clock size={10} className="text-neutral-500" />
-                              <span>Focus</span>
-                            </button>
-
-                            <div className="flex items-center gap-1 text-[10px] font-body text-[#9ca3af]">
-                              <Edit3 size={11} className="text-[#9ca3af] group-hover:text-black transition-colors" />
-                            </div>
+                          <div className="flex items-center gap-2 text-[10px] font-body text-[#9ca3af]">
+                            <Edit3 size={11} className="text-[#9ca3af] group-hover:text-black transition-colors" />
+                            <span>Edit details</span>
                           </div>
                         </div>
                       </div>
@@ -854,7 +845,7 @@ export default function TasksPage() {
                       {task.title}
                     </td>
                     <td className="py-3.5 px-4 text-[#6b7280] font-light">
-                      {task.project?.name || '—'}
+                      {task.project?.name || 'â€”'}
                     </td>
                     <td className="py-3.5 px-4">
                       <span className={cn(
@@ -883,7 +874,7 @@ export default function TasksPage() {
                       {task.time_box_minutes || 45}m
                     </td>
                     <td className="py-3.5 px-4 text-[#6b7280] font-mono text-[11px] font-light">
-                      {task.due_date ? format(new Date(task.due_date), 'dd MMM yyyy') : '—'}
+                      {task.due_date ? format(new Date(task.due_date), 'dd MMM yyyy') : 'â€”'}
                     </td>
                     <td className="py-3.5 px-6 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">

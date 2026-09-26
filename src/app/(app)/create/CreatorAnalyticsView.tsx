@@ -278,7 +278,7 @@ export function CreatorAnalyticsView({
           <div className="text-xs text-[#6b7280] mt-1.5 font-light">
             Verified views synced from Meta &amp; YouTube
           </div>
-          <div className="mt-3 pt-3 border-t border-black/[0.04] text-[11px] font-mono text-emerald-700 flex items-center gap-1">
+          <div className="mt-3 pt-3 border-t border-black/[0.04] text-[11px] font-mono text-indigo-700 flex items-center gap-1">
             <CheckCircle2 size={12} />
             <span>{summary.totalReach.toLocaleString()} unique accounts reached</span>
           </div>
@@ -292,7 +292,7 @@ export function CreatorAnalyticsView({
           </div>
           <div className="text-3xl font-light text-black tracking-tight flex items-baseline gap-2">
             <span>{summary.hookHoldRate}%</span>
-            <span className="text-xs font-mono text-emerald-600 font-normal">&gt;70% target</span>
+            <span className="text-xs font-mono text-indigo-600 font-normal">&gt;70% target</span>
           </div>
           <div className="text-xs text-[#6b7280] mt-1.5 font-light">
             Viewers who stayed past the opening 3-second hook
@@ -307,7 +307,7 @@ export function CreatorAnalyticsView({
           </div>
         </div>
 
-        {/* Metric 3: Real Likes & Interactions */}
+        {/* Metric 3: Real Likes & Poppinsactions */}
         <div className="p-5 rounded-3xl bg-white border border-black/[0.08] shadow-xs">
           <div className="flex items-center justify-between text-xs text-[#6b7280] mb-2 font-mono">
             <span>TOTAL LIKES</span>
@@ -487,7 +487,7 @@ export function CreatorAnalyticsView({
                 Drop-off curve across your vertical videos in the first 60 seconds
               </p>
             </div>
-            <div className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-mono">
+            <div className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-mono">
               74% Hold at 3s
             </div>
           </div>
@@ -545,7 +545,7 @@ export function CreatorAnalyticsView({
             {/* Time Axis Labels */}
             <div className="flex justify-between text-[10px] font-mono text-[#9ca3af] pt-2 border-t border-black/[0.04]">
               <span>0s (100%)</span>
-              <span className="text-emerald-700 font-semibold">3s Hook (76%)</span>
+              <span className="text-indigo-700 font-semibold">3s Hook (76%)</span>
               <span>15s (65%)</span>
               <span>30s (52%)</span>
               <span>60s End (44%)</span>
@@ -576,10 +576,10 @@ export function CreatorAnalyticsView({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-black">Under 20 seconds (Fast Hooks)</span>
-                <span className="font-mono text-emerald-700 font-semibold">84% Retention</span>
+                <span className="font-mono text-indigo-700 font-semibold">84% Retention</span>
               </div>
               <div className="w-full bg-neutral-100 rounded-full h-3 overflow-hidden">
-                <div className="bg-emerald-500 rounded-full h-3 w-[84%] transition-all duration-500" />
+                <div className="bg-indigo-500 rounded-full h-3 w-[84%] transition-all duration-500" />
               </div>
               <div className="text-[10px] text-[#6b7280] font-mono flex items-center justify-between">
                 <span>Fastest loop completion</span>
@@ -942,7 +942,7 @@ export function CreatorAnalyticsView({
 
                   <div className="p-3.5 rounded-2xl bg-[#fafafa] border border-black/[0.06]">
                     <span className="text-[10px] font-mono text-[#9ca3af] uppercase">3s Hold Rate</span>
-                    <div className="text-xl font-light text-emerald-700 mt-0.5">
+                    <div className="text-xl font-light text-indigo-700 mt-0.5">
                       {Math.min(Math.round(70 + Math.min(((selectedVideo.metrics?.likes || 1) / (selectedVideo.metrics?.views || 10)) * 60, 24)), 95)}%
                     </div>
                   </div>
