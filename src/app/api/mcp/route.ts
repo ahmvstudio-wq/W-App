@@ -63,7 +63,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const response = await processMcpMessage(body, baseUrl)
+    const authHeader = req.headers.get('authorization') || req.headers.get('x-api-key')
+    const keyParam = req.nextUrl.searchParams.get('key') || req.nextUrl.searchParams.get('token')
+    const response = await processMcpMessage(body, baseUrl, authHeader, keyParam)
     if (!response) {
       return new NextResponse(null, { status: 204 })
     }

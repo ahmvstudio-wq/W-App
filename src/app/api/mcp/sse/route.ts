@@ -1,6 +1,7 @@
 export const runtime = 'edge'
 import { NextRequest, NextResponse } from 'next/server'
 import { getApiClient, getDefaultWorkspaceId, getDefaultUserId } from '@/lib/supabase/admin'
+import { verifyOAuthAccessToken } from '@/lib/oauth/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -223,20 +224,59 @@ const MCP_TOOLS = [
   }
 ]
 
-async function executeMcpTool(name: string, args: any, hostUrl: string) {
+async function resolveUserWorkspace(authHeader?: string | null, keyParam?: string | null) {
   const supabase = getApiClient()
-  const workspaceId = await getDefaultWorkspaceId(supabase)
-  const ownerId = await getDefaultUserId(supabase)
+  let token = ''
+  if (authHeader) {
+    token = authHeader.replace(/^Bearer\s+/i, '').trim()
+  } else if (keyParam) {
+    token = keyParam.trim()
+  }
+
+  // 1. If OAuth token from Claude "Sign in now"
+  if (token && (token.startsWith('tok_') || token.startsWith('cult_'))) {
+    const { valid, userId } = await verifyOAuthAccessToken(token)
+    if (valid && userId) {
+      const workspaceId = await getDefaultWorkspaceId(supabase, userId)
+      return { userId, workspaceId }
+    }
+  }
+
+  // 2. If API Key from URL query param (?key=...) or Header
+  const masterKey = process.env.CULTLIKE_API_KEY || process.env.CHATGPT_API_KEY || 'focus_sk_live_9a7d3f82e1c4b6e5'
+  if (token && token === masterKey) {
+    const userId = await getDefaultUserId(supabase)
+    const workspaceId = await getDefaultWorkspaceId(supabase, userId)
+    return { userId, workspaceId }
+  }
+
+  // 3. Fallback for default owner
+  const userId = await getDefaultUserId(supabase)
+  const workspaceId = await getDefaultWorkspaceId(supabase, userId)
+  return { userId, workspaceId }
+}
+
+async function executeMcpTool(name: string, args: any, hostUrl: string, authHeader?: string | null, keyParam?: string | null) {
+  const supabase = getApiClient()
+  const { userId, workspaceId } = await resolveUserWorkspace(authHeader, keyParam)
+  const ownerId = userId
 
   switch (name) {
     case 'cultlike_get_overview': {
-      const { data: tasks } = await supabase.from('tasks').select('*').limit(20)
-      const { data: projects } = await supabase.from('projects').select('*').limit(10)
+      let taskQuery = supabase.from('tasks').select('*').limit(20)
+      let projQuery = supabase.from('projects').select('*').limit(10)
+      if (workspaceId) {
+        taskQuery = taskQuery.eq('workspace_id', workspaceId)
+        projQuery = projQuery.eq('workspace_id', workspaceId)
+      }
+      const { data: tasks } = await taskQuery
+      const { data: projects } = await projQuery
       return { tasks: tasks || [], projects: projects || [], workspace_id: workspaceId }
     }
 
     case 'cultlike_list_tasks': {
       let query = supabase.from('tasks').select('*')
+      if (workspaceId) query = query.eq('workspace_id', workspaceId)
       if (args.status && args.status !== 'active') query = query.eq('status', args.status)
       if (args.priority) query = query.eq('priority', args.priority)
       if (args.project_id) query = query.eq('project_id', args.project_id)
@@ -263,13 +303,17 @@ async function executeMcpTool(name: string, args: any, hostUrl: string) {
     }
 
     case 'cultlike_update_task': {
-      const { data, error } = await supabase.from('tasks').update(args).eq('id', args.id).select().single()
+      let query = supabase.from('tasks').update(args).eq('id', args.id)
+      if (workspaceId) query = query.eq('workspace_id', workspaceId)
+      const { data, error } = await query.select().single()
       if (error) throw error
       return { success: true, task: data }
     }
 
     case 'cultlike_list_projects': {
-      const { data } = await supabase.from('projects').select('*')
+      let query = supabase.from('projects').select('*')
+      if (workspaceId) query = query.eq('workspace_id', workspaceId)
+      const { data } = await query
       return { projects: data || [] }
     }
 
@@ -288,21 +332,27 @@ async function executeMcpTool(name: string, args: any, hostUrl: string) {
     }
 
     case 'cultlike_get_content_vault': {
-      const { data } = await supabase.from('content_items').select('*').order('created_at', { ascending: false })
+      let query = supabase.from('content_items').select('*').order('created_at', { ascending: false })
+      if (workspaceId) query = query.eq('workspace_id', workspaceId)
+      const { data } = await query
       return { deliverables: data || [] }
     }
 
     case 'cultlike_schedule_content': {
-      const { data, error } = await supabase.from('content_items').update({
+      let query = supabase.from('content_items').update({
         status: 'scheduled',
         scheduled_at: args.scheduled_at
-      }).eq('id', args.id).select().single()
+      }).eq('id', args.id)
+      if (workspaceId) query = query.eq('workspace_id', workspaceId)
+      const { data, error } = await query.select().single()
       if (error) throw error
       return { success: true, deliverable: data }
     }
 
     case 'cultlike_get_analytics': {
-      const { data: tasks } = await supabase.from('tasks').select('status, priority')
+      let query = supabase.from('tasks').select('status, priority')
+      if (workspaceId) query = query.eq('workspace_id', workspaceId)
+      const { data: tasks } = await query
       const total = tasks?.length || 0
       const shipped = tasks?.filter(t => t.status === 'shipped').length || 0
       return { total_tasks: total, shipped_tasks: shipped, completion_rate: total > 0 ? Math.round((shipped / total) * 100) : 0 }
@@ -313,7 +363,7 @@ async function executeMcpTool(name: string, args: any, hostUrl: string) {
   }
 }
 
-export async function processMcpMessage(body: any, hostUrl: string) {
+export async function processMcpMessage(body: any, hostUrl: string, authHeader?: string | null, keyParam?: string | null) {
   const { id, method, params } = body
 
   if (method === 'initialize') {
@@ -345,7 +395,7 @@ export async function processMcpMessage(body: any, hostUrl: string) {
 
   if (method === 'tools/call') {
     try {
-      const toolResult = await executeMcpTool(params.name, params.arguments || {}, hostUrl)
+      const toolResult = await executeMcpTool(params.name, params.arguments || {}, hostUrl, authHeader, keyParam)
       return {
         jsonrpc: '2.0',
         id,
@@ -411,10 +461,11 @@ export async function POST(req: NextRequest) {
   const host = req.headers.get('host') || 'cultlike.ahmvsystems.com'
   const protocol = host.includes('localhost') ? 'http' : 'https'
   const baseUrl = `${protocol}://${host}`
-
   try {
     const body = await req.json()
-    const response = await processMcpMessage(body, baseUrl)
+    const authHeader = req.headers.get('authorization') || req.headers.get('x-api-key')
+    const keyParam = req.nextUrl.searchParams.get('key') || req.nextUrl.searchParams.get('token')
+    const response = await processMcpMessage(body, baseUrl, authHeader, keyParam)
     if (!response) {
       return new NextResponse(null, { status: 204 })
     }
