@@ -314,12 +314,19 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           {/* Left Column: Greeting & Big Punchy Metric */}
           <div className="lg:col-span-7 space-y-4">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-light text-black tracking-tight leading-snug">
-              <span className="font-bold text-black">{totalHours} focused hours</span> logged <br className="hidden sm:block" />
-              <span className="text-neutral-500 font-light">
-                across {projects.length} active projects.
-              </span>
-            </h2>
+            <div className="space-y-1">
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <span className="font-mono text-4xl sm:text-5xl lg:text-6xl font-light tracking-tighter text-black tabular-nums">
+                  {totalHours}
+                </span>
+                <span className="font-mono text-xs sm:text-sm uppercase tracking-widest text-neutral-400 font-medium pb-1">
+                  focused hours logged
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-neutral-500 font-light tracking-tight">
+                Operating across <span className="text-black font-medium">{projects.length} active master programs</span> with continuous live sync.
+              </p>
+            </div>
 
             <div className="flex flex-wrap items-center gap-3 text-xs">
               <span className="px-3 py-1 rounded-full bg-neutral-100 text-neutral-900 border border-black/[0.08] font-mono text-[11px] font-medium flex items-center gap-1.5 shadow-2xs">
