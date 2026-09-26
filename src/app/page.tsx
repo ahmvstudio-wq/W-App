@@ -6,12 +6,16 @@ import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { 
   ArrowRight, X, ChevronDown, Plus, Play, Pause, RotateCcw, 
-  Check, Sparkles, Terminal, Cpu, Database, Share2, Layers,
-  ExternalLink, Zap, ShieldCheck, Clock, TrendingUp, Calendar, Video
+  Cpu, Clock, Video, FileText, Send
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion'
+import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion'
 import LandingMenuModal from '@/components/LandingMenuModal'
+import {
+  FathomLogo, GoogleDriveLogo, YouTubeLogo, InstagramLogo,
+  ClaudeLogo, OpenAILogo, GitHubLogo, FigmaLogo,
+  LinearLogo, SlackLogo, NotionLogo, AppleLogo
+} from '@/components/IntegrationLogos'
 
 const ease: [number, number, number, number] = [0.16, 1, 0.3, 1]
 
@@ -24,7 +28,7 @@ const AnimatedText = ({ text, className, delay = 0 }: { text: string, className?
         hidden: { opacity: 0 },
         visible: {
           opacity: 1,
-          transition: { staggerChildren: 0.035, delayChildren: delay }
+          transition: { staggerChildren: 0.04, delayChildren: delay }
         }
       }}
       initial="hidden"
@@ -36,11 +40,11 @@ const AnimatedText = ({ text, className, delay = 0 }: { text: string, className?
         <span key={index} className="inline-block overflow-hidden mr-[0.22em] pb-1">
           <motion.span 
             variants={{
-              hidden: { opacity: 0, y: 24 },
+              hidden: { opacity: 0, y: 28 },
               visible: { 
                 opacity: 1, 
                 y: 0,
-                transition: { ease, duration: 0.75 }
+                transition: { ease, duration: 0.8 }
               }
             }} 
             className="inline-block"
@@ -53,61 +57,58 @@ const AnimatedText = ({ text, className, delay = 0 }: { text: string, className?
   )
 }
 
-// Integration fleet list with clean monochrome branding & metadata
+// Integration partner fleet with real vector logos
 const INTEGRATIONS = [
-  { name: 'Fathom Video', role: 'Meeting Takeaways & Action Items', tag: 'Native Webhook' },
-  { name: 'Google Drive', role: 'Raw Media Ingestion & Content Vault', tag: 'Direct Storage' },
-  { name: 'YouTube Studio', role: 'Video Publishing & Retention Analytics', tag: 'Omnichannel' },
-  { name: 'Instagram', role: 'Reels & Carousel Staging Pipeline', tag: 'Social API' },
-  { name: 'Claude 3.5 Sonnet', role: 'Autonomous Background Sprint Planner', tag: 'OpenAPI 3.1' },
-  { name: 'OpenAI GPT-4o', role: 'Headless Context Assistant Connector', tag: 'Live GPT Action' },
-  { name: 'GitHub', role: 'Commit Sync & Shipping Velocity', tag: 'Codebase Bridge' },
-  { name: 'Figma', role: 'Design Canvas & Spec Linking', tag: 'Asset Bridge' },
-  { name: 'Linear', role: 'Bi-Directional Issue Sync', tag: 'Workflow Hub' },
-  { name: 'Slack', role: 'Daily Executive Digest Dispatch', tag: 'Bot Gateway' },
-  { name: 'Notion', role: 'Document Memo & PRD Import', tag: 'Sync Engine' },
-  { name: 'Apple Calendar', role: 'Deep Work Timeboxing Blocks', tag: 'iCal Sync' }
+  { name: 'Fathom Video', Logo: FathomLogo, role: 'Meeting Takeaways' },
+  { name: 'Google Drive', Logo: GoogleDriveLogo, role: 'Media Vault' },
+  { name: 'YouTube', Logo: YouTubeLogo, role: 'Publishing & Analytics' },
+  { name: 'Instagram', Logo: InstagramLogo, role: 'Reels Studio' },
+  { name: 'Claude', Logo: ClaudeLogo, role: 'Background Sprint Planner' },
+  { name: 'OpenAI', Logo: OpenAILogo, role: 'Context Bridge' },
+  { name: 'GitHub', Logo: GitHubLogo, role: 'Shipping Velocity' },
+  { name: 'Figma', Logo: FigmaLogo, role: 'Asset Linking' },
+  { name: 'Linear', Logo: LinearLogo, role: 'Deliverable Sync' },
+  { name: 'Slack', Logo: SlackLogo, role: 'Digest Gateway' },
+  { name: 'Notion', Logo: NotionLogo, role: 'Document Sync' },
+  { name: 'Apple', Logo: AppleLogo, role: 'Calendar Blocks' }
 ]
 
-// Headless AI Simulator Workflows
+// Headless AI Simulator Workflows (Zero ugly tags, clean narrative)
 const HEADLESS_WORKFLOWS = [
   {
     id: 'meeting',
     title: 'Zero-Input Meeting Distiller',
-    subtitle: 'Fathom call finishes -> Headless AI creates sprint tasks automatically.',
-    inputLabel: 'Incoming Call: Architecture Sprint Review (42 min)',
-    rawSnippet: `[00:14:20] "We definitely need to migrate the database indexes to Postgres before Friday."\n[00:28:10] "Let's also make sure the OAuth callback handles token refresh errors silently."`,
-    outputSummary: '3 Actionable Deliverables Created & Ranked',
+    subtitle: 'Fathom call finishes → Headless AI creates sprint deliverables automatically.',
+    inputTitle: 'Incoming Fathom Call: Product Architecture Review',
+    rawText: `[00:14:20] "We need to migrate our database indexes to Postgres before Friday."\n[00:28:10] "Let's make sure the OAuth callback handles silent token refreshes."`,
     actions: [
-      { title: 'Migrate Postgres database indexes for sprint query load', priority: 'P0', time: '45m', status: 'Queued' },
-      { title: 'Patch silent token refresh retry logic in OAuth callback', priority: 'P1', time: '30m', status: 'Queued' },
-      { title: 'Sync migration documentation into Document Memo Hub', priority: 'P2', time: '15m', status: 'Queued' },
+      { title: 'Migrate Postgres database indexes for sprint query load', time: '45m' },
+      { title: 'Patch silent token refresh retry logic in OAuth callback', time: '30m' },
+      { title: 'Sync migration notes into Document Memo Hub', time: '15m' },
     ]
   },
   {
     id: 'sprint',
     title: 'Autonomous Sprint Planner',
-    subtitle: 'Set a high-level outcome -> Headless AI organizes your deep work calendar.',
-    inputLabel: 'Creator Prompt: "Ship the v1.0 public launch landing page this sprint"',
-    rawSnippet: `Goal: Deliver high-converting Apple-style landing page with interactive Headless AI simulator, telemetry graphs, and live OAuth authentication.`,
-    outputSummary: 'Calculated 14.5 Focused Hours across 5 Deliverables',
+    subtitle: 'State your goal → Headless AI organizes your deep work blocks.',
+    inputTitle: 'Founder Goal: "Ship the v1.0 public launch this sprint"',
+    rawText: `Goal: Deliver public landing page with interactive Headless AI simulator, live OAuth authentication, and telemetry curves.`,
     actions: [
-      { title: 'Hero Section: Ambient light tracking & typography hierarchy', priority: 'P0', time: '90m', status: 'Ready' },
-      { title: 'Interactive Headless AI Simulator cockpit component', priority: 'P0', time: '120m', status: 'Ready' },
-      { title: 'Integration marquee fleet with infinite kinetic velocity', priority: 'P1', time: '45m', status: 'Ready' },
+      { title: 'Hero Section: Ambient light tracking & typography hierarchy', time: '90m' },
+      { title: 'Interactive Headless AI Simulator cockpit component', time: '120m' },
+      { title: 'Integration marquee fleet with infinite kinetic velocity', time: '45m' },
     ]
   },
   {
     id: 'content',
     title: 'Omnichannel Content Engine',
-    subtitle: 'Upload raw video footage to Drive -> Headless AI generates hooks & schedules.',
-    inputLabel: 'Google Drive File: studio_vlog_ep48_final_4k.mp4 (1.8 GB)',
-    rawSnippet: `Audio Transcribed: "Why traditional productivity tools fail high-agency builders..." -> Extracted 3 high-retention 3-second hook candidates.`,
-    outputSummary: 'Staged Across YouTube & Instagram with Viral Curve Analysis',
+    subtitle: 'Upload footage to Drive → Headless AI drafts hooks and stages publishing.',
+    inputTitle: 'Google Drive File: studio_vlog_ep48_final.mp4',
+    rawText: `Audio Transcribed: "Why traditional productivity tools fail high-agency builders..." → Extracted 3 high-retention hook variations.`,
     actions: [
-      { title: 'Shorts Hook: "Stop organizing work. Start shipping."', priority: 'Viral 88%', time: 'Schedule', status: 'Staged' },
-      { title: 'Instagram Reel: Behind-the-scenes engineering studio tour', priority: 'Viral 76%', time: 'Schedule', status: 'Staged' },
-      { title: 'Long-form YouTube: Deep dive on headless workspace architecture', priority: 'P0 Vault', time: 'Schedule', status: 'Staged' },
+      { title: 'Shorts Hook: "Stop organizing work. Start shipping."', time: 'Ready' },
+      { title: 'Instagram Reel: Behind-the-scenes engineering studio tour', time: 'Ready' },
+      { title: 'Long-form YouTube: Deep dive on headless workspace architecture', time: 'Ready' },
     ]
   }
 ]
@@ -124,9 +125,8 @@ export default function LandingPage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(0)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [activeWorkflow, setActiveWorkflow] = useState<number>(0)
-  const [isSimRunning, setIsSimRunning] = useState<boolean>(false)
 
-  // Interactive Live Pomodoro Simulator inside showcase
+  // Interactive Live Pomodoro Simulator
   const [timerSeconds, setTimerSeconds] = useState(25 * 60)
   const [timerActive, setTimerActive] = useState(false)
 
@@ -243,16 +243,16 @@ export default function LandingPage() {
       a: 'Traditional productivity apps turn you into a project manager for yourself. You spend hours creating tags, moving cards, and writing status reports instead of building. Cultlike eliminates this meta-work. With Headless AI, meeting intelligence, and 25-minute execution blocks, the workspace manages itself in the background.',
     },
     {
-      q: 'What exactly is Headless AI?',
+      q: 'What is Headless AI?',
       a: 'Headless AI is background intelligence that operates without requiring you to open a chat box or write prompts. It automatically listens to your completed Fathom calls, analyzes your Google Drive uploads, and connects to Claude or ChatGPT via secure OpenAPI 3.1 endpoints to turn raw ideas into shipped work.',
     },
     {
-      q: 'How does the deep work chronograph and streak tracking work?',
+      q: 'How does the deep work chronograph work?',
       a: 'Every deliverable in your workspace has an integrated 25-minute Pomodoro timer. As you focus and ship deliverables, Cultlike logs your actual focused hours, updates your consecutive daily streak, and visualizes your velocity on an annual 52-week heatmap.',
     },
     {
       q: 'How do meeting summaries turn into tasks?',
-      a: 'When your Fathom call finishes, the full transcript and AI action items sync instantly. You can convert any spoken takeaway into an executable P0 deliverable with a single click, ensuring nothing gets lost.',
+      a: 'When your Fathom call finishes, the full transcript and AI action items sync instantly. You can convert any spoken takeaway into an executable deliverable with a single click, ensuring nothing gets lost.',
     },
     {
       q: 'Is Cultlike OS free for solo creators and founders?',
@@ -322,15 +322,15 @@ export default function LandingPage() {
         }}
       />
 
-      {/* ─── TARGETED SKY-BLUE SUBTLE AMBIENT LIGHTING ACCENTS (NO PINK / NO MULTICOLOR) ─── */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-[radial-gradient(ellipse_70%_50%_at_50%_-10%,rgba(56,189,248,0.07),rgba(255,255,255,0))] pointer-events-none z-0" />
+      {/* ─── TARGETED SKY-BLUE SUBTLE AMBIENT LIGHTING (NO PINK / NO MULTICOLOR) ─── */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-[radial-gradient(ellipse_70%_50%_at_50%_-10%,rgba(56,189,248,0.08),rgba(255,255,255,0))] pointer-events-none z-0" />
       <div className="fixed top-1/3 -right-20 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(56,189,248,0.04),rgba(255,255,255,0))] pointer-events-none z-0" />
 
-      {/* ─── HERO SECTION (NOTHING BUT TEXT IN MIDDLE WITH INTERACTIVE AMBIENT ACCENTS) ─── */}
+      {/* ─── HERO SECTION (NOTHING BUT HEADING & SUBTITLE IN MIDDLE - ZERO UGLY TAGS) ─── */}
       <section 
         ref={heroRef}
         onMouseMove={handleMouseMove}
-        className="relative min-h-[90vh] flex flex-col items-center justify-center pt-28 sm:pt-36 pb-20 px-6 sm:px-10 max-w-[1200px] mx-auto text-center z-10 select-none"
+        className="relative min-h-[85vh] flex flex-col items-center justify-center pt-28 sm:pt-36 pb-16 px-6 sm:px-10 max-w-[1200px] mx-auto text-center z-10 select-none"
       >
         {/* Interactive Mouse Follower Spotlight (Subtle Sky-Blue Specular Aura) */}
         <motion.div
@@ -342,119 +342,76 @@ export default function LandingPage() {
           }}
         />
 
-        <div className="relative z-10 max-w-4xl mx-auto space-y-7 flex flex-col items-center">
+        <div className="relative z-10 max-w-4xl mx-auto space-y-8 flex flex-col items-center">
           
-          {/* Minimalist Brand Category Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: -15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ ease, duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-sky-500/20 bg-sky-50/60 backdrop-blur-md shadow-2xs"
-          >
-            <span className="w-2 h-2 rounded-full bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.8)] animate-pulse" />
-            <span className="text-[11px] font-mono uppercase tracking-widest text-sky-950 font-medium">
-              THE ANTI-PRODUCTIVITY OPERATING SYSTEM
-            </span>
-          </motion.div>
-
-          {/* Giant Apple-Style Headline */}
-          <h1 className="text-[clamp(40px,7vw,84px)] font-normal tracking-[-0.04em] leading-[1.04] text-black">
-            <AnimatedText text="Stop organizing work." className="font-semibold text-black" />
-            <span className="text-neutral-400 font-light block mt-1">
-              <AnimatedText text="Start shipping." delay={0.25} />
-            </span>
+          {/* Main Hero Headline: The Anti-Productivity App */}
+          <h1 className="text-[clamp(44px,7.5vw,92px)] font-medium tracking-[-0.04em] leading-[1.02] text-black">
+            <AnimatedText text="The anti-productivity app." className="text-black" />
           </h1>
 
-          {/* Simple, Punchy, Human Subtitle */}
+          {/* Simple, Punchy, Human Subtitle (Poppins Light) */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ ease, duration: 0.7, delay: 0.4 }}
-            className="text-base sm:text-xl text-neutral-600 font-light leading-relaxed max-w-2xl mx-auto"
+            transition={{ ease, duration: 0.7, delay: 0.3 }}
+            className="text-lg sm:text-2xl text-neutral-500 font-light leading-relaxed max-w-2xl mx-auto"
           >
-            Traditional productivity apps force you to do meta-work — endlessly moving cards, setting tags, and writing tickets. Cultlike runs silently in the background with <strong className="font-medium text-black">Headless AI</strong>, turning your meetings, thoughts, and recordings into delivered work.
+            Stop managing work. Start shipping. Cultlike runs in the background with Headless AI — turning your meetings, thoughts, and recordings into delivered work without the friction.
           </motion.p>
 
-          {/* Interactive CTAs */}
+          {/* Clean Action Buttons (Zero Clutter) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ ease, duration: 0.7, delay: 0.55 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-3 w-full sm:w-auto"
+            transition={{ ease, duration: 0.7, delay: 0.45 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2 w-full sm:w-auto"
           >
             <button
               onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
-              className="w-full sm:w-auto px-8 py-4 rounded-full bg-black hover:bg-neutral-800 text-white text-sm font-medium transition-all cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.2)] active:scale-[0.98] flex items-center justify-center gap-2 group"
+              className="w-full sm:w-auto px-9 py-4 rounded-full bg-black hover:bg-neutral-800 text-white text-sm font-medium transition-all cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.2)] active:scale-[0.98] flex items-center justify-center gap-2 group"
             >
-              <span>Launch Free Workspace</span>
+              <span>Get Started</span>
               <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
             </button>
-            <a
-              href="#headless-simulator"
-              className="w-full sm:w-auto px-7 py-4 rounded-full border border-black/[0.1] hover:border-black/[0.25] bg-white/80 backdrop-blur-md text-sm font-normal text-black transition-all cursor-pointer shadow-xs hover:bg-white flex items-center justify-center gap-2"
+            <button
+              onClick={() => { setMode('login'); setConfirmationSent(false); setIsAuthOpen(true) }}
+              className="w-full sm:w-auto px-8 py-4 rounded-full border border-black/[0.1] hover:border-black/[0.25] bg-white/80 backdrop-blur-md text-sm font-normal text-black transition-all cursor-pointer shadow-xs hover:bg-white flex items-center justify-center"
             >
-              <span>See Headless AI in Action</span>
-              <ChevronDown size={14} className="text-neutral-500" />
-            </a>
-          </motion.div>
-
-          {/* Minimalist Live Telemetry Pill */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.7 }}
-            className="pt-6 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs font-mono text-neutral-500"
-          >
-            <span className="flex items-center gap-1.5">
-              <Check size={13} className="text-sky-600 stroke-[2.5]" />
-              <span>Zero Backlog Grooming</span>
-            </span>
-            <span className="hidden sm:inline text-neutral-300">•</span>
-            <span className="flex items-center gap-1.5">
-              <Check size={13} className="text-sky-600 stroke-[2.5]" />
-              <span>Live Fathom & Drive Sync</span>
-            </span>
-            <span className="hidden sm:inline text-neutral-300">•</span>
-            <span className="flex items-center gap-1.5">
-              <Check size={13} className="text-sky-600 stroke-[2.5]" />
-              <span>100% Free for Solo Creators</span>
-            </span>
+              <span>Sign In</span>
+            </button>
           </motion.div>
 
         </div>
       </section>
 
 
-      {/* ─── INTEGRATIONS LOGO FLEET (INFINITE SMOOTH KINETIC SCROLL MARQUEE) ─── */}
-      <section className="py-14 border-y border-black/[0.06] bg-white/60 backdrop-blur-sm relative overflow-hidden">
+      {/* ─── INTEGRATIONS LOGO FLEET WITH REAL VECTOR LOGOS (INFINITE KINETIC MARQUEE) ─── */}
+      <section className="py-14 border-y border-black/[0.06] bg-white/70 backdrop-blur-sm relative overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-6 mb-6 text-center">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-400 font-medium">
-            CONNECTED TO YOUR ENTIRE CREATIVE STACK
+          <span className="text-xs font-mono uppercase tracking-widest text-neutral-400 font-medium">
+            CONNECTED TO YOUR TOOLS
           </span>
         </div>
 
-        {/* Marquee Track (Duplicated for Seamless Infinite Loop) */}
+        {/* Marquee Track with Real Logos */}
         <div className="flex overflow-hidden select-none [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
           <div className="flex gap-4 items-center shrink-0 animate-marquee py-2">
             {INTEGRATIONS.concat(INTEGRATIONS).map((item, idx) => (
               <div
                 key={idx}
-                className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-white border border-black/[0.06] shadow-2xs hover:border-sky-500/30 hover:shadow-xs hover:scale-[1.02] transition-all cursor-default shrink-0 group"
+                className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-white border border-black/[0.06] shadow-2xs hover:border-sky-500/40 hover:shadow-xs hover:scale-[1.02] transition-all cursor-default shrink-0 group"
               >
-                <div className="w-8 h-8 rounded-xl bg-neutral-100 flex items-center justify-center text-xs font-mono font-semibold text-black group-hover:bg-sky-50 group-hover:text-sky-600 transition-colors">
-                  {item.name.charAt(0)}
+                <div className="w-8 h-8 rounded-xl bg-neutral-100 flex items-center justify-center text-neutral-800 group-hover:bg-sky-50 group-hover:text-sky-600 transition-colors">
+                  <item.Logo className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-neutral-900 leading-none group-hover:text-black">
+                  <div className="text-xs font-medium text-neutral-900 leading-none group-hover:text-black">
                     {item.name}
                   </div>
-                  <div className="text-[10px] font-mono text-neutral-400 mt-1">
+                  <div className="text-[11px] text-neutral-400 font-light mt-1">
                     {item.role}
                   </div>
                 </div>
-                <span className="ml-2 px-2 py-0.5 rounded-full bg-neutral-50 text-[9px] font-mono text-neutral-500 border border-black/[0.04]">
-                  {item.tag}
-                </span>
               </div>
             ))}
           </div>
@@ -462,18 +419,14 @@ export default function LandingPage() {
       </section>
 
 
-      {/* ─── HEADLESS AI SIMULATOR (INTERACTIVE LIVE WORKFLOW COCKPIT) ─── */}
+      {/* ─── HEADLESS AI SIMULATOR (ZERO UGLY TAGS, PURE WORKFLOW ARCHITECTURE) ─── */}
       <section id="headless-simulator" className="py-24 sm:py-36 px-6 sm:px-10 max-w-[1300px] mx-auto relative z-10">
         <div className="space-y-4 text-center max-w-2xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-50 border border-sky-200/80 text-sky-800 text-[10px] font-mono uppercase tracking-wider">
-            <Cpu size={12} className="text-sky-600" />
-            <span>BACKGROUND EXECUTION ENGINE</span>
-          </div>
           <h2 className="text-3xl sm:text-5xl font-medium tracking-tight text-black">
-            Meet Headless AI.
+            Headless AI at work.
           </h2>
           <p className="text-base sm:text-lg text-neutral-500 font-light leading-relaxed">
-            No typing prompts into a blank box. Headless AI connects to your real inputs, digests context automatically, and delivers completed deliverables ready to ship.
+            No typing into a chat box. Headless AI listens to your calls, reads your drive uploads, and creates ready-to-ship deliverables in the background.
           </p>
         </div>
 
@@ -493,55 +446,45 @@ export default function LandingPage() {
                     : "hover:bg-white/50 text-neutral-600"
                 )}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 font-medium">Workflow 0{idx + 1}</span>
-                  {activeWorkflow === idx && (
-                    <span className="w-2 h-2 rounded-full bg-sky-500 shadow-[0_0_6px_rgba(14,165,233,0.8)]" />
-                  )}
-                </div>
-                <div className="text-sm font-semibold text-black">{wf.title}</div>
-                <div className="text-[11px] text-neutral-500 font-light mt-0.5 line-clamp-1">{wf.subtitle}</div>
+                <div className="text-sm font-semibold text-black mb-0.5">{wf.title}</div>
+                <div className="text-xs text-neutral-500 font-light line-clamp-1">{wf.subtitle}</div>
               </button>
             ))}
           </div>
 
-          {/* Workflow Live Execution Cockpit */}
+          {/* Workflow Execution Cockpit */}
           <div className="p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            {/* Left: Input Digest & Raw Signal */}
+            {/* Left: Raw Input Signal */}
             <div className="lg:col-span-5 space-y-4">
               <div>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 font-medium block mb-1.5">
-                  RAW UNSTRUCTURED SIGNAL
+                <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-2 font-medium">
+                  RAW INPUT
                 </span>
-                <div className="p-4 rounded-2xl bg-neutral-900 text-white space-y-2.5 font-mono text-xs shadow-inner">
-                  <div className="flex items-center justify-between pb-2 border-b border-white/10 text-[11px] text-neutral-400">
-                    <span className="text-sky-400">{HEADLESS_WORKFLOWS[activeWorkflow].inputLabel}</span>
-                    <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded text-white">Ingested</span>
+                <div className="p-5 rounded-2xl bg-neutral-900 text-white space-y-2.5 font-sans text-xs shadow-inner">
+                  <div className="text-sky-400 font-medium pb-2 border-b border-white/10 text-xs">
+                    {HEADLESS_WORKFLOWS[activeWorkflow].inputTitle}
                   </div>
-                  <p className="text-neutral-300 font-light leading-relaxed whitespace-pre-line text-[11px]">
-                    {HEADLESS_WORKFLOWS[activeWorkflow].rawSnippet}
+                  <p className="text-neutral-300 font-light leading-relaxed whitespace-pre-line text-xs">
+                    {HEADLESS_WORKFLOWS[activeWorkflow].rawText}
                   </p>
                 </div>
               </div>
 
-              {/* Headless AI Processing Bridge Indicator */}
-              <div className="p-3.5 rounded-2xl bg-sky-50/70 border border-sky-200/60 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
-                  <span className="text-xs font-mono text-sky-900 font-medium">Headless Neural Synthesizer</span>
+              <div className="p-3.5 rounded-2xl bg-sky-50/70 border border-sky-100 flex items-center justify-between text-xs text-sky-900 font-medium">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
+                  <span>Headless AI Processing</span>
                 </div>
-                <span className="text-[10px] font-mono text-sky-700 bg-sky-100 px-2 py-0.5 rounded-full font-medium">
-                  0.4s Latency
-                </span>
+                <span className="text-sky-600 font-light">Automatic</span>
               </div>
             </div>
 
-            {/* Right: Automatically Generated Shippable Outcomes */}
+            {/* Right: Clean Deliverables (Zero ugly tags) */}
             <div className="lg:col-span-7 space-y-4">
               <div>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 font-medium block mb-1.5">
-                  HEADLESS AI SHIPPABLE DELIVERABLES
+                <span className="text-xs font-mono uppercase tracking-wider text-neutral-400 block mb-2 font-medium">
+                  OUTPUT DELIVERABLES
                 </span>
                 <div className="space-y-2.5">
                   {HEADLESS_WORKFLOWS[activeWorkflow].actions.map((act, aIdx) => (
@@ -552,37 +495,26 @@ export default function LandingPage() {
                       transition={{ delay: aIdx * 0.1, duration: 0.4 }}
                       className="p-4 rounded-2xl bg-[#fafafa] border border-black/[0.06] hover:border-black/[0.15] hover:bg-white transition-all flex items-center justify-between gap-4 group"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-6 h-6 rounded-lg bg-white border border-black/[0.08] flex items-center justify-center text-xs font-mono text-neutral-800 shadow-2xs shrink-0">
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="w-7 h-7 rounded-xl bg-white border border-black/[0.08] flex items-center justify-center text-xs font-medium text-neutral-800 shadow-2xs shrink-0">
                           {aIdx + 1}
                         </div>
                         <div className="min-w-0">
                           <div className="text-xs sm:text-sm font-medium text-black truncate group-hover:text-sky-950">
                             {act.title}
                           </div>
-                          <div className="text-[10px] font-mono text-neutral-400 mt-0.5">
-                            Est: {act.time} · Ready in Workspace Sprint
+                          <div className="text-xs text-neutral-400 font-light mt-0.5">
+                            Estimated time: {act.time}
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="px-2.5 py-1 rounded-md bg-sky-50 text-sky-700 border border-sky-200/60 text-[10px] font-mono font-semibold">
-                          {act.priority}
-                        </span>
-                        <span className="text-xs font-mono text-neutral-400 group-hover:text-black transition-colors">
-                          →
-                        </span>
+                      <div className="text-xs font-mono text-neutral-400 group-hover:text-black transition-colors shrink-0">
+                        →
                       </div>
                     </motion.div>
                   ))}
                 </div>
-              </div>
-
-              <div className="text-right">
-                <span className="text-[11px] font-mono text-neutral-400">
-                  {HEADLESS_WORKFLOWS[activeWorkflow].outputSummary}
-                </span>
               </div>
             </div>
 
@@ -592,57 +524,54 @@ export default function LandingPage() {
       </section>
 
 
-      {/* ─── THE 3 PILLARS OF "THE ANTI-PRODUCTIVITY APP" ─── */}
+      {/* ─── THE 3 PRINCIPLES OF THE ANTI-PRODUCTIVITY APP ─── */}
       <section className="py-24 sm:py-36 px-6 sm:px-10 bg-white border-t border-black/[0.06] relative z-10">
         <div className="max-w-[1300px] mx-auto space-y-16">
           
           <div className="max-w-3xl space-y-4">
-            <span className="text-xs font-mono uppercase tracking-widest text-sky-600 font-semibold">
-              WHY BUILDERS CHOOSE CULTLIKE
-            </span>
             <h2 className="text-3xl sm:text-5xl font-medium tracking-tight text-black leading-tight">
-              Built for high-agency creators who refuse to do fake work.
+              Built for builders who refuse to do fake work.
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10">
             
-            {/* Pillar 1 */}
+            {/* Principle 1 */}
             <div className="p-8 rounded-3xl bg-[#fbfbfd] border border-black/[0.06] hover:border-black/[0.12] transition-all space-y-4 group">
               <div className="w-12 h-12 rounded-2xl bg-white border border-black/[0.08] flex items-center justify-center text-black shadow-2xs group-hover:scale-105 transition-transform">
-                <Cpu size={22} className="text-neutral-900" />
+                <Cpu size={20} className="text-neutral-900" />
               </div>
-              <h3 className="text-xl font-semibold text-black tracking-tight">
+              <h3 className="text-xl font-medium text-black tracking-tight">
                 Zero Backlog Grooming
               </h3>
-              <p className="text-sm text-neutral-600 font-light leading-relaxed">
-                Never waste Sunday afternoons grooming JIRA tickets or categorizing color-coded Notion boards. Headless AI extracts tasks directly from meetings, commits, and memos automatically.
+              <p className="text-sm text-neutral-500 font-light leading-relaxed">
+                Never waste time organizing tickets or color-coding boards. Headless AI extracts tasks directly from meetings, commits, and memos automatically.
               </p>
             </div>
 
-            {/* Pillar 2 */}
+            {/* Principle 2 */}
             <div className="p-8 rounded-3xl bg-[#fbfbfd] border border-black/[0.06] hover:border-black/[0.12] transition-all space-y-4 group">
               <div className="w-12 h-12 rounded-2xl bg-white border border-black/[0.08] flex items-center justify-center text-black shadow-2xs group-hover:scale-105 transition-transform">
-                <Clock size={22} className="text-neutral-900" />
+                <Clock size={20} className="text-neutral-900" />
               </div>
-              <h3 className="text-xl font-semibold text-black tracking-tight">
+              <h3 className="text-xl font-medium text-black tracking-tight">
                 25-Min Deep Work Chronograph
               </h3>
-              <p className="text-sm text-neutral-600 font-light leading-relaxed">
-                Work happens in focused sprint blocks, not endless todo list scrolling. Every deliverable links directly to a native Pomodoro timer and logs into your annual shipping streak.
+              <p className="text-sm text-neutral-500 font-light leading-relaxed">
+                Work happens in focused sprint blocks, not endless todo list scrolling. Every deliverable links directly to a native Pomodoro timer and updates your streak.
               </p>
             </div>
 
-            {/* Pillar 3 */}
+            {/* Principle 3 */}
             <div className="p-8 rounded-3xl bg-[#fbfbfd] border border-black/[0.06] hover:border-black/[0.12] transition-all space-y-4 group">
               <div className="w-12 h-12 rounded-2xl bg-white border border-black/[0.08] flex items-center justify-center text-black shadow-2xs group-hover:scale-105 transition-transform">
-                <Video size={22} className="text-neutral-900" />
+                <Video size={20} className="text-neutral-900" />
               </div>
-              <h3 className="text-xl font-semibold text-black tracking-tight">
+              <h3 className="text-xl font-medium text-black tracking-tight">
                 Omnichannel Content Vault
               </h3>
-              <p className="text-sm text-neutral-600 font-light leading-relaxed">
-                Seamless pipeline from Google Drive media files to YouTube and Instagram scheduling. Analyze audience retention curves and verify your proof of work without switching tools.
+              <p className="text-sm text-neutral-500 font-light leading-relaxed">
+                Seamless pipeline from Google Drive media files to YouTube and Instagram scheduling. Analyze retention curves and verify your proof of work in one place.
               </p>
             </div>
 
@@ -658,9 +587,6 @@ export default function LandingPage() {
           
           {/* Left: Text Description */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-100 border border-black/[0.06] text-neutral-800 text-[10px] font-mono uppercase tracking-wider">
-              <span>NATIVE HARDWARE STUDIO</span>
-            </div>
             <h2 className="text-3xl sm:text-4xl font-medium tracking-tight text-black leading-tight">
               One unified surface for your entire operation.
             </h2>
@@ -669,15 +595,15 @@ export default function LandingPage() {
             </p>
             
             <div className="space-y-3 pt-2">
-              <div className="flex items-center gap-3 text-sm text-neutral-700">
+              <div className="flex items-center gap-3 text-sm text-neutral-700 font-light">
                 <span className="w-5 h-5 rounded-full bg-sky-50 text-sky-700 flex items-center justify-center text-xs font-semibold">✓</span>
                 <span>Hardware radial arc chronograph with real minute tracking</span>
               </div>
-              <div className="flex items-center gap-3 text-sm text-neutral-700">
+              <div className="flex items-center gap-3 text-sm text-neutral-700 font-light">
                 <span className="w-5 h-5 rounded-full bg-sky-50 text-sky-700 flex items-center justify-center text-xs font-semibold">✓</span>
-                <span>Fathom call takeaway auto-sync to P0 sprint queue</span>
+                <span>Fathom call takeaway auto-sync to sprint queue</span>
               </div>
-              <div className="flex items-center gap-3 text-sm text-neutral-700">
+              <div className="flex items-center gap-3 text-sm text-neutral-700 font-light">
                 <span className="w-5 h-5 rounded-full bg-sky-50 text-sky-700 flex items-center justify-center text-xs font-semibold">✓</span>
                 <span>Proof of work annual shipping heatmap with 52-week cadence</span>
               </div>
@@ -690,31 +616,26 @@ export default function LandingPage() {
               {/* Subtle top sky-blue specular line */}
               <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-sky-400/50 to-transparent" />
 
-              {/* In-App Header Header */}
+              {/* In-App Header */}
               <div className="flex items-center justify-between pb-4 border-b border-black/[0.06]">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-black text-white text-xs font-semibold flex items-center justify-center font-mono">
                     C
                   </div>
                   <div>
-                    <div className="text-xs font-semibold text-black">Active Sprint Cockpit</div>
-                    <div className="text-[10px] font-mono text-neutral-400">P0 Core Deliverables · In Progress</div>
+                    <div className="text-xs font-medium text-black">Active Sprint Cockpit</div>
+                    <div className="text-[11px] text-neutral-400 font-light">In Progress</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-full bg-sky-50 text-sky-800 border border-sky-200 text-[10px] font-mono font-medium">
-                    14-Day Streak 🔥
-                  </span>
+                <div className="text-xs font-medium text-neutral-800">
+                  14-Day Streak 🔥
                 </div>
               </div>
 
               {/* Interactive Live Pomodoro Dial */}
               <div className="p-6 rounded-2xl bg-gradient-to-b from-[#fbfbfd] to-neutral-50 border border-black/[0.04] flex flex-col sm:flex-row items-center justify-between gap-6">
-                <div className="space-y-2 text-center sm:text-left">
-                  <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider block font-semibold">
-                    CURRENT DEEP WORK SESSION
-                  </span>
-                  <div className="text-lg font-medium text-black">
+                <div className="space-y-1.5 text-center sm:text-left">
+                  <div className="text-base font-medium text-black">
                     Refactor OAuth token rotation engine
                   </div>
                   <div className="text-xs text-neutral-500 font-light">
@@ -753,9 +674,9 @@ export default function LandingPage() {
 
               {/* 7-Day Velocity Curve Preview */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-neutral-500">Weekly Shipping Velocity</span>
-                  <span className="font-semibold text-black">18 Tasks Completed this Week</span>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-neutral-500 font-light">Weekly Shipping Velocity</span>
+                  <span className="font-medium text-black">18 Tasks Completed this Week</span>
                 </div>
                 
                 {/* SVG Velocity Graph with subtle sky-blue stroke */}
@@ -796,14 +717,11 @@ export default function LandingPage() {
           
           {/* Left: Heading */}
           <div className="lg:col-span-4 space-y-3">
-            <span className="text-xs font-mono uppercase tracking-widest text-sky-600 font-semibold">
-              FREQUENTLY ASKED
-            </span>
             <h2 className="text-3xl sm:text-4xl font-medium tracking-tight text-black leading-tight">
-              Everything you need to know.
+              Frequently asked questions.
             </h2>
             <p className="text-sm text-neutral-500 font-light">
-              Have a specific question about workflow setup?{' '}
+              Have a specific question?{' '}
               <a href="mailto:hello@cultlike.ahmvsystems.com" className="text-black underline underline-offset-4 decoration-black/30 hover:decoration-black transition-colors">
                 Contact our engineering team
               </a>
@@ -861,10 +779,6 @@ export default function LandingPage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.12),transparent_70%)] pointer-events-none" />
 
         <div className="max-w-[1000px] mx-auto text-center space-y-8 relative z-10">
-          <span className="text-[11px] font-mono uppercase tracking-widest text-sky-400 font-medium px-3.5 py-1 rounded-full bg-sky-500/10 border border-sky-500/20">
-            START SHIPPING TODAY
-          </span>
-          
           <h2 className="text-3xl sm:text-6xl font-normal tracking-tight text-white leading-tight">
             Stop managing.<br />
             <span className="font-light text-neutral-400">Start shipping with Cultlike.</span>
@@ -879,7 +793,7 @@ export default function LandingPage() {
               onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
               className="w-full sm:w-auto px-9 py-4 rounded-full bg-white hover:bg-neutral-100 text-black text-sm font-medium transition-all cursor-pointer shadow-[0_4px_20px_rgba(255,255,255,0.15)] active:scale-[0.98]"
             >
-              Launch Free Workspace
+              Get Started Free
             </button>
             <button
               onClick={() => { setMode('login'); setConfirmationSent(false); setIsAuthOpen(true) }}
@@ -909,14 +823,6 @@ export default function LandingPage() {
               <p className="text-sm text-neutral-500 font-light max-w-xs">
                 The anti-productivity operating system for high-agency creators and solo founders.
               </p>
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  onClick={() => { setMode('signup'); setConfirmationSent(false); setIsAuthOpen(true) }}
-                  className="px-5 py-2 rounded-full bg-black hover:bg-neutral-800 text-white text-xs font-medium transition-all cursor-pointer"
-                >
-                  Get Started Free
-                </button>
-              </div>
             </div>
 
             {/* Product */}
@@ -956,7 +862,7 @@ export default function LandingPage() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-xs font-mono text-neutral-600">
                   <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span>All Systems Operational</span>
+                  <span>Operational</span>
                 </div>
                 <span className="block text-xs font-mono text-neutral-400">OpenAPI 3.1 Live</span>
               </div>
@@ -973,14 +879,13 @@ export default function LandingPage() {
       </footer>
 
 
-      {/* ─── AUTH MODAL (CLEAN APPLE SPECULAR GLASS MODAL) ─── */}
+      {/* ─── AUTH MODAL ─── */}
       {isAuthOpen && (
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-md flex items-center justify-center p-4">
           <div 
             className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative animate-in fade-in zoom-in-95 duration-150 border border-black/[0.08]"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
             <button
               onClick={() => { setIsAuthOpen(false); setError(null); setConfirmationSent(false) }}
               className="absolute top-4 right-4 w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center text-neutral-500 transition-colors cursor-pointer z-10"
@@ -989,7 +894,6 @@ export default function LandingPage() {
             </button>
 
             <div className="p-8 sm:p-10">
-              {/* Logo Emblem */}
               <div className="flex items-center mb-6">
                 <img src="/logo-cultlike.png" alt="Logo" className="h-11 w-11 object-contain rounded-full shadow-2xs" />
               </div>
